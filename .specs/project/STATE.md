@@ -84,3 +84,6 @@ Próxima: T-F02-02 — DTOs, mapper e validações (Gate `mvn -q test -Dtest=Tas
 - **Teste que passa com banco vazio é teste que não testa nada.** O smoke test consultar `flyway_schema_history` foi o que revelou o Flyway desligado; um simples "contexto carregou" teria passado.
 - Spring 7 removeu `HandlerMethodValidationException#getAllValidationResults()`: usar `getParameterValidationResults()`.
 - Um método de teste com espaço no nome (`void segundaOrigemConfigurada TambemEhLiberada()`) não compila; o erro do compilador aparece como `'(' expected` na linha seguinte, o que confunde a leitura.
+- **`git commit -m` no PowerShell 5.1 achata o corpo da mensagem numa linha só.** Escrever a mensagem num arquivo e usar `git commit -F <arquivo>`. Ocorre em T-F01-03, T-F01-04 e T-F02-01.
+- **Teste de integração sem `@Transactional` deixa a entidade detached:** depois de `saveAndFlush`, chamar `flush()` não gera UPDATE. Use `saveAndFlush` a cada mudança, ou coloque `@Transactional` no teste.
+- Nomes de variável que colidem com classe do mesmo pacote (`Task hoje`) causam erro de compilação confuso tipo `cannot be converted to Task`; use o nome do tipo (`LocalDate hoje`).
