@@ -1,0 +1,1 @@
+﻿Nunca afirmar fatos não verificados. O que não puder ser verificado: [NEEDS CLARIFICATION] ou [ASSUMPTION] em STATE.md. Versões/APIs devem ser verificadas (documentação oficial, Maven Central, mvn dependency:tree, compilação).

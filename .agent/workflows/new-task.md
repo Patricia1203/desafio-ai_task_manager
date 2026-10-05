@@ -1,0 +1,1 @@
+﻿1. Ler STATE.md, localizar task in-progress ou pending com menor dependência satisfeita. 2. Marcar in-progress. 3. Seguir loop workflow.md.

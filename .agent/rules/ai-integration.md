@@ -1,0 +1,1 @@
+﻿Porta/adaptador (sem importar org.springframework.ai nas camadas de negócio), prompts em arquivos, structured output + validação, retry controlado, contexto mínimo, anti-prompt-injection, somente leitura para ferramentas.

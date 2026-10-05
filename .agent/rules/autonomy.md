@@ -1,0 +1,1 @@
+﻿Ver workflow.md 4.3. Aplicar direto vs parar e perguntar. Sempre registrar em STATE.md.

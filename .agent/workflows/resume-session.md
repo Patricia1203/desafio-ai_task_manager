@@ -1,0 +1,1 @@
+﻿1. git status; git log --oneline -10. 2. Ler STATE.md. 3. Localizar task in-progress. 4. Reestabelecer contexto (spec+design+task). 5. Continuar do passo 2 do loop.

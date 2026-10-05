@@ -1,0 +1,1 @@
+﻿Backend: Java 21+, pacotes por feature, records para DTOs, constructor injection, sem Lombok salvo justificativa. Frontend: React/TS funcional, hooks, minimal.

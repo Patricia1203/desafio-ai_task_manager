@@ -1,0 +1,2 @@
+﻿# PROJECT.md
+Visão: implementar AI Task Manager (Spring Boot 4 + Spring AI + React). Objetivo: atender requisitos seção 1 do prompt com rastreabilidade e qualidade. Critérios de sucesso: testes verdes, docker compose up funcional, README completo.
