@@ -1,8 +1,8 @@
 ﻿# STATE.md
 
 ## Task atual
-T-F02-02 — DTOs, mapper e validações — **done** (Gate: `mvn -q test -Dtest=TaskMapperTest` verde, 17 testes; suíte completa com 44 testes verdes).
-Próxima: T-F02-03 — Service CRUD, filtros, status e summary (Gate `mvn -q test -Dtest=TaskServiceTest`).
+T-F02-03 — Service CRUD, filtros, status e summary — **done** (Gate: `mvn -q test -Dtest=TaskServiceTest` verde, 30 testes; suíte completa com 74 testes verdes).
+Próxima: T-F02-04 — Controller REST de tarefas (Gate `mvn -q test -Dtest=TaskControllerTest`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -30,7 +30,7 @@ Próxima: T-F02-03 — Service CRUD, filtros, status e summary (Gate `mvn -q tes
 - [ASSUMPTION] `dueDate` será `LocalDate` (data sem hora) com formato ISO-8601 `yyyy-MM-dd`. Se o desafio exigir data-hora, ajustar em F02.
 - [ASSUMPTION] `BusinessRuleException` responde **422** e não 400. O `design.md` da F02 lista "ERR-02 400" sem distinguir; se o desafio exigir 400 para regra de negócio, o handler muda em um único ponto.
 - [ASSUMPTION] **DONE é terminal** — reabrir uma tarefa concluída exige passar por TODO, e ir direto para IN_PROGRESS é recusado com 422. O `spec.md` da F02 só diz "altera entre TODO, IN_PROGRESS, DONE", sem definir transições inválidas. Se o desafio exigir transição livre, remover o bloco em `Task#changeStatus`.
-- [NEEDS CLARIFICATION] O que fazer ao excluir uma tarefa que tem subtarefas. Implementado como cascata (`ON DELETE CASCADE`). A alternativa é bloquear com 422 e obrigar o usuário a mover ou excluir as subtarefas primeiro. Decidir em T-F02-03 e ajustar o `DELETE`.
+- ~~[NEEDS CLARIFICATION] O que fazer ao excluir uma tarefa que tem subtarefas.~~ **Resolvido em T-F02-03: cascata.** Ver "Decisões — T-F02-03".
 
 - 2026-10-05 (T-F01-03): **A imagem `eclipse-temurin:21-jdk-alpine` não contém o Maven.** O build do backend falhou com `mvn: not found`. Corrigido usando `maven:3.9-eclipse-temurin-21-alpine` no estágio de build e `eclipse-temurin:21-jre-alpine` no runtime.
 - 2026-10-05 (T-F01-03): Tags de imagem **verificadas** com `docker manifest inspect` antes de fixar: maven 3.9-eclipse-temurin-21-alpine, eclipse-temurin 21-jre-alpine, node 24-alpine, nginx 1.29-alpine, postgres 17-alpine, ollama/ollama latest.
@@ -68,6 +68,13 @@ Próxima: T-F02-03 — Service CRUD, filtros, status e summary (Gate `mvn -q tes
 - 2026-10-05: **`toSubtask` é separado de `toDomain`.** A decomposição por IA (RF-14, F03) exige pai; deixar o pai explícito na assinatura impede um caminho da IA criando tarefa de topo por engano.
 - 2026-10-05: **O `trim()` do título fica no DTO (`normalizedTitle()`), não no mapper.** O DTO é a borda: normalizar na entrada evita repetir isso no service e na IA, que vai montar DTOs também.
 
+## Decisões — T-F02-03
+- 2026-10-05: **Excluir uma tarefa remove as subtarefas em cascata. Decisão fechada nesta task.** O `spec.md` empurrava isso ("definir comportamento depois se necessário") e o `ON DELETE CASCADE` já estava no schema; o service apenas não bloqueia. A alternativa (recusar com 422 e obrigar a tratar as filhas antes) exigiria contar as filhas dentro da transação do delete. Se o desafio preferir bloquear, o caminho é remover o `ON DELETE CASCADE` na próxima migration e trocar o `delete`.
+- 2026-10-05: **`TaskFilter` não carrega `Pageable`.** `TaskService#list(filter, pageable)` e `#findAll(filter)` são métodos separados: a tela usa o primeiro, as ferramentas somente-leitura do assistente (F04) usam o segundo. Um filtro com paginação embutida obrigaria a F04 a fabricar um pageable falso.
+- 2026-10-05: **`TaskSummary` é record nomeado, não `Map<String, Long>`.** `summary.pendentes()` é verificável em tempo de compilação e o JSON sai com os campos nomeados que a tela consome.
+- 2026-10-05: **`@Transactional(readOnly = true)` na classe, `@Transactional` nos métodos de escrita.** `findById` seguido de alteração e `save` no mesmo método de leitura seria transação implícita por chamada.
+- 2026-10-05: **O `delete` verifica existência antes de apagar.** `repository.delete(id)` aceitaria id inexistente e responderia 204, furando ERR-01.
+
 ## Dúvidas [NEEDS CLARIFICATION]
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
 
@@ -96,6 +103,8 @@ Próxima: T-F02-03 — Service CRUD, filtros, status e summary (Gate `mvn -q tes
 - Um método de teste com espaço no nome (`void segundaOrigemConfigurada TambemEhLiberada()`) não compila; o erro do compilador aparece como `'(' expected` na linha seguinte, o que confunde a leitura.
 - **`git commit -m` no PowerShell 5.1 achata o corpo da mensagem numa linha só.** Escrever a mensagem num arquivo e usar `git commit -F <arquivo>`. Ocorre em T-F01-03, T-F01-04 e T-F02-01.
 - **Teste de integração sem `@Transactional` deixa a entidade detached:** depois de `saveAndFlush`, chamar `flush()` não gera UPDATE. Use `saveAndFlush` a cada mudança, ou coloque `@Transactional` no teste.
+- **`timestamptz` guarda microssegundos, `Instant` guarda nanossegundos.** Comparar o valor lido em memória com o relido do banco falha por precisão (`...Z` com 9 dígitos contra 6). Relê do banco antes de usar como referência, ou compare truncado.
+- **Sem `@Container` + `@ServiceConnection`, o `@SpringBootTest` cai no `application-test.yml`** e tenta o Postgres da máquina: a falha aparece como `BeanCreationException` no `entityManagerFactory` por "autenticação do tipo senha falhou", sem nenhuma pista de que faltou o container. Copiar o bloco de container de outro teste de integração pronto.
 - Nomes de variável que colidem com classe do mesmo pacote (`Task hoje`) causam erro de compilação confuso tipo `cannot be converted to Task`; usar o nome do tipo (`LocalDate hoje`).
 - **`Validator.validate` devolve `Set`, e `Set` não tem índice.** Guardar o resultado em `List` e chamar `.get(0)` não compila, com o erro "no instance(s) of type variable(s) T exist so that Set<...> conforms to List<...>", que não aponta para a causa. Usar um helper que valida o tamanho e devolve `iterator().next()`.
 - **Asserção tautológica passa no teste e não testa nada.** Escrever `assertThat(x).isEqualTo(condicao ? x : x)` nunca falha. Quando a intenção era comparar com o valor de antes da operação, capturar o valor em variável local antes de chamá-la.

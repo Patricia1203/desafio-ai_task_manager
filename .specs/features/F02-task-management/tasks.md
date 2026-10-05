@@ -34,7 +34,7 @@
 - **Nota 6:** `Validator.validate` devolve `Set`, que não tem posição fixa. O teste usa um helper `unica(Set)` que valida o tamanho e devolve `iterator().next()`; escrever `violations.get(0)` no lugar dá erro de compilação e induz a mudar o tipo errado.
 
 ### T-F02-03 — Service CRUD, filtros, status e summary
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-01, RF-02, RF-03, RF-04, RF-05, RF-06, RF-08, RF-09, RF-20, ERR-01
 - **Depende de:** T-F02-02
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/application/TaskService.java, backend/src/main/java/com/desafio/taskmanager/task/application/dto/TaskSummary.java, backend/src/main/java/com/desafio/taskmanager/task/application/dto/TaskFilter.java, backend/src/main/java/com/desafio/taskmanager/common/error/ResourceNotFoundException.java, backend/src/test/java/.../task/application/TaskServiceTest.java
@@ -43,6 +43,13 @@
 - **Testes:** TaskServiceTest cobrindo criar com status TODO, editar, excluir, alterar status, listagem filtrada, subtarefas, summary e exceção 404 para id inexistente.
 - **Gate:** mvn -q test -Dtest=TaskServiceTest
 - **Commit (rascunho):** `add: Service de tarefas com CRUD, filtros e summary`
+- **Nota:** **exclusão de tarefa com subtarefas é cascata, e isso é decisão, não esquecimento.** O `ON DELETE CASCADE` de `V2__create_tasks.sql` já estava no banco; o service só não checa nada antes de apagar. A alternativa (recusar com 422 e obrigar a mover/excluir as filhas antes) muda o `delete` para uma transação que conta as filhas — trocar depois significa remover a linha do cascade na próxima migration, não reescrever a feature. Registrado em `STATE.md`.
+- **Nota 2:** `TaskFilter` é um record com `status` e `priority` opcionais, sem pageable — a paginação é argumento separado de `TaskService#list(filter, pageable)`. Assim o mesmo filtro serve para a listagem paginada da tela e para um `findAll` do assistente (F04), que não pagina.
+- **Nota 3:** o summary é uma classe de resultado (`TaskSummary`) calculada a partir das `@Query` de contagem já prontas em `TaskRepository`, e não um `Map<String, Long>`. Record com nome deixa o contrato do dashboard explícito e o teste falha em silêncio se o nome do campo mudar.
+- **Nota 4:** a exclusão checa existência antes de apagar. `repository.delete(id)` sem `findById` responderia 204 para um id inexistente, e o requisito ERR-01 pede 404.
+- **Nota 5:** o teste `excluirPaiRemoveSubtarefasPorCascata` fixa a comportamento escolhido no banco. É o teste que vai falhar se alguém trocar a cascata por bloqueio sem perceber que mudou a regra.
+- **Nota 6:** `TaskService` é `@Transactional(readOnly = true)` na classe e `@Transactional` nos métodos de escrita. Sem isso o `getOrThrow` + alteração + `save`_from_leitura_precisariam de transação própria por chamada.
+- **Nota 7:** o teste `alterarParaOMesmoStatusNaoFalhaNemMexeEmUpdatedAt` relê a tarefa antes de agir, porque `timestamptz` guarda microssegundos e `Instant` guarda nanos: comparar o valor em memória com o relido falha por precisão, não por lógica.
 
 ### T-F02-04 — Controller REST de tarefas
 - **Status:** pending

@@ -1,0 +1,41 @@
+package com.desafio.taskmanager.task.application.dto;
+
+import com.desafio.taskmanager.task.domain.TaskPriority;
+import com.desafio.taskmanager.task.domain.TaskStatus;
+
+/**
+ * Criterio de listagem de tarefas (RF-02). Os dois campos sao opcionais e
+ * compoem entre si: os ausentes simplesmente nao entram na Specification.
+ *
+ * <p>Sem pageable de proposito — a paginacao e argumento separado de
+ * {@code TaskService#list}, para o mesmo filtro servir tanto para a listagem
+ * paginada da tela quanto para uma leitura completa do assistente (F04).
+ */
+public record TaskFilter(TaskStatus status, TaskPriority priority) {
+
+    /** Sem filtro: devolve a listagem inteira. */
+    public static TaskFilter all() {
+        return new TaskFilter(null, null);
+    }
+
+    public static TaskFilter byStatus(TaskStatus status) {
+        return new TaskFilter(status, null);
+    }
+
+    public static TaskFilter byPriority(TaskPriority priority) {
+        return new TaskFilter(null, priority);
+    }
+
+    public boolean hasStatus() {
+        return status != null;
+    }
+
+    public boolean hasPriority() {
+        return priority != null;
+    }
+
+    /** Verdadeiro quando nenhum criterio foi informado. */
+    public boolean isEmpty() {
+        return !hasStatus() && !hasPriority();
+    }
+}
