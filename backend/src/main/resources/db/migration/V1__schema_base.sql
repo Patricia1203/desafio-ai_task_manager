@@ -11,7 +11,8 @@
 --   .specs/features/F04-ai-assistant/design.md
 --
 -- Aqui ficam apenas as convencoes que valem para qualquer tabela futura:
---   - chave primaria BIGSERIAL gerada pelo banco
+--   - chave primaria UUID gerada pela aplicacao (tasks usa UUID PRIMARY KEY;
+--     nao ha coluna BIGSERIAL neste schema)
 --   - created_at / updated_at em timestamptz (UTC), preenchidos por now()
 --   - enums persistidos como VARCHAR com CHECK explicito (evita tipos ENUM do PG,
 --     que exigem ALTER TYPE para novos valores)

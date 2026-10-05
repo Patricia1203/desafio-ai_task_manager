@@ -147,15 +147,18 @@
 - **Nota 2:** **o teste confere a posição, não só a presença.** Verificar que `id` existe no sort não basta: se viesse antes de `createdAt`, o desempate passaria a mandar na ordem principal. `idEhUltimoCriterioDaOrdenacao` usa `containsExactly` para travar a sequência.
 
 ### T-F02-05g — BOM, typos e documentação desatualizada
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RNF-20
 - **Origem:** revisão de código do backend
-- **Arquivos (alterar):** `backend/pom.xml`, `backend/src/main/resources/application.yml`, `backend/src/main/resources/application-dev.yml`, `backend/src/main/resources/db/migration/V1__schema_base.sql`, Javadocs em `TaskService`, `TaskMapper`, `CorsProperties`
-- **O que fazer:** remover BOM UTF-8 dos `.yml` e do `pom.xml`; corrigir `V1` que fala em `BIGSERIAL` para uma tarefa com `UUID`; `createSubtask` que cita RF-03 em vez de RF-14; `@param parent` obsoleto em `updateDomain`; `CorsProperties.allowsOrigin`; typos `composedos` e `subtarea`.
-- **Pronto quando:** nenhum arquivo versionado abre com BOM e nenhum javadoc aponta para requisito errado.
+- **Arquivos (alterar):** `backend/pom.xml`, `backend/src/main/resources/application.yml`, `backend/src/main/resources/application-dev.yml`, `backend/src/main/resources/db/migration/V1__schema_base.sql`, Javadocs em `TaskService`, `TaskMapper`, `CorsProperties`, `Task`, `TaskRepository`
+- **O que fazer:** remover BOM UTF-8 dos `.yml` e do `pom.xml`; corrigir `V1` que fala em `BIGSERIAL` para uma tabela com `UUID`; `createSubtask` que cita RF-03 em vez de RF-14; `@param parent` obsoleto em `updateDomain`; docstring de `CorsProperties.allowsOrigin`; typos `composedos` e `subtarea`.
+- **Pronto quando:** nenhum arquivo versionado de `backend/` abre com BOM e nenhum javadoc aponta para requisito errado.
+- **Testes:** suíte completa; a mudança é de byte inicial e de comentário, sem efeito de comportamento.
 - **Gate:** mvn -q test
-- **Commit (rascunho):** `chore: Remover BOM e corrigir documentacao divergente`
-- **Nota:** **o BOM some da tela mas quebra ferramentas.** `pom.xml` e os `.yml` comecam com `EF BB BF`; em YAML o parser pode falhar em espaco ou chave e o erro aponta para a linha errada.
+- **Commit:** `chore: Remover BOM e corrigir documentacao divergente`
+- **Nota:** **o BOM some da tela mas quebra ferramentas.** `pom.xml` e os `.yml` começavam com `EF BB BF`; em YAML o parser pode falhar em espaço ou chave e o erro aponta para a linha errada. Removido com script, byte a byte, para não reescrever o conteúdo.
+- **Nota 2:** **`@param parent` não é só texto errado: é um parâmetro que não existe.** `updateDomain` nunca recebeu `parent`; a documentação descrevia uma assinatura antiga.
+- **Nota 3:** **o `RF-03` estava em dois lugares.** `TaskController#update` é RF-03 de verdade (edição de conteúdo); o errado era `createSubtask`, que é RF-14 (decomposição em subtarefas). Corrigir pelo grep sem ler o requisito teria trocado os dois.
 
 ### T-F02-05h — Fragilidade dos testes de integração
 - **Status:** pending

@@ -17,7 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /**
- * Acesso a tabela tasks. Filtros composedos e paginacao entram pelo
+ * Acesso a tabela tasks. Filtros compostos e paginacao entram pelo
  * {@code JpaSpecificationExecutor}; as consultas de summary e as ferramentas
  * somente-leitura do assistente (F04) sao @Query nomeadas para ficarem
  * legiveis e reviewaveis.

@@ -163,7 +163,7 @@ public class Task {
         return updatedAt;
     }
 
-    /** Verdadeiro quando a tarefa e uma subtarea de outra. */
+    /** Verdadeiro quando a tarefa e uma subtarefa de outra. */
     public boolean isSubtask() {
         return parent != null;
     }

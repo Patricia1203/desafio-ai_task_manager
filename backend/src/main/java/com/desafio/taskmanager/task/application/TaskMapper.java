@@ -35,9 +35,8 @@ public class TaskMapper {
     }
 
     /**
-     * Aplica o PUT sobre a entidade existente.
-     *
-     * @param parent mantido: o pai nao se altera por edicao de conteudo
+     * Aplica o PUT sobre a entidade existente. O pai nao se altera por edicao de
+     * conteudo, e o status tem endpoint proprio.
      */
     public void updateDomain(Task task, UpdateTaskRequest request) {
         task.updateContent(

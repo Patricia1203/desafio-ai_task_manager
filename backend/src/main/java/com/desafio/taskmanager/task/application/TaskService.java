@@ -46,7 +46,7 @@ public class TaskService {
         return mapper.toResponse(repository.save(task));
     }
 
-    /** RF-03. Cria subtarefa sob um pai existente. Pai invalido vira 404. */
+    /** RF-14. Cria subtarefa sob um pai existente. Pai invalido vira 404. */
     @Transactional
     public TaskResponse createSubtask(UUID parentId, CreateTaskRequest request) {
         Task parent = getOrThrow(parentId);

@@ -16,7 +16,7 @@ public record CorsProperties(List<String> allowedOrigins) {
         allowedOrigins = allowedOrigins == null ? List.of() : List.copyOf(allowedOrigins);
     }
 
-    /** Sintaxe do Spring para converter a lista separada por virgula do env. */
+    /** Indica se a origem do request esta na lista liberada por app.cors.allowed-origins. */
     public boolean allowsOrigin(String origin) {
         return allowedOrigins.contains(origin);
     }
