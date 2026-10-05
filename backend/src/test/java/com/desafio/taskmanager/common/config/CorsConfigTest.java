@@ -1,5 +1,7 @@
 package com.desafio.taskmanager.common.config;
 
+import com.desafio.taskmanager.common.web.HealthController;
+
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +23,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * RNF-21: o CORS so aceita as origens de app.cors.allowed-origins.
+ *
+ * <p>O slice e fixado no {@code HealthController} de proposito. Um
+ * {@code @WebMvcTest} sem atributo carrega todos os controllers, e assim que
+ * existir um controller com dependencia propria ({@code TaskController} precisa
+ * de {@code TaskService}) este teste quebra por causa de um controller que ele
+ * nem exercita.
  */
-@WebMvcTest
+@WebMvcTest(HealthController.class)
 @Import(WebConfig.class)
 @TestPropertySource(properties = "app.cors.allowed-origins=http://localhost:5173,http://localhost:8081")
 class CorsConfigTest {

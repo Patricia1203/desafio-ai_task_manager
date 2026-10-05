@@ -1,8 +1,8 @@
 ﻿# STATE.md
 
 ## Task atual
-T-F02-03 — Service CRUD, filtros, status e summary — **done** (Gate: `mvn -q test -Dtest=TaskServiceTest` verde, 30 testes; suíte completa com 74 testes verdes).
-Próxima: T-F02-04 — Controller REST de tarefas (Gate `mvn -q test -Dtest=TaskControllerTest`).
+T-F02-04 — Controller REST de tarefas — **done** (Gate: `mvn -q test -Dtest=TaskControllerTest` verde, 27 testes; suíte completa com 101 testes verdes).
+Próxima: T-F02-05 — Frontend Dashboard e Tarefas (Gate `npm run lint && npm run test && npm run build` no frontend).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -75,6 +75,14 @@ Próxima: T-F02-04 — Controller REST de tarefas (Gate `mvn -q test -Dtest=Task
 - 2026-10-05: **`@Transactional(readOnly = true)` na classe, `@Transactional` nos métodos de escrita.** `findById` seguido de alteração e `save` no mesmo método de leitura seria transação implícita por chamada.
 - 2026-10-05: **O `delete` verifica existência antes de apagar.** `repository.delete(id)` aceitaria id inexistente e responderia 204, furando ERR-01.
 
+## Decisões — T-F02-04
+- 2026-10-05: **`TaskController` sem `@Validated`.** A anotação troca a validação nativa do Spring 7 nos parâmetros do controller (`HandlerMethodValidationException`, já mapeada em 400) pelo proxy AOP (`ConstraintViolationException`, sem mapeamento). O sintoma era `GET /tasks?page=-1` respondendo **500** em vez de 400, com o log mostrando a exceção Original. Se outro controller precisar de validação de parâmetro, usar a nativa e nunca reintroduzir `@Validated` sem antes mapear `ConstraintViolationException`.
+- 2026-10-05: **`/tasks/summary` antes de `/tasks/{id}`.** `/{id}` com `UUID` casa qualquer segmento, então a ordem de declaração decide se o summary existe. Não é estilo, é correção.
+- 2026-10-05: **`size` limitado a 100 e `page` a 0 ou mais.** Parâmetro de query sem teto vira consultas que derrubam o Postgres; o limite entra como `400` com campo, não como 500.
+- 2026-10-05: **Ordenação fixa em `createdAt desc`, sem parâmetro de sort no filtro.** Mais recentes primeiro é decisão de produto; aceitar sort do cliente abre espaço para ordenação sobre coluna não indexada.
+- 2026-10-05: **A confirmação da cascata é responsabilidade da tela, não do backend.** Decisão do usuário: a interface lista as subtarefas antes de excluir. O backend não ganha `?confirm=true` — o `design.md` define "remove ou 404", e `GET /tasks/{id}/subtasks` já entrega a lista. Implementado em T-F02-05.
+- 2026-10-05: **`CorsConfigTest` fixado em `@WebMvcTest(HealthController.class)`.** Um `@WebMvcTest` sem atributo carrega todos os controllers; ao existir `TaskController` (que depende de `TaskService`), o contexto do teste de CORS passou a falhar por causa de um controller que ele não exercita. A correção é fixar o slice, não injetar beans falsos.
+
 ## Dúvidas [NEEDS CLARIFICATION]
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
 
@@ -103,6 +111,8 @@ Próxima: T-F02-04 — Controller REST de tarefas (Gate `mvn -q test -Dtest=Task
 - Um método de teste com espaço no nome (`void segundaOrigemConfigurada TambemEhLiberada()`) não compila; o erro do compilador aparece como `'(' expected` na linha seguinte, o que confunde a leitura.
 - **`git commit -m` no PowerShell 5.1 achata o corpo da mensagem numa linha só.** Escrever a mensagem num arquivo e usar `git commit -F <arquivo>`. Ocorre em T-F01-03, T-F01-04 e T-F02-01.
 - **Teste de integração sem `@Transactional` deixa a entidade detached:** depois de `saveAndFlush`, chamar `flush()` não gera UPDATE. Use `saveAndFlush` a cada mudança, ou coloque `@Transactional` no teste.
+- **`@Validated` no controller troca a exceção de validação e quebra o 400.** Com a anotação, `ConstraintViolationException` (não mapeada) cai no 500 genérico; sem ela, `HandlerMethodValidationException` (mapeada) vira 400 com a lista de campos. Teste que só olha `isOk()` não pega isso; precisa checar o status e o corpo do erro.
+- **`@WebMvcTest` sem atributo carrega todos os controllers e quebra testes que não são dele.** Passou a falhar com `NoSuchBeanDefinitionException` ao entrar o primeiro controller com dependência própria. Sempre fixar `controllers = ...` ou `controllers = Classe.class`.
 - **`timestamptz` guarda microssegundos, `Instant` guarda nanossegundos.** Comparar o valor lido em memória com o relido do banco falha por precisão (`...Z` com 9 dígitos contra 6). Relê do banco antes de usar como referência, ou compare truncado.
 - **Sem `@Container` + `@ServiceConnection`, o `@SpringBootTest` cai no `application-test.yml`** e tenta o Postgres da máquina: a falha aparece como `BeanCreationException` no `entityManagerFactory` por "autenticação do tipo senha falhou", sem nenhuma pista de que faltou o container. Copiar o bloco de container de outro teste de integração pronto.
 - Nomes de variável que colidem com classe do mesmo pacote (`Task hoje`) causam erro de compilação confuso tipo `cannot be converted to Task`; usar o nome do tipo (`LocalDate hoje`).

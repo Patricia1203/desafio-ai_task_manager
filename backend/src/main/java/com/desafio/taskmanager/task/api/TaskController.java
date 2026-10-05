@@ -1,0 +1,130 @@
+package com.desafio.taskmanager.task.api;
+
+import java.net.URI;
+import java.util.List;
+import java.util.UUID;
+
+import com.desafio.taskmanager.task.api.dto.CreateTaskRequest;
+import com.desafio.taskmanager.task.api.dto.PageResponse;
+import com.desafio.taskmanager.task.api.dto.TaskResponse;
+import com.desafio.taskmanager.task.api.dto.UpdateStatusRequest;
+import com.desafio.taskmanager.task.api.dto.UpdateTaskRequest;
+import com.desafio.taskmanager.task.application.TaskService;
+import com.desafio.taskmanager.task.application.dto.TaskFilter;
+import com.desafio.taskmanager.task.application.dto.TaskSummary;
+import com.desafio.taskmanager.task.domain.TaskPriority;
+import com.desafio.taskmanager.task.domain.TaskStatus;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * API de tarefas (RF-01 a RF-06, RF-20, RF-23).
+ *
+ * <p>O controller nao tem regra de negocio: valida a borda, delega ao service e
+ * empacota a resposta. Erros sao convertidos em ProblemDetail pelo
+ * {@code GlobalExceptionHandler}, entao nao ha try/catch aqui.
+ *
+ * <p>A ordem das rotas importa: {@code /tasks/summary} precisa vir antes de
+ * {@code /tasks/{id}}, senao o Spring casa "summary" com o {id} e tenta
+ * converter para UUID.
+ *
+ * <p><b>Sem {@code @Validated} de proposito.</b> A validacao de metodo nativa do
+ * Spring 7 nos parametros do controller lanca {@code HandlerMethodValidationException},
+ * que o handler global ja traduz em 400 com a lista de campos. Com {@code @Validated}
+ * entra o proxy AOP antigo, que lanca {@code ConstraintViolationException} — nenhuma das
+ * duas esta mapeada, e a violacao cai no 500 generico.
+ */
+@RestController
+@RequestMapping("/tasks")
+public class TaskController {
+
+    /** Evita que page * size derrube o banco com um size enorme. */
+    private static final int MAX_PAGE_SIZE = 100;
+
+    private final TaskService service;
+
+    public TaskController(TaskService service) {
+        this.service = service;
+    }
+
+    /** RF-02, RF-23. Filtros e paginacao; ordenacao fixa em createdAt desc. */
+    @GetMapping
+    public PageResponse<TaskResponse> list(
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "page nao pode ser negativo") int page,
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "size deve ser no minimo 1")
+            @Max(value = MAX_PAGE_SIZE, message = "size deve ser no maximo " + MAX_PAGE_SIZE) int size) {
+        return PageResponse.of(service.list(
+                new TaskFilter(status, priority),
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))));
+    }
+
+    /** RF-20. Fica antes de /tasks/{id} por causa do casamento de rota. */
+    @GetMapping("/summary")
+    public TaskSummary summary() {
+        return service.summary();
+    }
+
+    /** RF-02. Id inexistente vira 404 pelo service. */
+    @GetMapping("/{id}")
+    public TaskResponse findById(@PathVariable UUID id) {
+        return service.findById(id);
+    }
+
+    /** RF-02. Subtarefas em ordem de criacao; 404 se o pai nao existir. */
+    @GetMapping("/{id}/subtasks")
+    public List<TaskResponse> findSubtasks(@PathVariable UUID id) {
+        return service.findSubtasks(id);
+    }
+
+    /** RF-01, ERR-02. 201 com Location apontando para a tarefa criada. */
+    @PostMapping
+    public ResponseEntity<TaskResponse> create(@Valid @RequestBody CreateTaskRequest request) {
+        TaskResponse created = service.create(request);
+        return ResponseEntity
+                .created(URI.create("/tasks/" + created.id()))
+                .body(created);
+    }
+
+    /** RF-03. Substituicao de conteudo; o status tem endpoint proprio. */
+    @PutMapping("/{id}")
+    public TaskResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateTaskRequest request) {
+        return service.update(id, request);
+    }
+
+    /** RF-06. Transicao de status; recusa vira 422, id inexistente vira 404. */
+    @PatchMapping("/{id}/status")
+    public TaskResponse changeStatus(@PathVariable UUID id, @Valid @RequestBody UpdateStatusRequest request) {
+        return service.changeStatus(id, request.status());
+    }
+
+    /**
+     * RF-05. 204 sem corpo.
+     *
+     * <p>As subtarefas vao junto por cascata. A interface pede confirmacao
+     * mostrando quais sao antes do DELETE — a tela busca
+     * {@code GET /tasks/{id}/subtasks} e so entao confirma. O backend nao exige
+     * confirmacao: o contrato do spec e "remove ou 404".
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}

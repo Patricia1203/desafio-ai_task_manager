@@ -52,15 +52,21 @@
 - **Nota 7:** o teste `alterarParaOMesmoStatusNaoFalhaNemMexeEmUpdatedAt` relê a tarefa antes de agir, porque `timestamptz` guarda microssegundos e `Instant` guarda nanos: comparar o valor em memória com o relido falha por precisão, não por lógica.
 
 ### T-F02-04 — Controller REST de tarefas
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-23, RF-24, RF-02, RF-07, ERR-01, ERR-02, ERR-06
 - **Depende de:** T-F02-03
-- **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java, backend/src/test/java/.../task/api/TaskControllerTest.java
+- **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java, backend/src/test/java/.../task/api/TaskControllerTest.java, backend/src/test/java/.../common/config/CorsConfigTest.java (ajuste de slice)
 - **O que fazer:** GET /tasks (filtros status, priority, page, size), GET /tasks/summary, GET /tasks/{id}, POST /tasks (201 + Location), PUT /tasks/{id}, PATCH /tasks/{id}/status, DELETE /tasks/{id} (204), GET /tasks/{id}/subtasks. Erros no formato ProblemDetail.
 - **Pronto quando:** todos os endpoints respondem com o status e corpo definidos em design.md; 400 lista os campos inválidos; 404 para id inexistente.
 - **Testes:** TaskControllerTest (@WebMvcTest) para 200/201/204/400/404 e para o formato ProblemDetail, incluindo Location no 201.
 - **Gate:** mvn -q test -Dtest=TaskControllerTest
 - **Commit (rascunho):** `add: Controller REST de tarefas`
+- **Nota:** **`/tasks/summary` é declarado antes de `/tasks/{id}`.** O `/{id}` com UUID casa qualquer string, então `summary` seria convertido para UUID e o summary ficaria inalcançável com 400. Ordem de mapeamento não é decoração aqui.
+- **Nota 2:** **`@Validated` foi removido do controller.** Com ele, a validação de `@RequestParam` passa pelo proxy AOP e lança `ConstraintViolationException`, que não está mapeada: `page=-1` voltava **500** em vez de 400. Sem a anotação, a validação nativa do Spring 7 nos parâmetros do controller lança `HandlerMethodValidationException`, que o `GlobalExceptionHandler` já traduz. Não reintroduzir `@Validated` aqui sem mapear a exceção nova.
+- **Nota 3:** `size` tem teto de 100 e `page` não pode ser negativo. Sem teto, `size=100000` vira um `SELECT` que derruba o banco por causa de um parâmetro de query.
+- **Nota 4:** ordenação fixa em `createdAt desc` no controller. O filtro não expõe sort: a ordem é decisão de produto (mais recentes primeiro), não parâmetro do cliente.
+- **Nota 5:** **`CorsConfigTest` foi fixado em `@WebMvcTest(HealthController.class)`.** Ele usava `@WebMvcTest` sem atributo, que carrega todos os controllers; com o `TaskController` no projeto, passou a exigir um `TaskService` e o contexto inteiro do teste falhou. Fixar o slice é a correção, não adicionar beans falsos.
+- **Nota 6:** a exclusão em cascata pede confirmação na interface. O backend não exige flag: o `design.md` define "remove ou 404". A tela lista `GET /tasks/{id}/subtasks` e só então confirma. Ver T-F02-05.
 
 ### T-F02-05 — Frontend Dashboard e Tarefas
 - **Status:** pending
@@ -72,3 +78,4 @@
 - **Testes:** TaskForm (validação e submit), TaskList (render, filtro, vazio), TaskDetail (mudança de status e exclusão) com a camada api/ mockada.
 - **Gate:** cd frontend && npm run lint && npm run test && npm run build
 - **Commit (rascunho):** `add: Telas de Dashboard e Tarefas com CRUD completo`
+- **Nota (decisão do usuário):** **a exclusão em cascata pede confirmação na interface, listando as subtarefas que serão arrastadas.** Ao clicar em excluir, a tela busca `GET /tasks/{id}/subtasks`; havendo filhas, mostra os títulos numa caixa de confirmação antes de chamar o `DELETE`. Sem subtarefas, confirma direto. O backend não ganha parâmetro de confirmação — o contrato é "remove ou 404" e a lista já está disponível. Teste obrigatório: `TaskDetail` mostra os títulos das subtarefas no diálogo e o DELETE só é disparado após confirmar.
