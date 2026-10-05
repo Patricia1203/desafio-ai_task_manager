@@ -1,25 +1,10 @@
 ﻿spring:
-  application:
-    name: ai-task-manager
-  datasource:
-    url: 
-    username: 
-    password: 
   jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        format_sql: true
-    open-in-view: false
+    show-sql: true
   flyway:
-    enabled: true
-  ai:
-    ollama:
-      base-url: 
-      chat:
-        options:
-          model: 
-server:
-  servlet:
-    context-path: /api
+    clean-disabled: false
+
+logging:
+  level:
+    com.desafio.taskmanager: DEBUG
+    org.hibernate.SQL: DEBUG

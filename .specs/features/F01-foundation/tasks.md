@@ -1,7 +1,7 @@
 ﻿# tasks.md — F01-foundation
 
 ### T-F01-01 — Bootstrap backend (Spring Boot 4, Java 21)
-- Status: pending
+- Status: done
 - Reqs: RNF-01, RNF-20
 - Depende de: (nenhuma)
 - Arquivos (criar/alterar): backend/, backend/pom.xml, backend/src/main/java/.../Application.java, backend/src/main/resources/application.yml, backend/src/main/resources/application-dev.yml
