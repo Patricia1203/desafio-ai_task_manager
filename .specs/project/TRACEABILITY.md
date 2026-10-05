@@ -1,3 +1,52 @@
-﻿# TRACEABILITY.md
-| REQ | Feature | Task(s) | Código | Testes | Commit (assunto/hash) | Status |
+﻿| REQ | Feature | Task(s) | Código | Testes | Commit (assunto/hash) | Status |
 |---|---|---|---|---|---|---|
+| RNF-01 | F01 | | | | | pending |
+| RNF-02 | F03,F04 | | | | | pending |
+| RNF-03 | F01 | | | | | pending |
+| RNF-04 | F01,F05 | | | | | pending |
+| RNF-05 | F01,F05 | | | | | pending |
+| RF-01 | F02 | | | | | pending |
+| RF-02 | F02 | | | | | pending |
+| RF-03 | F02 | | | | | pending |
+| RF-04 | F02 | | | | | pending |
+| RF-05 | F02 | | | | | pending |
+| RF-06 | F02 | | | | | pending |
+| RF-07 | F02 | | | | | pending |
+| RF-08 | F02 | | | | | pending |
+| RF-09 | F02 | | | | | pending |
+| RF-10 | F03 | | | | | pending |
+| RF-11 | F03 | | | | | pending |
+| RF-12 | F03 | | | | | pending |
+| RF-13 | F03 | | | | | pending |
+| RF-14 | F03 | | | | | pending |
+| RF-15 | F04 | | | | | pending |
+| RF-16 | F04 | | | | | pending |
+| RF-17 | F04 | | | | | pending |
+| RF-18 | F04 | | | | | pending |
+| RF-19 | F04 | | | | | pending |
+| RF-20 | F02 | | | | | pending |
+| RF-21 | F02 | | | | | pending |
+| RF-22 | F04 | | | | | pending |
+| RF-23 | F02 | | | | | pending |
+| RF-24 | F03,F04 | | | | | pending |
+| RNF-10 | F03,F04 | | | | | pending |
+| RNF-11 | F03,F04 | | | | | pending |
+| RNF-12 | F03,F04 | | | | | pending |
+| RNF-13 | F03,F04 | | | | | pending |
+| RNF-14 | F03,F04 | | | | | pending |
+| RNF-15 | F03,F04 | | | | | pending |
+| RNF-20 | F01 | | | | | pending |
+| RNF-21 | F01 | | | | | pending |
+| ERR-01 | F02,F05 | | | | | pending |
+| ERR-02 | F02,F05 | | | | | pending |
+| ERR-03 | F03,F04,F05 | | | | | pending |
+| ERR-04 | F03,F04,F05 | | | | | pending |
+| ERR-05 | F03,F04,F05 | | | | | pending |
+| ERR-06 | F02,F05 | | | | | pending |
+| TST-01 | F02,F03,F04 | | | | | pending |
+| TST-02 | F02,F03,F04 | | | | | pending |
+| TST-03 | F03,F04 | | | | | pending |
+| TST-04 | F01,F02 | | | | | pending |
+| DOC-01 | F05 | | | | | pending |
+| DEL-01 | F05 | | | | | pending |
+| DEL-02 | F05 | | | | | pending |
