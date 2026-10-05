@@ -194,17 +194,24 @@ class TaskControllerTest {
 
     // --- POST /tasks ---
 
+    /**
+     * O {@code context-path} e /api, entao o Location precisa do prefixo: um
+     * Location sem ele aponta para um caminho que nao existe e o cliente toma
+     * 404 ao seguir o proprio header do 201. O MockMvc nao aplica o
+     * context-path sozinho, entao a requisicao o declara explicitamente.
+     */
     @Test
-    void criarRetorna201ComLocation() throws Exception {
+    void criarRetorna201ComLocationIncluindoOContextPath() throws Exception {
         when(service.create(any(CreateTaskRequest.class))).thenReturn(resposta());
 
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/api/tasks")
+                        .contextPath("/api")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"title":"Titulo","description":"Descricao","priority":"HIGH",
                                  "dueDate":"2026-12-31"}"""))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/tasks/" + ID))
+                .andExpect(header().string("Location", "http://localhost/api/tasks/" + ID))
                 .andExpect(jsonPath("$.id").value(ID.toString()))
                 .andExpect(jsonPath("$.title").value("Titulo"));
     }

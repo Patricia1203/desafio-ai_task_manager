@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * API de tarefas (RF-01 a RF-06, RF-20, RF-23).
@@ -93,13 +94,26 @@ public class TaskController {
         return service.findSubtasks(id);
     }
 
-    /** RF-01, ERR-02. 201 com Location apontando para a tarefa criada. */
+    /**
+     * RF-01, ERR-02. 201 com Location apontando para a tarefa criada.
+     *
+     * <p><b>Por que {@code ServletUriComponentsBuilder} e nao uma string.</b> O
+     * servico vive em {@code /api} por causa do {@code context-path}, e
+     * {@code URI.create("/tasks/" + id)} ignoraria esse prefixo: o header
+     * apontaria para um caminho que nao existe e o cliente receberia um 404 ao
+     * seguir o proprio Location do 201. Montar a URI a partir da requisicao
+     * corrente pega scheme, host, porta e context-path reais, o que tambem
+     * funciona atras de proxy sem ajuste manual.
+     */
     @PostMapping
     public ResponseEntity<TaskResponse> create(@Valid @RequestBody CreateTaskRequest request) {
         TaskResponse created = service.create(request);
-        return ResponseEntity
-                .created(URI.create("/tasks/" + created.id()))
-                .body(created);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.id())
+                .toUri();
+        return ResponseEntity.created(location).body(created);
     }
 
     /** RF-03. Substituicao de conteudo; o status tem endpoint proprio. */

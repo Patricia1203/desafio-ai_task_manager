@@ -95,16 +95,17 @@
 - **Nota 2:** **`HealthControllerTest` é um arquivo novo, não uma extensão do `CorsConfigTest`.** O `CorsConfigTest` fixa o slice em `HealthController` só porque ele precisa do `JdbcTemplate` mockado; o mock é detalhe de CORS, não o que o teste exercita. Um teste que depende da infraestrutura alheia quebra quando a infra muda.
 
 ### T-F02-05c — Location do POST com o prefixo /api
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-01
 - **Origem:** revisão de código do backend
-- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`, `backend/src/test/java/com/desafio/taskmanager/task/api/TaskControllerTest.java`
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`, `backend/src/test/java/com/desafio/taskmanager/task/api/TaskControllerTest.java`, `.specs/project/TRACEABILITY.md`
 - **O que fazer:** trocar `URI.create("/tasks/" + id)` por `ServletUriComponentsBuilder`, para o `Location` incluir o `context-path`.
 - **Pronto quando:** o `Location` do 201 aponta para `/api/tasks/{id}`.
-- **Testes:** corrigir `criarRetorna201ComLocation`, que hoje valida o valor errado e por isso não pega o bug.
+- **Testes:** `TaskControllerTest.criarRetorna201ComLocationIncluindoOContextPath`.
 - **Gate:** mvn -q test -Dtest=TaskControllerTest
-- **Commit (rascunho):** `fix: Incluir o context-path no Location da criacao de tarefa`
+- **Commit:** `fix: Incluir o context-path no Location da criacao de tarefa`
 - **Nota:** **o teste validava o bug.** `URI.create("/tasks/" + id)` ignora o `context-path: /api`, então o header apontava para um caminho que não existe. A asserção precisa mudar junto, senão o conserto quebra o teste e o teste quebra o conserto.
+- **Nota 2:** **o teste declara `contextPath("/api")` e posta em `/api/tasks` de propósito.** O MockMvc não aplica o `context-path` do `application-test.yml` automaticamente; sem declarar, o `ServletUriComponentsBuilder` não teria prefixo nenhum para montar e o teste passaria vazio — validando de novo o caminho errado.
 
 ### T-F02-05d — Separação entre service e DTO de API
 - **Status:** pending
