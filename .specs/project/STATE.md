@@ -1,8 +1,8 @@
 ﻿# STATE.md
 
 ## Task atual
-T-F01-02 — Skeleton frontend (Vite + React + TS) — **done** (Gates: `npm run lint`, `npm run test`, `npm run build` verdes).
-Próxima: T-F01-03 — Docker compose + Dockerfiles (Gate `docker compose config`).
+T-F01-03 — Docker compose + Dockerfiles — **done** (Gates: `docker compose config` e `docker compose build` verdes).
+Próxima: T-F01-04 — Config, Flyway, migrations base, ProblemDetail, CORS e endpoint /api/health (Gate `mvn -q test`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -29,14 +29,22 @@ Próxima: T-F01-03 — Docker compose + Dockerfiles (Gate `docker compose config
 - [ASSUMPTION] O modelo padrão `qwen2.5:7b` suporta tool calling no Ollama. Não verificado (Ollama indisponível). Confirmar em T-F03-02/F-F04-02; se não suportar, trocar para `llama3.1:8b` ou implementar fallback de contexto injetado (registrar decisão).
 - [ASSUMPTION] `dueDate` será `LocalDate` (data sem hora) com formato ISO-8601 `yyyy-MM-dd`. Se o desafio exigir data-hora, ajustar em F02.
 
+- 2026-10-05 (T-F01-03): **A imagem `eclipse-temurin:21-jdk-alpine` não contém o Maven.** O build do backend falhou com `mvn: not found`. Corrigido usando `maven:3.9-eclipse-temurin-21-alpine` no estágio de build e `eclipse-temurin:21-jre-alpine` no runtime.
+- 2026-10-05 (T-F01-03): Tags de imagem **verificadas** com `docker manifest inspect` antes de fixar: maven 3.9-eclipse-temurin-21-alpine, eclipse-temurin 21-jre-alpine, node 24-alpine, nginx 1.29-alpine, postgres 17-alpine, ollama/ollama latest.
+- 2026-10-05 (T-F01-03): O healthcheck do backend usa `wget`, que existe na imagem JRE alpine (busybox) — verificado executando `command -v wget` no container.
+- 2026-10-05 (T-F01-03): O healthcheck do backend aponta para `/api/health`, que **ainda não existe** (entra em T-F01-04). O compose só sobe o frontend depois do backend ficar healthy, então essa task precisa criar o endpoint. Registrado como dependência.
+- 2026-10-05 (T-F01-03): Dockerfiles multi-stage com usuário não-root no backend; cache de Maven e de npm em camadas separadas; nginx fazendo proxy de `/api` com timeout de 300s para as chamadas de IA.
+
 ## Dúvidas [NEEDS CLARIFICATION]
-- [NEEDS CLARIFICATION] Tags exatas de `eclipse-temurin` e `node` para os Dockerfiles (verificar no Docker Hub em T-F01-03).
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
 
 ## Bloqueios
 - Nenhum. Docker daemon em execução (verificado em T-F01-02).
 
 ## Melhorias aplicadas automaticamente
+- Removido do Dockerfile do backend o `COPY` da pasta `prompts` no estágio de runtime: o `.jar` já embute `src/main/resources`, então a cópia era redundante e criava uma segunda fonte de prompts em disco.
+- `.dockerignore` em `backend/` e `frontend/` para não enviar `target/`, `node_modules/` e `dist/` no contexto de build.
+- Healthcheck do compose com `start_period` para dar tempo do backend subir (Flyway + JPA + Ollama na inicialização).
 - Corrigido BOM UTF-8 (`\ufeff`) gerado por `Set-Content -Encoding UTF8` do PowerShell, que quebrava a compilação Java. Regra: usar a ferramenta de escrita de arquivo (sem BOM) para código Java/XML.
 - `application.yml` reescrito com as propriedades corretas do Spring AI 2.x (`spring.ai.model.chat=ollama`, `spring.ai.ollama.chat.model`) e com `server.error.include-*` desabilitados para garantir que nenhuma mensagem interna vaze nas respostas.
 - Adicionado `flyway-database-postgresql` (exigido pelo Flyway moderno para dialeto Postgres).

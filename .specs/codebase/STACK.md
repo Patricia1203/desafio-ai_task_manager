@@ -30,6 +30,21 @@ Verificado em 2026-10-05 consultando Maven Central (`repo1.maven.org/maven2`) e 
 Não foi possível confirmar via API do Ollama porque o daemon Docker/Ollama não estava em execução durante a verificação.
 Decisão provisória registrada em STATE.md; confirmar em T-F03-02 / T-F04-02.
 
-## Dockerfile / base images
+## Imagens Docker (tags verificadas em 2026-10-05 com `docker manifest inspect`)
 
-[NEEDS CLARIFICATION] Tags exatas de `eclipse-temurin` e `node` a serem fixadas em T-F01-03 (verificar tags existentes no Docker Hub antes de fixar).
+| Imagem | Tag | Uso | Observação |
+|---|---|---|---|
+| `maven` | `3.9-eclipse-temurin-21-alpine` | build do backend | **Necessária**: a imagem `eclipse-temurin:21-jdk-alpine` **não traz o `mvn`** (build falha com `mvn: not found`). |
+| `eclipse-temurin` | `21-jre-alpine` | runtime do backend | tem `wget` (busybox), usado no healthcheck do compose |
+| `node` | `24-alpine` | build do frontend | bate com o Node 24.15.0 local |
+| `nginx` | `1.29-alpine` | runtime do frontend | serve o build do Vite e faz proxy de `/api` |
+| `postgres` | `17-alpine` | banco | tem `pg_isready` para o healthcheck |
+| `ollama/ollama` | `latest` | LLM local | o binário `ollama` existe na imagem, usado no healthcheck e no pull |
+
+Todas as imagens foram verificadas como multi-arch (amd64 + arm64), exceto `ollama/ollama:latest` (amd64 + arm64) e `postgres:17-alpine` (amd64 + arm64 confirmados).
+
+## Modelo LLM
+
+[NEEDS CLARIFICATION] Modelo exato do Ollama. Candidatos com tool calling: `qwen2.5:7b`, `llama3.1:8b`.
+Não foi possível confirmar via API do Ollama porque o daemon Docker/Ollama não estava em execução durante a verificação.
+Decisão provisória registrada em STATE.md; confirmar em T-F03-02 / T-F04-02.

@@ -25,7 +25,7 @@
 - **Nota:** versões verificadas no npm — React 19.2.8, Vite 8.3.x, TypeScript 6.0.x, Vitest 4.1.x, React Router 7.9.x. Vitest 3.x é incompatível com Vite 8 (conflito de tipos de Plugin).
 
 ### T-F01-03 — Docker compose + infra base
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RNF-04, RNF-05
 - **Depende de:** T-F01-01, T-F01-02
 - **Arquivos (criar/alterar):** docker-compose.yml, .env.example, backend/Dockerfile, backend/.dockerignore, frontend/Dockerfile, frontend/nginx.conf, frontend/.dockerignore
@@ -34,7 +34,9 @@
 - **Testes:** nenhum teste unitário; Gate é a validação do compose e o build das imagens.
 - **Gate:** docker compose config && docker compose build
 - **Commit (rascunho):** `configure: Adicionar docker-compose.yml e Dockerfiles`
-- **Nota:** o serviço `ollama` com pull automático do modelo entra em T-F05-01.
+- **Nota:** o serviço `ollama-pull` (one-shot) já foi incluído aqui porque o backend depende dele; o restante do hardening do Ollama (instruções, RAM, GPU) entra em T-F05-01.
+- **Nota 2:** o build exigiu `maven:3.9-eclipse-temurin-21-alpine` — a imagem `eclipse-temurin:21-jdk-alpine` não traz o binário `mvn`.
+- **Nota 3:** o healthcheck do backend aponta para `/api/health`, criado em T-F01-04.
 
 ### T-F01-04 — Config, Flyway, migrations base, ProblemDetail, CORS
 - **Status:** pending
