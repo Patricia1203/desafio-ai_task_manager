@@ -68,6 +68,105 @@
 - **Nota 5:** **`CorsConfigTest` foi fixado em `@WebMvcTest(HealthController.class)`.** Ele usava `@WebMvcTest` sem atributo, que carrega todos os controllers; com o `TaskController` no projeto, passou a exigir um `TaskService` e o contexto inteiro do teste falhou. Fixar o slice é a correção, não adicionar beans falsos.
 - **Nota 6:** a exclusão em cascata pede confirmação na interface. O backend não exige flag: o `design.md` define "remove ou 404". A tela lista `GET /tasks/{id}/subtasks` e só então confirma. Ver T-F02-05.
 
+### T-F02-05a — Handlers de status de infraestrutura do MVC
+- **Status:** done
+- **Reqs:** ERR-01, ERR-06
+- **Origem:** revisão de código do backend
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/common/error/GlobalExceptionHandler.java`, `backend/src/test/java/com/desafio/taskmanager/common/error/ErrorProbeController.java`, `backend/src/test/java/com/desafio/taskmanager/common/error/GlobalExceptionHandlerTest.java`, `.specs/project/TRACEABILITY.md`
+- **O que fazer:** mapear `NoResourceFoundException`/`NoHandlerFoundException` para 404, `HttpRequestMethodNotSupportedException` para 405 e `HttpMediaTypeNotSupportedException` para 415; adicionar handler explícito para `DataAccessException`.
+- **Pronto quando:** os cinco testes novos passam e a suíte relevante continua verde.
+- **Testes:** `rotaInexistenteDevolve404ENao500`, `metodoNaoPermitidoDevolve405ENao500`, `contentTypeInvalidoDevolve415ENao500`, `deleteNaRotaQueSoAceitaGetDevolve405`, `falhaDeBancoDevolve500ComMensagemFixaESemSql`.
+- **Gate:** mvn -q test -Dtest=GlobalExceptionHandlerTest
+- **Commit:** `fix: Mapear 404, 405 e 415 e tratar DataAccessException`
+- **Nota:** **o `@ExceptionHandler(Exception.class)` é rede de segurança, não despachante.** Ele capturava as três exceções de infraestrutura do MVC e devolvia 500, então erro de navegação virava erro de servidor. Cada uma ganhou handler próprio; o Spring resolve pelo mais específico. O handler de `DataAccessException` devolve o mesmo status e a mesma mensagem fixa do catch-all, mas documenta a intenção e deixa o comportamento explícito caso mude.
+- **Nota 2:** `falhaDeBancoDevolve500ComMensagemFixaESemSql` verifica que nem a URL do JDBC nem o nome do banco vazam. O `type` é `banco-indisponivel`, distinto de `erro-interno`, para o cliente distinguir causa transitória de bug.
+
+### T-F02-05b — Health check com status 503
+- **Status:** pending
+- **Reqs:** RNF-01
+- **Origem:** revisão de código do backend
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/common/web/HealthController.java`, `backend/src/test/java/com/desafio/taskmanager/common/config/CorsConfigTest.java`
+- **O que fazer:** devolver HTTP 503 quando o `SELECT 1` falhar, mantendo `status: DOWN` no corpo.
+- **Pronto quando:** teste cobre banco no ar (200/UP) e banco fora (503/DOWN).
+- **Testes:** teste do `HealthController` com `JdbcTemplate` mockado para os dois lados.
+- **Gate:** mvn -q test -Dtest=CorsConfigTest
+- **Commit (rascunho):** `fix: Devolver 503 no health check quando o banco esta fora`
+- **Nota:** **o corpo já dizia `DOWN` enquanto o status era 200, e o healthcheck do compose só olha o status HTTP.** Ou seja, o Compose considers o serviço saudável com o Postgres fora do ar. O corpo não muda; o código de resposta passa a refletir a verdade.
+
+### T-F02-05c — Location do POST com o prefixo /api
+- **Status:** pending
+- **Reqs:** RF-01
+- **Origem:** revisão de código do backend
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`, `backend/src/test/java/com/desafio/taskmanager/task/api/TaskControllerTest.java`
+- **O que fazer:** trocar `URI.create("/tasks/" + id)` por `ServletUriComponentsBuilder`, para o `Location` incluir o `context-path`.
+- **Pronto quando:** o `Location` do 201 aponta para `/api/tasks/{id}`.
+- **Testes:** corrigir `criarRetorna201ComLocation`, que hoje valida o valor errado e por isso não pega o bug.
+- **Gate:** mvn -q test -Dtest=TaskControllerTest
+- **Commit (rascunho):** `fix: Incluir o context-path no Location da criacao de tarefa`
+- **Nota:** **o teste validava o bug.** `URI.create("/tasks/" + id)` ignora o `context-path: /api`, então o header apontava para um caminho que não existe. A asserção precisa mudar junto, senão o conserto quebra o teste e o teste quebra o conserto.
+
+### T-F02-05d — Separação entre service e DTO de API
+- **Status:** pending
+- **Reqs:** RNF-20
+- **Origem:** revisão de código do backend
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/application/TaskService.java`, `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`
+- **O que fazer:** parar de devolver `task.api.dto.TaskResponse` a partir de `task.application`. O service devolve a entidade ou um objeto de aplicação neutro; o mapper fica no controller.
+- **Pronto quando:** `task.application` não importa nada de `task.api`.
+- **Testes:** ajustar `TaskServiceTest` para o novo tipo de retorno; `TaskControllerTest` continua cobrindo o JSON.
+- **Gate:** mvn -q test -Dtest=TaskServiceTest
+- **Commit (rascunho):** `refactor: Remover a dependencia de application sobre api`
+- **Nota:** **decidir a direção antes de escrever código.** Duas saídas: mover os DTOs para `application` (churn alto em toda a feature, e passa a ser `application` quem define o formato de saída) ou deixar os DTOs em `api.dto` e fazer o controller mapear (o service devolve a entidade). A segunda é mais limpa em camadas e é a proposta.
+- **Nota 2:** **`parent.getId()` foi testado e não causa N+1.** Sonda que roda `findAll()` + `TaskMapper#toResponse` fora de transação, com `open-in-view: false`: se o `getId()` tocasse o banco, a sessão estaria fechada e estouraria `LazyInitializationException`. Rodou limpo (6 tarefas mapeadas, 5 com `parentId`). O Hibernate devolve o identificador do proxy sem inicializar. Não criar coluna `parent_id` de leitura: seria mudança de schema sem problema para resolver.
+
+### T-F02-05e — JSON em português
+- **Status:** pending
+- **Reqs:** RF-01, RF-20
+- **Origem:** decisão do usuário
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/dto/*.java`, `backend/src/main/java/com/desafio/taskmanager/task/application/TaskSummary.java`, `backend/src/main/resources/db/migration/V2__create_tasks.sql` e testes
+- **O que fazer:** renomear os campos do JSON para português.
+- **Pronto quando:** o contrato inteiro responde em português e os testes refletem o nome novo.
+- **Testes:** atualizar todas as asserções de `jsonPath`.
+- **Gate:** mvn -q test
+- **Commit (rascunho):** `refactor: Renomear o contrato JSON para portugues`
+- **Nota (decisão do usuário):** **JSON em português, por ser projeto brasileiro.** Feito agora, antes do frontend consumir: depois seria breaking change com telas já escritas. Cuidado com os valores de enum, que também são string no JSON e com migration quando o valor mudar no banco.
+- **Nota 2:** **[NEEDS CLARIFICATION] traceId.** O design não previa `traceId` e não há `traceId` em nenhum arquivo de `.specs`. Não é omissão do design, é decisão ainda não tomada: se entra, em qual header e em qual campo do ProblemDetail. `T-F05-02` fala em "preencher traceId e timestamp"; confirmar o formato antes de implementar.
+
+### T-F02-05f — Ordenação estável na paginação
+- **Status:** pending
+- **Reqs:** RNF-03
+- **Origem:** revisão de código do backend
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`, `backend/src/test/java/com/desafio/taskmanager/task/api/TaskControllerTest.java`
+- **O que fazer:** acrescentar `id` como segundo criterio de ordenação, depois de `createdAt desc`.
+- **Pronto quando:** duas tarefas com o mesmo `createdAt` mantêm a ordem entre páginas.
+- **Testes:** tarefas com timestamp idêntico não trocam de lugar entre páginas.
+- **Gate:** mvn -q test -Dtest=TaskControllerTest
+- **Commit (rascunho):** `fix: Desempatar a ordenacao por id na paginacao`
+- **Nota:** **só `createdAt desc` não é ordenação.** Em empate de timestamp o Postgres não garante ordem estável, então a mesma tarefa pode repetir ou sumir entre páginas.
+
+### T-F02-05g — BOM, typos e documentação desatualizada
+- **Status:** pending
+- **Reqs:** RNF-20
+- **Origem:** revisão de código do backend
+- **Arquivos (alterar):** `backend/pom.xml`, `backend/src/main/resources/application.yml`, `backend/src/main/resources/application-dev.yml`, `backend/src/main/resources/db/migration/V1__schema_base.sql`, Javadocs em `TaskService`, `TaskMapper`, `CorsProperties`
+- **O que fazer:** remover BOM UTF-8 dos `.yml` e do `pom.xml`; corrigir `V1` que fala em `BIGSERIAL` para uma tarefa com `UUID`; `createSubtask` que cita RF-03 em vez de RF-14; `@param parent` obsoleto em `updateDomain`; `CorsProperties.allowsOrigin`; typos `composedos` e `subtarea`.
+- **Pronto quando:** nenhum arquivo versionado abre com BOM e nenhum javadoc aponta para requisito errado.
+- **Gate:** mvn -q test
+- **Commit (rascunho):** `chore: Remover BOM e corrigir documentacao divergente`
+- **Nota:** **o BOM some da tela mas quebra ferramentas.** `pom.xml` e os `.yml` comecam com `EF BB BF`; em YAML o parser pode falhar em espaco ou chave e o erro aponta para a linha errada.
+
+### T-F02-05h — Fragilidade dos testes de integração
+- **Status:** pending
+- **Reqs:** TST-04
+- **Origem:** revisão de código do backend
+- **Arquivos (alterar):** `backend/src/test/java/com/desafio/taskmanager/AiTaskManagerApplicationTests.java`, `backend/src/main/resources/application.yml`, base de teste compartilhada
+- **O que fazer:** trocar `containsExactlyInAnyOrder("flyway_schema_history", "tasks")` por `contains`, para não quebrar quando a F04 criar as tabelas de chat; mover o log DEBUG do `application.yml` base para o profile `dev`.
+- **Pronto quando:** a suíte não depende da lista exata de tabelas e o profile default não loga em DEBUG.
+- **Testes:** a suíte completa passa.
+- **Gate:** mvn -q test
+- **Commit (rascunho):** `test: Desacoplar os testes da lista de tabelas e do log de dev`
+- **Nota:** **a asserção de tabelas é uma bomba-relógio para a F04.** `containsExactlyInAnyOrder` falha no dia em que o chat criar a própria tabela, por um motivo que não tem nada a ver com o teste.
+- **Nota 2:** **cada classe de teste sobe seu próprio Postgres; a suíte completa leva minutos.** Base compartilhada ou container singleton é a correção. Um teste unitário puro do domínio vem junto, para cobrir as regras sem subir banco.
+
 ### T-F02-05 — Frontend Dashboard e Tarefas
 - **Status:** pending
 - **Reqs:** RF-20, RF-21, RNF-03
