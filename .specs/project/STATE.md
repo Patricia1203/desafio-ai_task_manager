@@ -1,7 +1,8 @@
 ﻿# STATE.md
 
 ## Task atual
-T-F01-01 — Bootstrap backend (Spring Boot 4, Java 21) — **in-progress** (Gate `mvn compile` verde; falta registrar testes base na F01-04).
+T-F01-02 — Skeleton frontend (Vite + React + TS) — **done** (Gates: `npm run lint`, `npm run test`, `npm run build` verdes).
+Próxima: T-F01-03 — Docker compose + Dockerfiles (Gate `docker compose config`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -13,9 +14,18 @@ T-F01-01 — Bootstrap backend (Spring Boot 4, Java 21) — **in-progress** (Gat
 - 2026-10-05: `spring-boot-starter-web` foi substituído por `spring-boot-starter-webmvc` (starter renomeado/deprecado no Boot 4).
 - 2026-10-05: Testcontainers 2.x renomeou os artifacts: `junit-jupiter` → `testcontainers-junit-jupiter`, `postgresql` → `testcontainers-postgresql`.
 - 2026-10-05: `context-path: /api` definido no servidor, então os controllers ficam em `/tasks`, `/ai/tasks/...`, `/assistant/...` (URL pública `/api/tasks`).
-- 2026-10-05: Docker Desktop instalado (29.6.2) mas o **daemon estava parado** durante a verificação. Testcontainers e `docker compose` exigem o daemon em execução.
+- 2026-10-05: Docker Desktop instalado (29.6.2). O daemon estava parado durante a verificação de T-F01-01 e foi **iniciado pelo usuário** antes de T-F01-02 (Docker Desktop 4.84.0, Engine 29.6.2, containerd 2.2.5).
 
 ## Premissas [ASSUMPTION]
+- 2026-10-05 (T-F01-02): Frontend scaffoldado com `npm create vite@latest -- --template react-ts` (create-vite 9.2.1).
+  Versões resultantes: **React 19.2.8**, **Vite 8.3.x** (rolldown), **TypeScript 6.0.x**, **Vitest 4.1.x**, React Router 7.9.x, jsdom 27.
+- 2026-10-05 (T-F01-02): O `vite.config.ts` importa `defineConfig` de `vitest/config` (e não de `vite`) para que o bloco `test` seja tipado. Importar de `vite` dá erro de tipo TS2769.
+- 2026-10-05 (T-F01-02): Vitest teve de ser **4.x**, não 3.x — o Vitest 3 embute um Vite diferente e o conflito de tipos de `Plugin` quebrava o `tsc -b`.
+- 2026-10-05 (T-F01-02): Bibliotecas extras no frontend, com justificativa (RNF-05):
+  - `react-router-dom` — roteamento das telas Dashboard/Tarefas/Assistente (exigido por RF-20/RF-21/RF-22).
+  - `vitest` + `@testing-library/react` + `@testing-library/jest-dom` + `@testing-library/user-event` + `jsdom` — base de testes exigida por TST-02 na parte de frontend.
+  - `oxlint` (já vindo do template) — lint rápido sem configuração pesada.
+  Nenhum UI kit, nenhuma lib de estado global, nenhuma lib de forms.
 - [ASSUMPTION] O modelo padrão `qwen2.5:7b` suporta tool calling no Ollama. Não verificado (Ollama indisponível). Confirmar em T-F03-02/F-F04-02; se não suportar, trocar para `llama3.1:8b` ou implementar fallback de contexto injetado (registrar decisão).
 - [ASSUMPTION] `dueDate` será `LocalDate` (data sem hora) com formato ISO-8601 `yyyy-MM-dd`. Se o desafio exigir data-hora, ajustar em F02.
 
@@ -24,8 +34,7 @@ T-F01-01 — Bootstrap backend (Spring Boot 4, Java 21) — **in-progress** (Gat
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
 
 ## Bloqueios
-- Nenhum bloqueio de código.
-- Ambiente: Docker daemon parado → qualquer Gate que dependa de Testcontainers ou `docker compose up` precisa do Docker Desktop iniciado.
+- Nenhum. Docker daemon em execução (verificado em T-F01-02).
 
 ## Melhorias aplicadas automaticamente
 - Corrigido BOM UTF-8 (`\ufeff`) gerado por `Set-Content -Encoding UTF8` do PowerShell, que quebrava a compilação Java. Regra: usar a ferramenta de escrita de arquivo (sem BOM) para código Java/XML.
