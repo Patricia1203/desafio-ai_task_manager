@@ -82,16 +82,17 @@
 - **Nota 2:** `falhaDeBancoDevolve500ComMensagemFixaESemSql` verifica que nem a URL do JDBC nem o nome do banco vazam. O `type` é `banco-indisponivel`, distinto de `erro-interno`, para o cliente distinguir causa transitória de bug.
 
 ### T-F02-05b — Health check com status 503
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RNF-01
 - **Origem:** revisão de código do backend
-- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/common/web/HealthController.java`, `backend/src/test/java/com/desafio/taskmanager/common/config/CorsConfigTest.java`
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/common/web/HealthController.java`, `backend/src/test/java/com/desafio/taskmanager/common/web/HealthControllerTest.java`, `.specs/project/TRACEABILITY.md`
 - **O que fazer:** devolver HTTP 503 quando o `SELECT 1` falhar, mantendo `status: DOWN` no corpo.
 - **Pronto quando:** teste cobre banco no ar (200/UP) e banco fora (503/DOWN).
-- **Testes:** teste do `HealthController` com `JdbcTemplate` mockado para os dois lados.
-- **Gate:** mvn -q test -Dtest=CorsConfigTest
-- **Commit (rascunho):** `fix: Devolver 503 no health check quando o banco esta fora`
-- **Nota:** **o corpo já dizia `DOWN` enquanto o status era 200, e o healthcheck do compose só olha o status HTTP.** Ou seja, o Compose considers o serviço saudável com o Postgres fora do ar. O corpo não muda; o código de resposta passa a refletir a verdade.
+- **Testes:** `HealthControllerTest.comBancoNoArDevolve200ComStatusUp`, `comBancoForaDevolve503ComStatusDown`, `comBancoForaNaoVazaDetalheDaFalha`.
+- **Gate:** mvn -q test -Dtest=HealthControllerTest,CorsConfigTest
+- **Commit:** `fix: Devolver 503 no health check quando o banco esta fora`
+- **Nota:** **o corpo já dizia `DOWN` enquanto o status era 200, e o healthcheck do compose só olha o status HTTP.** Ou seja, o Compose considerava o serviço saudável com o Postgres fora do ar. O corpo não muda; o código de resposta passa a refletir a verdade.
+- **Nota 2:** **`HealthControllerTest` é um arquivo novo, não uma extensão do `CorsConfigTest`.** O `CorsConfigTest` fixa o slice em `HealthController` só porque ele precisa do `JdbcTemplate` mockado; o mock é detalhe de CORS, não o que o teste exercita. Um teste que depende da infraestrutura alheia quebra quando a infra muda.
 
 ### T-F02-05c — Location do POST com o prefixo /api
 - **Status:** pending

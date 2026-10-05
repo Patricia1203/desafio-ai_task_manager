@@ -1,6 +1,6 @@
 | REQ | Feature | Task(s) | Código | Testes | Commit (assunto/hash) | Status |
 |---|---|---|---|---|---|---|
-| RNF-01 | F01 | T-F01-01, T-F01-04 | `backend/pom.xml`, `AiTaskManagerApplication`, `common/error`, `common/config` | `mvn -q compile`; `GlobalExceptionHandlerTest`, `CorsConfigTest` | 530102b, (T-F01-04) | done |
+| RNF-01 | F01 | T-F01-01, T-F01-04, T-F02-05b | `backend/pom.xml`, `AiTaskManagerApplication`, `common/error`, `common/config`, `common/web/HealthController` (503 quando o banco esta fora) | `mvn -q compile`; `GlobalExceptionHandlerTest`, `CorsConfigTest`, `HealthControllerTest` | 530102b, (T-F01-04), (T-F02-05b) | done |
 | RNF-02 | F03,F04 | | | | | pending |
 | RNF-03 | F01 | T-F01-02 | `frontend/src/router.tsx`, `AppLayout.tsx` | `npm run lint && npm run test && npm run build` | c89b825 | done |
 | RNF-04 | F01,F05 | T-F01-03 | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile` | `docker compose config && docker compose build` | b83deef | done |
