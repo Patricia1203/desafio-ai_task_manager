@@ -65,7 +65,7 @@ class TaskControllerTest {
 
     private static TaskResponse resposta() {
         return new TaskResponse(
-                ID, "Titulo", "Descricao", TaskStatus.TODO, TaskPriority.HIGH,
+                ID, "Titulo", "Descricao", TaskStatus.A_FAZER, TaskPriority.ALTA,
                 LocalDate.of(2026, 12, 31), null,
                 Instant.parse("2026-10-05T10:00:00Z"), Instant.parse("2026-10-05T10:00:00Z"));
     }
@@ -80,14 +80,14 @@ class TaskControllerTest {
 
         mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(ID.toString()))
-                .andExpect(jsonPath("$.content[0].title").value("Titulo"))
-                .andExpect(jsonPath("$.page").value(0))
-                .andExpect(jsonPath("$.size").value(20))
-                .andExpect(jsonPath("$.totalItems").value(1))
-                .andExpect(jsonPath("$.totalPages").value(1))
-                .andExpect(jsonPath("$.first").value(true))
-                .andExpect(jsonPath("$.last").value(true));
+                .andExpect(jsonPath("$.conteudo[0].id").value(ID.toString()))
+                .andExpect(jsonPath("$.conteudo[0].titulo").value("Titulo"))
+                .andExpect(jsonPath("$.pagina").value(0))
+                .andExpect(jsonPath("$.tamanho").value(20))
+                .andExpect(jsonPath("$.totalItens").value(1))
+                .andExpect(jsonPath("$.totalPaginas").value(1))
+                .andExpect(jsonPath("$.primeira").value(true))
+                .andExpect(jsonPath("$.ultima").value(true));
     }
 
     @Test
@@ -96,11 +96,11 @@ class TaskControllerTest {
                 .thenReturn(new org.springframework.data.domain.PageImpl<>(
                         List.of(), org.springframework.data.domain.PageRequest.of(0, 20), 0));
 
-        mockMvc.perform(get("/tasks").param("status", "IN_PROGRESS").param("priority", "HIGH"))
+        mockMvc.perform(get("/tasks").param("status", "EM_ANDAMENTO").param("priority", "ALTA"))
                 .andExpect(status().isOk());
 
         verify(service).list(
-                eq(new TaskFilter(TaskStatus.IN_PROGRESS, TaskPriority.HIGH)),
+                eq(new TaskFilter(TaskStatus.EM_ANDAMENTO, TaskPriority.ALTA)),
                 any());
     }
 
@@ -150,7 +150,7 @@ class TaskControllerTest {
 
     @Test
     void listarComStatusDesconhecidoRetorna400() throws Exception {
-        mockMvc.perform(get("/tasks").param("status", "FINISHED"))
+        mockMvc.perform(get("/tasks").param("status", "FINALIZADA"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
     }
@@ -193,10 +193,10 @@ class TaskControllerTest {
         mockMvc.perform(get("/tasks/{id}", ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(ID.toString()))
-                .andExpect(jsonPath("$.status").value("TODO"))
-                .andExpect(jsonPath("$.priority").value("HIGH"))
-                .andExpect(jsonPath("$.dueDate").value("2026-12-31"))
-                .andExpect(jsonPath("$.parentId").doesNotExist());
+                .andExpect(jsonPath("$.status").value("A_FAZER"))
+                .andExpect(jsonPath("$.prioridade").value("ALTA"))
+                .andExpect(jsonPath("$.prazo").value("2026-12-31"))
+                .andExpect(jsonPath("$.idTarefaPai").doesNotExist());
     }
 
     @Test
@@ -222,14 +222,14 @@ class TaskControllerTest {
 
     @Test
     void listarSubtarefasRetorna200() throws Exception {
-        TaskResponse sub = new TaskResponse(UUID.randomUUID(), "Filha", null, TaskStatus.TODO,
-                TaskPriority.MEDIUM, null, ID, Instant.now(), Instant.now());
+        TaskResponse sub = new TaskResponse(UUID.randomUUID(), "Filha", null, TaskStatus.A_FAZER,
+                TaskPriority.MEDIA, null, ID, Instant.now(), Instant.now());
         when(service.findSubtasks(ID)).thenReturn(List.of(sub));
 
         mockMvc.perform(get("/tasks/{id}/subtasks", ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Filha"))
-                .andExpect(jsonPath("$[0].parentId").value(ID.toString()));
+                .andExpect(jsonPath("$[0].titulo").value("Filha"))
+                .andExpect(jsonPath("$[0].idTarefaPai").value(ID.toString()));
     }
 
     @Test
@@ -256,12 +256,12 @@ class TaskControllerTest {
                         .contextPath("/api")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"Titulo","description":"Descricao","priority":"HIGH",
-                                 "dueDate":"2026-12-31"}"""))
+                                {"titulo":"Titulo","descricao":"Descricao","prioridade":"ALTA",
+                                 "prazo":"2026-12-31"}"""))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "http://localhost/api/tasks/" + ID))
                 .andExpect(jsonPath("$.id").value(ID.toString()))
-                .andExpect(jsonPath("$.title").value("Titulo"));
+                .andExpect(jsonPath("$.titulo").value("Titulo"));
     }
 
     @Test
@@ -269,11 +269,11 @@ class TaskControllerTest {
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"description":"sem titulo"}"""))
+                                {"descricao":"sem titulo"}"""))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.type").value("https://desafio.ai-task-manager/errors/validacao"))
-                .andExpect(jsonPath("$.errors[0].field").value("title"))
+                .andExpect(jsonPath("$.errors[0].field").value("titulo"))
                 .andExpect(jsonPath("$.errors[0].reason").value("titulo e obrigatorio"));
 
         verify(service, never()).create(any());
@@ -285,9 +285,9 @@ class TaskControllerTest {
 
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"" + longo + "\"}"))
+                        .content("{\"titulo\":\"" + longo + "\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("title"))
+                .andExpect(jsonPath("$.errors[0].field").value("titulo"))
                 .andExpect(jsonPath("$.errors[0].reason").value("titulo deve ter no maximo 200 caracteres"));
     }
 
@@ -296,7 +296,7 @@ class TaskControllerTest {
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"T","priority":"URGENTE"}"""))
+                                {"titulo":"T","prioridade":"URGENTE"}"""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.type").value("https://desafio.ai-task-manager/errors/requisicao-malformada"));
     }
@@ -326,9 +326,9 @@ class TaskControllerTest {
         mockMvc.perform(put("/tasks/{id}", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"Editado","description":"d","priority":"LOW"}"""))
+                                {"titulo":"Editado","descricao":"d","prioridade":"BAIXA"}"""))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Titulo"));
+                .andExpect(jsonPath("$.titulo").value("Titulo"));
     }
 
     @Test
@@ -336,9 +336,9 @@ class TaskControllerTest {
         mockMvc.perform(put("/tasks/{id}", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"description":"sem titulo"}"""))
+                                {"descricao":"sem titulo"}"""))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("title"));
+                .andExpect(jsonPath("$.errors[0].field").value("titulo"));
 
         verify(service, never()).update(any(), any());
     }
@@ -351,7 +351,7 @@ class TaskControllerTest {
         mockMvc.perform(put("/tasks/{id}", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"X"}"""))
+                                {"titulo":"X"}"""))
                 .andExpect(status().isNotFound());
     }
 
@@ -362,7 +362,7 @@ class TaskControllerTest {
         mockMvc.perform(put("/tasks/{id}", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"X","status":"DONE"}"""))
+                                {"titulo":"X","status":"CONCLUIDA"}"""))
                 .andExpect(status().isOk());
 
         // status nao existe em UpdateTaskRequest: se aparecesse no log de called
@@ -374,15 +374,15 @@ class TaskControllerTest {
 
     @Test
     void alterarStatusRetorna200() throws Exception {
-        when(service.changeStatus(ID, TaskStatus.IN_PROGRESS)).thenReturn(resposta());
+        when(service.changeStatus(ID, TaskStatus.EM_ANDAMENTO)).thenReturn(resposta());
 
         mockMvc.perform(patch("/tasks/{id}/status", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"status":"IN_PROGRESS"}"""))
+                                {"status":"EM_ANDAMENTO"}"""))
                 .andExpect(status().isOk());
 
-        verify(service).changeStatus(ID, TaskStatus.IN_PROGRESS);
+        verify(service).changeStatus(ID, TaskStatus.EM_ANDAMENTO);
     }
 
     @Test
@@ -407,16 +407,16 @@ class TaskControllerTest {
 
     @Test
     void transicaoRecusadaRetorna422() throws Exception {
-        when(service.changeStatus(ID, TaskStatus.IN_PROGRESS))
-                .thenThrow(new BusinessRuleException("status nao pode ir de DONE para IN_PROGRESS"));
+        when(service.changeStatus(ID, TaskStatus.EM_ANDAMENTO))
+                .thenThrow(new BusinessRuleException("status nao pode ir de CONCLUIDA para EM_ANDAMENTO"));
 
         mockMvc.perform(patch("/tasks/{id}/status", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"status":"IN_PROGRESS"}"""))
+                                {"status":"EM_ANDAMENTO"}"""))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.type").value("https://desafio.ai-task-manager/errors/regra-de-negocio"))
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("DONE")));
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("CONCLUIDA")));
     }
 
     // --- DELETE /tasks/{id} ---

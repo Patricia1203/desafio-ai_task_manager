@@ -7,11 +7,11 @@ package com.desafio.taskmanager.task.application.dto;
  * dashboard fica explicito no codigo e no JSON, e o teste quebra em vez de
  * devolver null silencioso se um campo for renomeado.
  *
- * @param total        tarefas de topo e subtarefas
- * @param pendentes    status TODO
- * @param emAndamento  status IN_PROGRESS
- * @param concluidas   status DONE
- * @param altaPrioridade quantidade de tarefas com prioridade HIGH
+ * @param total          tarefas de topo e subtarefas
+ * @param pendentes      status A_FAZER
+ * @param emAndamento    status EM_ANDAMENTO
+ * @param concluidas     status CONCLUIDA
+ * @param altaPrioridade tarefas com prioridade ALTA
  */
 public record TaskSummary(
         long total,

@@ -62,21 +62,21 @@ class TaskServiceTest extends PostgresIntegrationTest {
     void criarNasceComStatusInicialEPrioridadePadrao() {
         TaskResponse criada = service.create(pedido("Nova tarefa", null, null, null));
 
-        assertThat(criada.status()).isEqualTo(TaskStatus.TODO);
-        assertThat(criada.priority()).isEqualTo(TaskPriority.MEDIUM);
+        assertThat(criada.status()).isEqualTo(TaskStatus.A_FAZER);
+        assertThat(criada.prioridade()).isEqualTo(TaskPriority.MEDIA);
         assertThat(criada.id()).isNotNull();
-        assertThat(criada.createdAt()).isNotNull();
-        assertThat(criada.updatedAt()).isNotNull();
+        assertThat(criada.criadoEm()).isNotNull();
+        assertThat(criada.atualizadoEm()).isNotNull();
     }
 
     @Test
     void criarComPrioridadeEPrazoGravaOsCampos() {
         TaskResponse criada = service.create(
-                pedido("Com prazo", "descricao", TaskPriority.HIGH, LocalDate.of(2026, 12, 31)));
+                pedido("Com prazo", "descricao", TaskPriority.ALTA, LocalDate.of(2026, 12, 31)));
 
-        assertThat(criada.priority()).isEqualTo(TaskPriority.HIGH);
-        assertThat(criada.dueDate()).isEqualTo(LocalDate.of(2026, 12, 31));
-        assertThat(criada.description()).isEqualTo("descricao");
+        assertThat(criada.prioridade()).isEqualTo(TaskPriority.ALTA);
+        assertThat(criada.prazo()).isEqualTo(LocalDate.of(2026, 12, 31));
+        assertThat(criada.descricao()).isEqualTo("descricao");
     }
 
     @Test
@@ -102,7 +102,7 @@ class TaskServiceTest extends PostgresIntegrationTest {
         TaskResponse achada = service.findById(id);
 
         assertThat(achada.id()).isEqualTo(id);
-        assertThat(achada.title()).isEqualTo("Busca");
+        assertThat(achada.titulo()).isEqualTo("Busca");
     }
 
     @Test
@@ -131,37 +131,37 @@ class TaskServiceTest extends PostgresIntegrationTest {
 
     @Test
     void filtrarPorStatusRetornaSomenteODesejado() {
-        service.changeStatus(criar("Concluida").id(), TaskStatus.DONE);
+        service.changeStatus(criar("Concluida").id(), TaskStatus.CONCLUIDA);
         criar("Pendente");
 
-        assertThat(service.findAll(TaskFilter.byStatus(TaskStatus.TODO)))
-                .extracting(TaskResponse::title)
+        assertThat(service.findAll(TaskFilter.byStatus(TaskStatus.A_FAZER)))
+                .extracting(TaskResponse::titulo)
                 .containsExactly("Pendente");
-        assertThat(service.findAll(TaskFilter.byStatus(TaskStatus.DONE)))
-                .extracting(TaskResponse::title)
+        assertThat(service.findAll(TaskFilter.byStatus(TaskStatus.CONCLUIDA)))
+                .extracting(TaskResponse::titulo)
                 .containsExactly("Concluida");
     }
 
     @Test
     void filtrarPorPrioridadeRetornaSomenteODesejada() {
-        criar("Alta", null, TaskPriority.HIGH, null);
-        criar("Baixa", null, TaskPriority.LOW, null);
+        criar("Alta", null, TaskPriority.ALTA, null);
+        criar("Baixa", null, TaskPriority.BAIXA, null);
 
-        assertThat(service.findAll(TaskFilter.byPriority(TaskPriority.HIGH)))
-                .extracting(TaskResponse::title)
+        assertThat(service.findAll(TaskFilter.byPriority(TaskPriority.ALTA)))
+                .extracting(TaskResponse::titulo)
                 .containsExactly("Alta");
     }
 
     @Test
     void filtrosCompostosSeIntersecao() {
-        service.changeStatus(criar("Alta pendente", null, TaskPriority.HIGH, null).id(), TaskStatus.IN_PROGRESS);
-        criar("Alta concluida", null, TaskPriority.HIGH, null);
-        criar("Media pendente", null, TaskPriority.MEDIUM, null);
+        service.changeStatus(criar("Alta pendente", null, TaskPriority.ALTA, null).id(), TaskStatus.EM_ANDAMENTO);
+        criar("Alta concluida", null, TaskPriority.ALTA, null);
+        criar("Media pendente", null, TaskPriority.MEDIA, null);
 
         List<TaskResponse> resultado = service.findAll(
-                new TaskFilter(TaskStatus.IN_PROGRESS, TaskPriority.HIGH));
+                new TaskFilter(TaskStatus.EM_ANDAMENTO, TaskPriority.ALTA));
 
-        assertThat(resultado).extracting(TaskResponse::title).containsExactly("Alta pendente");
+        assertThat(resultado).extracting(TaskResponse::titulo).containsExactly("Alta pendente");
     }
 
     @Test
@@ -176,24 +176,24 @@ class TaskServiceTest extends PostgresIntegrationTest {
 
         assertThat(primeira.getTotalElements()).isEqualTo(3);
         assertThat(primeira.getTotalPages()).isEqualTo(2);
-        assertThat(primeira.getContent()).extracting(TaskResponse::title).containsExactly("A", "B");
+        assertThat(primeira.getContent()).extracting(TaskResponse::titulo).containsExactly("A", "B");
     }
 
     // --- editar (RF-03) ---
 
     @Test
     void editarAtualizaConteudoEMantemStatus() {
-        TaskResponse original = criar("Antigo", "antes", TaskPriority.LOW, null);
-        service.changeStatus(original.id(), TaskStatus.IN_PROGRESS);
+        TaskResponse original = criar("Antigo", "antes", TaskPriority.BAIXA, null);
+        service.changeStatus(original.id(), TaskStatus.EM_ANDAMENTO);
 
         TaskResponse editada = service.update(original.id(),
-                new UpdateTaskRequest("  Novo  ", "depois", TaskPriority.HIGH, LocalDate.of(2026, 6, 1)));
+                new UpdateTaskRequest("  Novo  ", "depois", TaskPriority.ALTA, LocalDate.of(2026, 6, 1)));
 
-        assertThat(editada.title()).isEqualTo("Novo");
-        assertThat(editada.description()).isEqualTo("depois");
-        assertThat(editada.priority()).isEqualTo(TaskPriority.HIGH);
-        assertThat(editada.dueDate()).isEqualTo(LocalDate.of(2026, 6, 1));
-        assertThat(editada.status()).isEqualTo(TaskStatus.IN_PROGRESS);
+        assertThat(editada.titulo()).isEqualTo("Novo");
+        assertThat(editada.descricao()).isEqualTo("depois");
+        assertThat(editada.prioridade()).isEqualTo(TaskPriority.ALTA);
+        assertThat(editada.prazo()).isEqualTo(LocalDate.of(2026, 6, 1));
+        assertThat(editada.status()).isEqualTo(TaskStatus.EM_ANDAMENTO);
     }
 
     @Test
@@ -217,45 +217,45 @@ class TaskServiceTest extends PostgresIntegrationTest {
     void alterarStatusPersisteNoBanco() {
         UUID id = criar("Fluxo").id();
 
-        assertThat(service.changeStatus(id, TaskStatus.IN_PROGRESS).status()).isEqualTo(TaskStatus.IN_PROGRESS);
-        assertThat(service.findById(id).status()).isEqualTo(TaskStatus.IN_PROGRESS);
-        assertThat(service.changeStatus(id, TaskStatus.DONE).status()).isEqualTo(TaskStatus.DONE);
-        assertThat(repository.findById(id).orElseThrow().getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(service.changeStatus(id, TaskStatus.EM_ANDAMENTO).status()).isEqualTo(TaskStatus.EM_ANDAMENTO);
+        assertThat(service.findById(id).status()).isEqualTo(TaskStatus.EM_ANDAMENTO);
+        assertThat(service.changeStatus(id, TaskStatus.CONCLUIDA).status()).isEqualTo(TaskStatus.CONCLUIDA);
+        assertThat(repository.findById(id).orElseThrow().getStatus()).isEqualTo(TaskStatus.CONCLUIDA);
     }
 
     @Test
     void alterarParaOMesmoStatusNaoFalhaNemMexeEmUpdatedAt() {
         UUID id = criar("Estavel").id();
         // relê para comparar com o valor do banco: timestamptz guarda microssegundos
-        Instant persistido = service.findById(id).updatedAt();
+        Instant persistido = service.findById(id).atualizadoEm();
 
-        TaskResponse igual = service.changeStatus(id, TaskStatus.TODO);
+        TaskResponse igual = service.changeStatus(id, TaskStatus.A_FAZER);
 
-        assertThat(igual.status()).isEqualTo(TaskStatus.TODO);
-        assertThat(service.findById(id).updatedAt()).isEqualTo(persistido);
+        assertThat(igual.status()).isEqualTo(TaskStatus.A_FAZER);
+        assertThat(service.findById(id).atualizadoEm()).isEqualTo(persistido);
     }
 
     @Test
-    void voltarDeDoneParaInProgressoEhRecusado() {
+    void voltarDeConcluidaParaEmAndamentoEhRecusado() {
         UUID id = criar("Concluida").id();
-        service.changeStatus(id, TaskStatus.DONE);
+        service.changeStatus(id, TaskStatus.CONCLUIDA);
 
-        assertThatThrownBy(() -> service.changeStatus(id, TaskStatus.IN_PROGRESS))
+        assertThatThrownBy(() -> service.changeStatus(id, TaskStatus.EM_ANDAMENTO))
                 .isInstanceOf(BusinessRuleException.class)
-                .hasMessageContaining("DONE");
+                .hasMessageContaining("CONCLUIDA");
     }
 
     @Test
-    void reabrirDeDoneParaTodoEhPermitido() {
+    void reabrirDeConcluidaParaAFazerEhPermitido() {
         UUID id = criar("Concluida").id();
-        service.changeStatus(id, TaskStatus.DONE);
+        service.changeStatus(id, TaskStatus.CONCLUIDA);
 
-        assertThat(service.changeStatus(id, TaskStatus.TODO).status()).isEqualTo(TaskStatus.TODO);
+        assertThat(service.changeStatus(id, TaskStatus.A_FAZER).status()).isEqualTo(TaskStatus.A_FAZER);
     }
 
     @Test
     void alterarStatusDeTarefaInexistenteRetorna404() {
-        assertThatThrownBy(() -> service.changeStatus(UUID.randomUUID(), TaskStatus.DONE))
+        assertThatThrownBy(() -> service.changeStatus(UUID.randomUUID(), TaskStatus.CONCLUIDA))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -295,9 +295,9 @@ class TaskServiceTest extends PostgresIntegrationTest {
         TaskResponse pai = criar("Pai");
         TaskResponse filha = criarSubtask(pai.id(), "Filha");
 
-        assertThat(filha.parentId()).isEqualTo(pai.id());
+        assertThat(filha.idTarefaPai()).isEqualTo(pai.id());
         assertThat(service.findSubtasks(pai.id()))
-                .extracting(TaskResponse::title)
+                .extracting(TaskResponse::titulo)
                 .containsExactly("Filha");
     }
 
@@ -328,14 +328,14 @@ class TaskServiceTest extends PostgresIntegrationTest {
 
     @Test
     void summaryContaCadaIndicador() {
-        service.changeStatus(criar("P1").id(), TaskStatus.DONE);
-        service.changeStatus(criar("P2").id(), TaskStatus.DONE);
-        service.changeStatus(criar("Em1").id(), TaskStatus.IN_PROGRESS);
-        criar("Alta1", null, TaskPriority.HIGH, null);
-        criar("Alta2", null, TaskPriority.HIGH, null);
+        service.changeStatus(criar("P1").id(), TaskStatus.CONCLUIDA);
+        service.changeStatus(criar("P2").id(), TaskStatus.CONCLUIDA);
+        service.changeStatus(criar("Em1").id(), TaskStatus.EM_ANDAMENTO);
+        criar("Alta1", null, TaskPriority.ALTA, null);
+        criar("Alta2", null, TaskPriority.ALTA, null);
         criar("P3");
 
-        // pendentes = Alta1 + Alta2 + P3 (as duas HIGH continuam TODO)
+        // pendentes = Alta1 + Alta2 + P3 (as duas ALTA continuam A_FAZER)
         TaskSummary summary = service.summary();
 
         assertThat(summary.total()).isEqualTo(6);
@@ -347,10 +347,10 @@ class TaskServiceTest extends PostgresIntegrationTest {
 
     @Test
     void summarySomaPorStatusIgualAoTotal() {
-        service.changeStatus(criar("A").id(), TaskStatus.DONE);
-        service.changeStatus(criar("B").id(), TaskStatus.IN_PROGRESS);
+        service.changeStatus(criar("A").id(), TaskStatus.CONCLUIDA);
+        service.changeStatus(criar("B").id(), TaskStatus.EM_ANDAMENTO);
         criar("C");
-        criar("D", null, TaskPriority.HIGH, null);
+        criar("D", null, TaskPriority.ALTA, null);
 
         TaskSummary summary = service.summary();
 

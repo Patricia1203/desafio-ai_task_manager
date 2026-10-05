@@ -9,16 +9,21 @@ import com.desafio.taskmanager.task.domain.TaskStatus;
 
 /**
  * Tarefa exposta na API. Record imutavel: a entidade JPA nunca sai do backend
- * (ver CONVENTIONS.md). O pai aparece so como {@code parentId}.
+ * (ver CONVENTIONS.md). O pai aparece so como {@code idTarefaPai}.
+ *
+ * <p><b>Por que o nome do record e o nome do campo.</b> O Jackson serializa o
+ * record pelo nome do componente, entao {@code titulo} aqui e {@code "titulo"}
+ * no JSON. Nao ha {@code @JsonProperty} nem camada de traducao: o contrato e o
+ * codigo. Decisao do usuario, contrato em portugues.
  */
 public record TaskResponse(
         UUID id,
-        String title,
-        String description,
+        String titulo,
+        String descricao,
         TaskStatus status,
-        TaskPriority priority,
-        LocalDate dueDate,
-        UUID parentId,
-        Instant createdAt,
-        Instant updatedAt) {
+        TaskPriority prioridade,
+        LocalDate prazo,
+        UUID idTarefaPai,
+        Instant criadoEm,
+        Instant atualizadoEm) {
 }

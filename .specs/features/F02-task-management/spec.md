@@ -16,7 +16,7 @@ US-011: Listar/visualizar/editar/excluir (RF-02-RF-05)
 - GET /api/tasks lista; GET /api/tasks/{id} 200 ou 404 (ERR-01); PUT /api/tasks/{id} edita ou 404/400; DELETE /api/tasks/{id} remove ou 404.
 
 US-012: Status e prioridades (RF-06, RF-08, RF-09)
-- PATCH /api/tasks/{id}/status altera entre TODO, IN_PROGRESS, DONE. Valores inválidos → 400.
+- PATCH /api/tasks/{id}/status altera entre A_FAZER, EM_ANDAMENTO, CONCLUIDA. Valores inválidos → 400.
 
 US-013: Dashboard (RF-20)
 - GET /api/tasks/summary retorna total, pendentes, em andamento, concluídas, alta prioridade.

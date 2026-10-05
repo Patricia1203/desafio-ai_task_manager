@@ -11,7 +11,7 @@
 - **Gate:** mvn -q test -Dtest=TaskRepositoryTest
 - **Commit (rascunho):** `add: Entidade e migração de Task`
 - **Nota:** `parentTaskId` do design virou `Task.parent` com `@ManyToOne(fetch = LAZY)`, e a coluna é `parent_id`. O self-reference tem `ON DELETE CASCADE`: excluir a tarefa pai remove as subtarefas.
-- **Nota 2:** **DONE é terminal.** `Task#changeStatus` só permite sair de DONE para TODO (reabrir). Voltar direto para IN_PROGRESS lança `BusinessRuleException` (422). Regra documentada em `STATE.md` como [ASSUMPTION] — se o desafio permitir reabrir direto, é uma linha no método.
+- **Nota 2:** **CONCLUIDA é terminal.** `Task#changeStatus` só permite sair de CONCLUIDA para A_FAZER (reabrir). Voltar direto para EM_ANDAMENTO lança `BusinessRuleException` (422). Regra documentada em `STATE.md` como [ASSUMPTION] — se o desafio permitir reabrir direto, é uma linha no método.
 - **Nota 3:** id é `UUID` gerado em Java (`UUID.randomUUID()` na factory da entidade), não no banco, para o id existir antes do INSERT e a subtarefa poder referenciar o pai já na mesma transação.
 - **Nota 4:** `@BeforeEach repository.deleteAll()` nos testes: os testes de integração compartilham o mesmo container e as contagens do summary não podem depender da ordem de execução.
 - **Nota 5:** o teste `atualizaStatusNoBanco` usa `saveAndFlush` a cada mudança de status, não `flush`. Sem `@Transactional` no teste a entidade fica detached e `flush()` sozinho não gera UPDATE.
@@ -28,7 +28,7 @@
 - **Commit (rascunho):** `add: DTOs e mapper de Task`
 - **Nota:** limite de título 200 (o mesmo do `VARCHAR(200)`) e descrição 5000, com as mensagens em português porque o `GlobalExceptionHandler` joga a mensagem da constraint direto no ProblemDetail.
 - **Nota 2:** `TaskResponse` expõe `parentId` (UUID) e nunca o `Task parent`, para o JSON da lista não arrastar a entidade carregada via LAZY.
-- **Nota 3:** **o status não é campo de `UpdateTaskRequest`.** PUT é substituição de conteúdo; a transição de status passa por `PATCH /tasks/{id}/status` e pela regra de domínio. Se o PUT aceitasse status, o mapper burlaria `changeStatus` e a invariante DONE-terminal ficaria sem dono.
+- **Nota 3:** **o status não é campo de `UpdateTaskRequest`.** PUT é substituição de conteúdo; a transição de status passa por `PATCH /tasks/{id}/status` e pela regra de domínio. Se o PUT aceitasse status, o mapper burlaria `changeStatus` e a invariante CONCLUIDA-terminal ficaria sem dono.
 - **Nota 4:** `PageResponse.of(Page<T>)` é o único ponto que conhece o `Page` do Spring Data. O envelope (`content`, `page`, `size`, `totalItems`, `totalPages`, `first`, `last`) é genérico e já serve para as mensagens do assistente em F03.
 - **Nota 5:** `toSubtask` existe separado de `toDomain` porque a decomposição por IA (RF-14, F03) cria subtarefa com pai obrigatório — deixar o pai explícito na assinatura impede que um caminho da IA crie tarefa de topo por engano.
 - **Nota 6:** `Validator.validate` devolve `Set`, que não tem posição fixa. O teste usa um helper `unica(Set)` que valida o tamanho e devolve `iterator().next()`; escrever `violations.get(0)` no lugar dá erro de compilação e induz a mudar o tipo errado.
@@ -38,9 +38,9 @@
 - **Reqs:** RF-01, RF-02, RF-03, RF-04, RF-05, RF-06, RF-08, RF-09, RF-20, ERR-01
 - **Depende de:** T-F02-02
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/application/TaskService.java, backend/src/main/java/com/desafio/taskmanager/task/application/dto/TaskSummary.java, backend/src/main/java/com/desafio/taskmanager/task/application/dto/TaskFilter.java, backend/src/main/java/com/desafio/taskmanager/common/error/ResourceNotFoundException.java, backend/src/test/java/.../task/application/TaskServiceTest.java
-- **O que fazer:** Regras de negócio: criação com status inicial TODO e createdAt automático; alteração de status; listagem com filtros de status/prioridade e paginação; summary com total, pendentes, em andamento, concluídas e alta prioridade; tarefa inexistente vira ResourceNotFoundException.
+- **O que fazer:** Regras de negócio: criação com status inicial A_FAZER e createdAt automático; alteração de status; listagem com filtros de status/prioridade e paginação; summary com total, pendentes, em andamento, concluídas e alta prioridade; tarefa inexistente vira ResourceNotFoundException.
 - **Pronto quando:** todas as regras de F02 spec produzem o resultado esperado; summary bate com os dados persistidos.
-- **Testes:** TaskServiceTest cobrindo criar com status TODO, editar, excluir, alterar status, listagem filtrada, subtarefas, summary e exceção 404 para id inexistente.
+- **Testes:** TaskServiceTest cobrindo criar com status A_FAZER, editar, excluir, alterar status, listagem filtrada, subtarefas, summary e exceção 404 para id inexistente.
 - **Gate:** mvn -q test -Dtest=TaskServiceTest
 - **Commit (rascunho):** `add: Service de tarefas com CRUD, filtros e summary`
 - **Nota:** **exclusão de tarefa com subtarefas é cascata, e isso é decisão, não esquecimento.** O `ON DELETE CASCADE` de `V2__create_tasks.sql` já estava no banco; o service só não checa nada antes de apagar. A alternativa (recusar com 422 e obrigar a mover/excluir as filhas antes) muda o `delete` para uma transação que conta as filhas — trocar depois significa remover a linha do cascade na próxima migration, não reescrever a feature. Registrado em `STATE.md`.
@@ -121,17 +121,18 @@
 - **Nota 2:** **`parent.getId()` foi testado e não causa N+1.** Sonda que roda `findAll()` + `TaskMapper#toResponse` fora de transação, com `open-in-view: false`: se o `getId()` tocasse o banco, a sessão estaria fechada e estouraria `LazyInitializationException`. Rodou limpo (6 tarefas mapeadas, 5 com `parentId`). O Hibernate devolve o identificador do proxy sem inicializar. Não criar coluna `parent_id` de leitura: seria mudança de schema sem problema para resolver.
 
 ### T-F02-05e — JSON em português
-- **Status:** pending
-- **Reqs:** RF-01, RF-20
+- **Status:** done
+- **Reqs:** RF-01, RF-07, RF-20, RF-23, RF-24, ERR-02
 - **Origem:** decisão do usuário
 - **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/dto/*.java`, `backend/src/main/java/com/desafio/taskmanager/task/application/TaskSummary.java`, `backend/src/main/resources/db/migration/V2__create_tasks.sql` e testes
-- **O que fazer:** renomear os campos do JSON para português.
-- **Pronto quando:** o contrato inteiro responde em português e os testes refletem o nome novo.
+- **O que fazer:** renomear os campos do JSON para português. Feito: `TaskResponse` (`id, titulo, descricao, status, prioridade, prazo, idTarefaPai, criadoEm, atualizadoEm`), `CreateTaskRequest`/`UpdateTaskRequest` (`titulo, descricao, prioridade, prazo`), `PageResponse` (`conteudo, pagina, tamanho, totalItens, totalPaginas, primeira, ultima`), e os enums `A_FAZER/EM_ANDAMENTO/CONCLUIDA` e `BAIXA/MEDIA/ALTA` gravados na `V2`.
+- **Pronto quando:** o contrato inteiro responde em português e os testes refletem o nome novo. `mvn -q test` — 132 testes verdes.
 - **Testes:** atualizar todas as asserções de `jsonPath`.
 - **Gate:** mvn -q test
 - **Commit (rascunho):** `refactor: Renomear o contrato JSON para portugues`
 - **Nota (decisão do usuário):** **JSON em português, por ser projeto brasileiro.** Feito agora, antes do frontend consumir: depois seria breaking change com telas já escritas. Cuidado com os valores de enum, que também são string no JSON e com migration quando o valor mudar no banco.
-- **Nota 2:** **[NEEDS CLARIFICATION] traceId.** O design não previa `traceId` e não há `traceId` em nenhum arquivo de `.specs`. Não é omissão do design, é decisão ainda não tomada: se entra, em qual header e em qual campo do ProblemDetail. `T-F05-02` fala em "preencher traceId e timestamp"; confirmar o formato antes de implementar.
+- **Nota 2:** Query params seguem em ingles (`status`, `priority`, `page`, `size`) e `ProblemDetail` segue o padrao RFC 7807: a traducao cobre corpo e resposta JSON, nao a URL nem os campos padrao de erro. Quem ja aplicou a `V2` anterior precisa limpar/recriar o schema (checksum divergente).
+- **Nota 3:** **[NEEDS CLARIFICATION] traceId.** O design não previa `traceId` e não há `traceId` em nenhum arquivo de `.specs`. Não é omissão do design, é decisão ainda não tomada: se entra, em qual header e em qual campo do ProblemDetail. `T-F05-02` fala em "preencher traceId e timestamp"; confirmar o formato antes de implementar.
 
 ### T-F02-05f — Ordenação estável na paginação
 - **Status:** done

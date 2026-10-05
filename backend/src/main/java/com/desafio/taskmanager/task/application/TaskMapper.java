@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
  * lados. Um {@code MapStruct} traria um requisito de build a mais e esconderia
  * o contrato, entao fica escrito a mao.
  *
- * <p>A entidade tem regra de transicao de status (DONE e terminal); o mapper nao
- * contorna isso. Status so muda por {@link Task#changeStatus}, chamado pelo
+ * <p>A entidade tem regra de transicao de status (CONCLUIDA e terminal); o mapper
+ * nao contorna isso. Status so muda por {@link Task#changeStatus}, chamado pelo
  * service.
  */
 @Component
@@ -27,10 +27,10 @@ public class TaskMapper {
     /** Constroi a entidade a partir do POST. O status inicial fica na entidade. */
     public Task toDomain(CreateTaskRequest request) {
         return new Task(
-                request.normalizedTitle(),
-                request.description(),
-                request.priority(),
-                request.dueDate(),
+                request.tituloNormalizado(),
+                request.descricao(),
+                request.prioridade(),
+                request.prazo(),
                 null);
     }
 
@@ -40,19 +40,19 @@ public class TaskMapper {
      */
     public void updateDomain(Task task, UpdateTaskRequest request) {
         task.updateContent(
-                request.normalizedTitle(),
-                request.description(),
-                request.priority() == null ? TaskPriority.DEFAULT : request.priority(),
-                request.dueDate());
+                request.tituloNormalizado(),
+                request.descricao(),
+                request.prioridade() == null ? TaskPriority.DEFAULT : request.prioridade(),
+                request.prazo());
     }
 
     /** Cria uma subtarefa a partir de um DTO e do pai (decomposicao de IA, RF-14). */
     public Task toSubtask(CreateTaskRequest request, Task parent) {
         return new Task(
-                request.normalizedTitle(),
-                request.description(),
-                request.priority(),
-                request.dueDate(),
+                request.tituloNormalizado(),
+                request.descricao(),
+                request.prioridade(),
+                request.prazo(),
                 parent);
     }
 
@@ -65,12 +65,18 @@ public class TaskMapper {
                 task.getStatus(),
                 task.getPriority(),
                 task.getDueDate(),
-                parentIdOf(task),
+                idTarefaPaiDe(task),
                 task.getCreatedAt(),
                 task.getUpdatedAt());
     }
 
-    private static UUID parentIdOf(Task task) {
+    /**
+     * O id do pai sai sem tocar no banco: {@code parent} e LAZY e o Hibernate
+     * devolve o identificador do proxy sem inicializa-lo. Verificado por sonda que
+     * mapeia fora de transacao, com {@code open-in-view: false} — se houvesse
+     * SELECT, a sessao fechada estouraria {@code LazyInitializationException}.
+     */
+    private static UUID idTarefaPaiDe(Task task) {
         Task parent = task.getParent();
         return parent == null ? null : parent.getId();
     }

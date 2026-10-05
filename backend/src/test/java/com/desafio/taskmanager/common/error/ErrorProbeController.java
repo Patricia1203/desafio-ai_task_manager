@@ -33,7 +33,7 @@ class ErrorProbeController {
 
     @GetMapping("/regra")
     void regra() {
-        throw new BusinessRuleException("status nao pode voltar de DONE para IN_PROGRESS");
+        throw new BusinessRuleException("status nao pode voltar de CONCLUIDA para EM_ANDAMENTO");
     }
 
     @GetMapping("/inesperado")

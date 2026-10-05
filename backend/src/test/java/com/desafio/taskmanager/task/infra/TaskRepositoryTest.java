@@ -52,15 +52,15 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     @Test
     void gravaELeComTodosOsCampos() {
         Task saved = repository.saveAndFlush(new Task(
-                "Escrever README", "detalhar as 7 secoes", TaskPriority.HIGH,
+                "Escrever README", "detalhar as 7 secoes", TaskPriority.ALTA,
                 LocalDate.of(2026, 12, 31), null));
 
         Task found = repository.findById(saved.getId()).orElseThrow();
 
         assertThat(found.getTitle()).isEqualTo("Escrever README");
         assertThat(found.getDescription()).isEqualTo("detalhar as 7 secoes");
-        assertThat(found.getStatus()).isEqualTo(TaskStatus.TODO);
-        assertThat(found.getPriority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(found.getStatus()).isEqualTo(TaskStatus.A_FAZER);
+        assertThat(found.getPriority()).isEqualTo(TaskPriority.ALTA);
         assertThat(found.getDueDate()).isEqualTo(LocalDate.of(2026, 12, 31));
         assertThat(found.getParent()).isNull();
         assertThat(found.isSubtask()).isFalse();
@@ -72,8 +72,8 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     void tarefaNovaNasceComStatusInicialEPrioridadePadrao() {
         Task saved = repository.saveAndFlush(new Task("Sem prioridade", null, null, null, null));
 
-        assertThat(saved.getStatus()).isEqualTo(TaskStatus.TODO);
-        assertThat(saved.getPriority()).isEqualTo(TaskPriority.MEDIUM);
+        assertThat(saved.getStatus()).isEqualTo(TaskStatus.A_FAZER);
+        assertThat(saved.getPriority()).isEqualTo(TaskPriority.MEDIA);
         assertThat(saved.getDueDate()).isNull();
     }
 
@@ -81,23 +81,23 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     void atualizaStatusNoBanco() {
         Task task = repository.saveAndFlush(new Task("Migrar schema", null, null, null, null));
 
-        task.changeStatus(TaskStatus.IN_PROGRESS);
+        task.changeStatus(TaskStatus.EM_ANDAMENTO);
         repository.saveAndFlush(task);
-        task.changeStatus(TaskStatus.DONE);
+        task.changeStatus(TaskStatus.CONCLUIDA);
         repository.saveAndFlush(task);
 
         Task found = repository.findById(task.getId()).orElseThrow();
-        assertThat(found.getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(found.getStatus()).isEqualTo(TaskStatus.CONCLUIDA);
     }
 
     @Test
     void filtraPorStatus() {
         repository.saveAllAndFlush(List.of(
-                nova("A", TaskStatus.TODO),
-                nova("B", TaskStatus.IN_PROGRESS),
-                nova("C", TaskStatus.DONE)));
+                nova("A", TaskStatus.A_FAZER),
+                nova("B", TaskStatus.EM_ANDAMENTO),
+                nova("C", TaskStatus.CONCLUIDA)));
 
-        assertThat(repository.findByStatusOrderByCreatedAtDesc(TaskStatus.IN_PROGRESS))
+        assertThat(repository.findByStatusOrderByCreatedAtDesc(TaskStatus.EM_ANDAMENTO))
                 .extracting(Task::getTitle)
                 .containsExactly("B");
     }
@@ -105,11 +105,11 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     @Test
     void filtraPorPrioridade() {
         repository.saveAllAndFlush(List.of(
-                new Task("A", null, TaskPriority.LOW, null, null),
-                new Task("B", null, TaskPriority.HIGH, null, null)));
+                new Task("A", null, TaskPriority.BAIXA, null, null),
+                new Task("B", null, TaskPriority.ALTA, null, null)));
 
         assertThat(repository.findByPriorityAndStatusInOrderByCreatedAtDesc(
-                TaskPriority.HIGH, List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE)))
+                TaskPriority.ALTA, List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO, TaskStatus.CONCLUIDA)))
                 .extracting(Task::getTitle)
                 .containsExactly("B");
     }
@@ -117,13 +117,13 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     @Test
     void filtraComSpecificationCompostaEOrdena() {
         repository.saveAllAndFlush(List.of(
-                new Task("A", null, TaskPriority.HIGH, null, null),
-                new Task("B", null, TaskPriority.LOW, null, null),
-                new Task("C", null, TaskPriority.HIGH, null, null)));
+                new Task("A", null, TaskPriority.ALTA, null, null),
+                new Task("B", null, TaskPriority.BAIXA, null, null),
+                new Task("C", null, TaskPriority.ALTA, null, null)));
 
         Specification<Task> spec = (root, query, cb) -> cb.and(
-                cb.equal(root.get("priority"), TaskPriority.HIGH),
-                cb.equal(root.get("status"), TaskStatus.TODO));
+                cb.equal(root.get("priority"), TaskPriority.ALTA),
+                cb.equal(root.get("status"), TaskStatus.A_FAZER));
 
         Page<Task> page = repository.findAll(spec,
                 PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "title")));
@@ -135,11 +135,11 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     @Test
     void paginaResultados() {
         repository.saveAllAndFlush(List.of(
-                nova("A", TaskStatus.TODO),
-                nova("B", TaskStatus.TODO),
-                nova("C", TaskStatus.DONE)));
+                nova("A", TaskStatus.A_FAZER),
+                nova("B", TaskStatus.A_FAZER),
+                nova("C", TaskStatus.CONCLUIDA)));
 
-        Page<Task> firstPage = repository.findByStatus(TaskStatus.TODO, PageRequest.of(0, 2));
+        Page<Task> firstPage = repository.findByStatus(TaskStatus.A_FAZER, PageRequest.of(0, 2));
 
         assertThat(firstPage.getTotalElements()).isEqualTo(2);
         assertThat(firstPage.getContent()).hasSize(2);
@@ -147,8 +147,8 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
 
     @Test
     void buscaSubtarefasPeloPai() {
-        Task parent = repository.saveAndFlush(nova("Tarefa pai", TaskStatus.IN_PROGRESS));
-        Task other = repository.saveAndFlush(nova("Outra tarefa", TaskStatus.TODO));
+        Task parent = repository.saveAndFlush(nova("Tarefa pai", TaskStatus.EM_ANDAMENTO));
+        Task other = repository.saveAndFlush(nova("Outra tarefa", TaskStatus.A_FAZER));
 
         repository.saveAllAndFlush(List.of(
                 new Task("Sub 1", null, null, null, parent),
@@ -162,7 +162,7 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
 
     @Test
     void subtarefaApontaParaOPai() {
-        Task parent = repository.saveAndFlush(nova("Tarefa pai", TaskStatus.TODO));
+        Task parent = repository.saveAndFlush(nova("Tarefa pai", TaskStatus.A_FAZER));
         Task sub = repository.saveAndFlush(new Task("Sub", null, null, null, parent));
 
         Task found = repository.findById(sub.getId()).orElseThrow();
@@ -173,7 +173,7 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
 
     @Test
     void deletaComSubtarefasEmCascata() {
-        Task parent = repository.saveAndFlush(nova("Tarefa pai", TaskStatus.TODO));
+        Task parent = repository.saveAndFlush(nova("Tarefa pai", TaskStatus.A_FAZER));
         Task sub = repository.saveAndFlush(new Task("Sub", null, null, null, parent));
 
         repository.deleteById(parent.getId());
@@ -187,17 +187,17 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     @Test
     void contaPorStatusEPrioridadeParaOSummary() {
         repository.saveAllAndFlush(List.of(
-                new Task("A", null, TaskPriority.HIGH, null, null),
-                new Task("B", null, TaskPriority.HIGH, null, null),
-                new Task("C", null, TaskPriority.LOW, null, null)));
+                new Task("A", null, TaskPriority.ALTA, null, null),
+                new Task("B", null, TaskPriority.ALTA, null, null),
+                new Task("C", null, TaskPriority.BAIXA, null, null)));
 
-        repository.saveAndFlush(nova("D", TaskStatus.DONE));
+        repository.saveAndFlush(nova("D", TaskStatus.CONCLUIDA));
 
         assertThat(repository.countAll()).isEqualTo(4);
-        assertThat(repository.countByStatusValue(TaskStatus.TODO)).isEqualTo(3);
-        assertThat(repository.countByStatusValue(TaskStatus.DONE)).isEqualTo(1);
-        assertThat(repository.countByPriorityValue(TaskPriority.HIGH)).isEqualTo(2);
-        assertThat(repository.countByPriorityValueAndNotDone(TaskPriority.HIGH, TaskStatus.DONE))
+        assertThat(repository.countByStatusValue(TaskStatus.A_FAZER)).isEqualTo(3);
+        assertThat(repository.countByStatusValue(TaskStatus.CONCLUIDA)).isEqualTo(1);
+        assertThat(repository.countByPriorityValue(TaskPriority.ALTA)).isEqualTo(2);
+        assertThat(repository.countByPriorityValueAndNotDone(TaskPriority.ALTA, TaskStatus.CONCLUIDA))
                 .isEqualTo(2);
     }
 
@@ -209,7 +209,7 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
                 new Task("Vence hoje", null, null, hoje, null),
                 new Task("Futura", null, null, hoje.plusDays(10), null)));
 
-        assertThat(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.DONE))
+        assertThat(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.CONCLUIDA))
                 .extracting(Task::getTitle)
                 .containsExactly("Vencida");
 
@@ -220,7 +220,7 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
 
     @Test
     void tarefasSemPaiSaoAsDeTopo() {
-        Task parent = repository.saveAndFlush(nova("Pai", TaskStatus.TODO));
+        Task parent = repository.saveAndFlush(nova("Pai", TaskStatus.A_FAZER));
         UUID subId = repository.saveAndFlush(new Task("Sub", null, null, null, parent)).getId();
 
         assertThat(repository.findByIdAndParentIsNull(subId)).isEmpty();
@@ -229,7 +229,7 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
 
     private Task nova(String title, TaskStatus status) {
         Task task = new Task(title, null, null, null, null);
-        if (status != TaskStatus.TODO) {
+        if (status != TaskStatus.A_FAZER) {
             task.changeStatus(status);
         }
         return task;

@@ -36,7 +36,7 @@ class TaskTest {
     class Criacao {
 
         @Test
-        @DisplayName("nasce com id, TODO, MEDIUM e os dois timestamps iguais")
+        @DisplayName("nasce com id, A_FAZER, MEDIA e os dois timestamps iguais")
         void nasceCompleta() {
             Task task = new Task("Titulo", "Descricao", null, PRAZO, null);
 
@@ -52,8 +52,8 @@ class TaskTest {
         @Test
         @DisplayName("prioridade explicita e respeitada; o padrao so entra quando falta")
         void prioridadeExplicitaVence() {
-            assertThat(new Task("T", null, TaskPriority.HIGH, null, null).getPriority())
-                    .isEqualTo(TaskPriority.HIGH);
+            assertThat(new Task("T", null, TaskPriority.ALTA, null, null).getPriority())
+                    .isEqualTo(TaskPriority.ALTA);
             assertThat(new Task("T", null, null, null, null).getPriority())
                     .isEqualTo(TaskPriority.DEFAULT);
         }
@@ -113,29 +113,29 @@ class TaskTest {
     class Transicao {
 
         @Test
-        @DisplayName("TODO para IN_PROGRESS e DONE e permitido")
+        @DisplayName("A_FAZER para EM_ANDAMENTO e CONCLUIDA e permitido")
         void avancoNormal() {
             Task task = new Task("T", null, null, null, null);
 
-            task.changeStatus(TaskStatus.IN_PROGRESS);
-            assertThat(task.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
+            task.changeStatus(TaskStatus.EM_ANDAMENTO);
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.EM_ANDAMENTO);
 
-            task.changeStatus(TaskStatus.DONE);
-            assertThat(task.getStatus()).isEqualTo(TaskStatus.DONE);
+            task.changeStatus(TaskStatus.CONCLUIDA);
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.CONCLUIDA);
         }
 
         @Test
-        @DisplayName("DONE volta so para TODO")
-        void doneReabreSomentePorTodo() {
+        @DisplayName("CONCLUIDA volta so para A_FAZER")
+        void concluidaReabreSomentePorAFazer() {
             Task task = new Task("T", null, null, null, null);
-            task.changeStatus(TaskStatus.DONE);
+            task.changeStatus(TaskStatus.CONCLUIDA);
 
-            assertThatThrownBy(() -> task.changeStatus(TaskStatus.IN_PROGRESS))
+            assertThatThrownBy(() -> task.changeStatus(TaskStatus.EM_ANDAMENTO))
                     .isInstanceOf(BusinessRuleException.class)
-                    .hasMessageContaining("use TODO para reabrir");
+                    .hasMessageContaining("use A_FAZER para reabrir");
 
-            task.changeStatus(TaskStatus.TODO);
-            assertThat(task.getStatus()).isEqualTo(TaskStatus.TODO);
+            task.changeStatus(TaskStatus.A_FAZER);
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.A_FAZER);
         }
 
         @Test
@@ -144,9 +144,9 @@ class TaskTest {
             Task task = new Task("T", null, null, null, null);
             Instant original = task.getUpdatedAt();
 
-            task.changeStatus(TaskStatus.TODO);
+            task.changeStatus(TaskStatus.A_FAZER);
 
-            assertThat(task.getStatus()).isEqualTo(TaskStatus.TODO);
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.A_FAZER);
             assertThat(task.getUpdatedAt()).isEqualTo(original);
         }
 
@@ -166,7 +166,7 @@ class TaskTest {
             Instant antes = task.getUpdatedAt();
 
             Thread.sleep(2);
-            task.changeStatus(TaskStatus.IN_PROGRESS);
+            task.changeStatus(TaskStatus.EM_ANDAMENTO);
 
             assertThat(task.getUpdatedAt()).isAfter(antes);
             assertThat(task.getCreatedAt()).isBeforeOrEqualTo(antes);
@@ -180,25 +180,25 @@ class TaskTest {
         @Test
         @DisplayName("altera os campos de conteudo sem mexer no status")
         void edicaoNaoMexeEmStatusNemCreatedAt() {
-            Task task = new Task("Antigo", "Descricao antiga", TaskPriority.LOW, PRAZO, null);
-            task.changeStatus(TaskStatus.IN_PROGRESS);
+            Task task = new Task("Antigo", "Descricao antiga", TaskPriority.BAIXA, PRAZO, null);
+            task.changeStatus(TaskStatus.EM_ANDAMENTO);
             Instant criadoEm = task.getCreatedAt();
 
-            task.updateContent("Novo", "Descricao nova", TaskPriority.HIGH,
+            task.updateContent("Novo", "Descricao nova", TaskPriority.ALTA,
                     LocalDate.of(2027, 1, 15));
 
             assertThat(task.getTitle()).isEqualTo("Novo");
             assertThat(task.getDescription()).isEqualTo("Descricao nova");
-            assertThat(task.getPriority()).isEqualTo(TaskPriority.HIGH);
+            assertThat(task.getPriority()).isEqualTo(TaskPriority.ALTA);
             assertThat(task.getDueDate()).isEqualTo(LocalDate.of(2027, 1, 15));
-            assertThat(task.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
+            assertThat(task.getStatus()).isEqualTo(TaskStatus.EM_ANDAMENTO);
             assertThat(task.getCreatedAt()).isEqualTo(criadoEm);
         }
 
         @Test
         @DisplayName("prioridade nula na edicao volta ao padrao")
         void prioridadeNulaNaEdicaoVoltaAoPadrao() {
-            Task task = new Task("T", null, TaskPriority.HIGH, null, null);
+            Task task = new Task("T", null, TaskPriority.ALTA, null, null);
 
             task.updateContent("T", null, null, null);
 

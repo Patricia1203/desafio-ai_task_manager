@@ -49,9 +49,9 @@ public interface TaskRepository
     @Query("select count(t) from Task t where t.priority = :priority")
     long countByPriorityValue(@Param("priority") TaskPriority priority);
 
-    @Query("select count(t) from Task t where t.priority = :priority and t.status <> :done")
+    @Query("select count(t) from Task t where t.priority = :priority and t.status <> :concluida")
     long countByPriorityValueAndNotDone(@Param("priority") TaskPriority priority,
-                                        @Param("done") TaskStatus done);
+                                        @Param("concluida") TaskStatus concluida);
 
     @Query("select count(t) from Task t where t.parent is not null")
     long countSubtasks();

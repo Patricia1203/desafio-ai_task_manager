@@ -10,23 +10,23 @@ import jakarta.validation.constraints.Size;
 /**
  * Corpo do PUT /api/tasks/{id}.
  *
- * <p>PUT e substituicao total: titulo e obrigatorio. O status nao vem aqui —
+ * <p>PUT e substituicao total: o titulo e obrigatorio. O status nao vem aqui —
  * ele tem endpoint proprio (PATCH /status), que valida as transicoes.
  */
 public record UpdateTaskRequest(
 
         @NotBlank(message = "titulo e obrigatorio")
         @Size(max = 200, message = "titulo deve ter no maximo 200 caracteres")
-        String title,
+        String titulo,
 
         @Size(max = 5000, message = "descricao deve ter no maximo 5000 caracteres")
-        String description,
+        String descricao,
 
-        TaskPriority priority,
+        TaskPriority prioridade,
 
-        LocalDate dueDate) {
+        LocalDate prazo) {
 
-    public String normalizedTitle() {
-        return title == null ? null : title.trim();
+    public String tituloNormalizado() {
+        return titulo == null ? null : titulo.trim();
     }
 }
