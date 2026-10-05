@@ -10,8 +10,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -19,6 +21,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * ERR-02 e ERR-06: toda resposta de erro e ProblemDetail (RFC 7807) e nenhum
  * erro vaza stack trace, nome de classe, SQL ou caminho de arquivo.
+ *
+ * <p>Cobre tambem os status de infraestrutura do MVC. Sem handler proprio,
+ * {@code NoResourceFoundException}, {@code HttpRequestMethodNotSupportedException}
+ * e {@code HttpMediaTypeNotSupportedException} caem no {@code Exception.class} e
+ * saem como 500.
  */
 @WebMvcTest(controllers = ErrorProbeController.class)
 class GlobalExceptionHandlerTest {
@@ -97,5 +104,53 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.title").exists())
                 .andExpect(jsonPath("$.status").exists())
                 .andExpect(jsonPath("$.detail").exists());
+    }
+
+    @Test
+    void rotaInexistenteDevolve404ENao500() throws Exception {
+        mockMvc.perform(get("/__test/rota-que-nao-existe"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.type").value(containsString("nao-encontrado")));
+    }
+
+    @Test
+    void metodoNaoPermitidoDevolve405ENao500() throws Exception {
+        mockMvc.perform(put("/__test/metodo"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.type").value(containsString("metodo-nao-permitido")));
+    }
+
+    @Test
+    void contentTypeInvalidoDevolve415ENao500() throws Exception {
+        mockMvc.perform(post("/__test/tipo")
+                        .contentType(MediaType.APPLICATION_XML)
+                        .content("<xml/>"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(415))
+                .andExpect(jsonPath("$.type").value(containsString("tipo-nao-suportado")));
+    }
+
+    @Test
+    void falhaDeBancoDevolve500ComMensagemFixaESemSql() throws Exception {
+        mockMvc.perform(get("/__test/banco"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.detail").value("Erro interno. Tente novamente mais tarde."))
+                .andExpect(jsonPath("$.type").value(containsString("banco-indisponivel")))
+                .andExpect(content().string(not(containsString("jdbc:postgresql"))))
+                .andExpect(content().string(not(containsString("taskmanager"))));
+    }
+
+    @Test
+    void deleteNaRotaQueSoAceitaGetDevolve405() throws Exception {
+        mockMvc.perform(delete("/__test/metodo"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405));
     }
 }

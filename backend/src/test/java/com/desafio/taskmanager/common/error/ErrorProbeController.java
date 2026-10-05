@@ -1,6 +1,9 @@
 package com.desafio.taskmanager.common.error;
 
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,5 +44,24 @@ class ErrorProbeController {
     @GetMapping("/malformado")
     ProbeRequest malformado(@RequestBody ProbeRequest request) {
         return request;
+    }
+
+    /** Lanca 405 de proposito, para provar que o handler nao devolve 500. */
+    @GetMapping("/metodo")
+    void metodo() throws HttpRequestMethodNotSupportedException {
+        throw new HttpRequestMethodNotSupportedException("POST");
+    }
+
+    /** Lanca 415 de proposito, para provar que o handler nao devolve 500. */
+    @PostMapping("/tipo")
+    void tipo() throws HttpMediaTypeNotSupportedException {
+        throw new HttpMediaTypeNotSupportedException("application/xml");
+    }
+
+    /** Lanca DataAccessException de proposito, para cobrir o handler de ERR-06. */
+    @GetMapping("/banco")
+    void banco() {
+        throw new DataAccessResourceFailureException(
+                "conexao recusada em jdbc:postgresql://host:5432/taskmanager");
     }
 }

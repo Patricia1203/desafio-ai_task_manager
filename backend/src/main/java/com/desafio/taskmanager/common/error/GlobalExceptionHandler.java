@@ -5,19 +5,32 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Handler global de erros. Toda resposta de erro da API e um ProblemDetail
  * (RFC 7807) com content-type application/problem+json.
+ *
+ * <p><b>Por que os handlers de infra do Spring estao aqui.</b> O
+ * {@code @ExceptionHandler(Exception.class)} do fim desta classe e rede de
+ * seguranca: pega o que sobrou. Por isso ele tambem capturava
+ * {@code NoResourceFoundException}, {@code HttpRequestMethodNotSupportedException}
+ * e {@code HttpMediaTypeNotSupportedException}, devolvendo <b>500</b> para o que
+ * deveria ser 404, 405 e 415. Erro de navegacao virava erro de servidor. Cada
+ * excecao abaixo tem handler proprio; o Spring escolhe pelo mais especifico.
  *
  * Garantia central (ERR-02, ERR-06 e o requisito de nao vazar stack trace):
  * - a mensagem de 500 e sempre fixa, nunca vem da excecao original;
@@ -33,8 +46,11 @@ public class GlobalExceptionHandler {
     private static final String BASE_TYPE = "https://desafio.ai-task-manager/errors/";
     private static final URI VALIDATION_TYPE = URI.create(BASE_TYPE + "validacao");
     private static final URI NOT_FOUND_TYPE = URI.create(BASE_TYPE + "nao-encontrado");
+    private static final URI METHOD_NOT_ALLOWED_TYPE = URI.create(BASE_TYPE + "metodo-nao-permitido");
+    private static final URI UNSUPPORTED_MEDIA_TYPE = URI.create(BASE_TYPE + "tipo-nao-suportado");
     private static final URI MALFORMED_TYPE = URI.create(BASE_TYPE + "requisicao-malformada");
     private static final URI RULE_TYPE = URI.create(BASE_TYPE + "regra-de-negocio");
+    private static final URI DATABASE_TYPE = URI.create(BASE_TYPE + "banco-indisponivel");
     private static final URI INTERNAL_TYPE = URI.create(BASE_TYPE + "erro-interno");
 
     private static final String GENERIC_500_MESSAGE =
@@ -71,6 +87,31 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.NOT_FOUND, NOT_FOUND_TYPE, "Recurso nao encontrado", ex.getMessage());
     }
 
+    /**
+     * 404 de rota inexistente. O Spring 7 lanca {@code NoResourceFoundException}
+     * para recurso estatico ou endpoint nao mapeado; sem este handler o
+     * catch-all devolvia 500.
+     */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ProblemDetail handleNoHandler(Exception ex) {
+        return problem(HttpStatus.NOT_FOUND, NOT_FOUND_TYPE, "Recurso nao encontrado",
+                "Recurso nao encontrado");
+    }
+
+    /** 405: o metodo HTTP existe na rota mas nao e aceito. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ProblemDetail handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        return problem(HttpStatus.METHOD_NOT_ALLOWED, METHOD_NOT_ALLOWED_TYPE,
+                "Metodo nao permitido", "Metodo HTTP nao suportado para este recurso");
+    }
+
+    /** 415: Content-Type do corpo nao suportado pela rota. */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ProblemDetail handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+        return problem(HttpStatus.UNSUPPORTED_MEDIA_TYPE, UNSUPPORTED_MEDIA_TYPE,
+                "Tipo nao suportado", "Content-Type nao suportado");
+    }
+
     @ExceptionHandler(BusinessRuleException.class)
     public ProblemDetail handleBusinessRule(BusinessRuleException ex) {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, RULE_TYPE, "Regra de negocio violada", ex.getMessage());
@@ -89,6 +130,19 @@ public class GlobalExceptionHandler {
         log.debug("Requisicao malformada rejeitada", ex);
         return problem(HttpStatus.BAD_REQUEST, MALFORMED_TYPE, "Requisicao invalida",
                 "Corpo ou parametro de requisicao invalido");
+    }
+
+    /**
+     * ERR-06: falha de persistencia (conexao perdida, constraint violada,
+     * deadlock). O status 500 ja seria o correto pelo catch-all, mas um handler
+     * explicito documenta a intencao e permite trocar o comportamento sem
+     * depender da rede de seguranca. SQL e nome de tabela ficam so no log.
+     */
+    @ExceptionHandler(DataAccessException.class)
+    public ProblemDetail handleDataAccess(DataAccessException ex) {
+        log.error("Falha de acesso ao banco", ex);
+        return problem(HttpStatus.INTERNAL_SERVER_ERROR, DATABASE_TYPE, "Erro interno",
+                GENERIC_500_MESSAGE);
     }
 
     /** Qualquer erro nao mapeado. A causa vai para o log; a resposta e fixa. */
