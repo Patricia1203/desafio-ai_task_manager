@@ -9,11 +9,11 @@ Verificado em 2026-10-05 consultando Maven Central (`repo1.maven.org/maven2`) e 
 | Spring AI | **2.0.1** | `spring-ai-bom/2.0.1` existe; `spring-ai-starter-model-ollama:2.0.1` declara dependências em Spring Boot 4.1.1 |
 | Maven | 3.9.15 | binário local em `~/.m2/wrapper/dists/apache-maven-3.9.15-bin` |
 | Testcontainers | **2.0.5** | `org.testcontainers:testcontainers:2.0.5`; artifacts renomeados na 2.x → `testcontainers-junit-jupiter`, `testcontainers-postgresql` |
-| Flyway | gerenciado pelo Boot 4.1.1 | `flyway-core` + `flyway-database-postgresql` |
+| Flyway | 12.4.0 (gerenciado pelo Boot 4.1.1) | `spring-boot-flyway:4.1.1` declara `flyway-core:12.4.0`; `flyway-database-postgresql` em runtime |
 | PostgreSQL driver | gerenciado pelo Boot 4.1.1 | `org.postgresql:postgresql` (runtime) |
 | Node.js | 24.15.0 | `node --version` |
 | npm | 11.12.1 | `npm --version` |
-| Docker Desktop | 29.6.2 (cliente; daemon parado no momento desta verificação) | `docker version` |
+| Docker Desktop | 4.84.0 / engine 29.6.2 / containerd 2.2.5 (daemon em execução) | `docker version` |
 
 ## Pontos de atenção verificados
 
@@ -23,12 +23,11 @@ Verificado em 2026-10-05 consultando Maven Central (`repo1.maven.org/maven2`) e 
 - **Tool Calling no Ollama**: suportado pelo `OllamaChatModel`; requer Ollama >= 0.2.8 (>= 0.4.6 para streaming). Verificado na doc "Ollama Chat".
 - **Structured output**: `OllamaChatOptions.outputSchema(String)` (JSON Schema) e `.format("json")` (JSON livre). `BeanOutputConverter#getJsonSchema()` gera o schema a partir do record.
 - **Auto-pull de modelo**: `spring.ai.ollama.init.pull-model-strategy` (`never` por padrão).
-
-## Modelo LLM
-
-[NEEDS CLARIFICATION] Modelo exato do Ollama. Candidatos com tool calling: `qwen2.5:7b`, `llama3.1:8b`.
-Não foi possível confirmar via API do Ollama porque o daemon Docker/Ollama não estava em execução durante a verificação.
-Decisão provisória registrada em STATE.md; confirmar em T-F03-02 / T-F04-02.
+- **Autoconfiguration do Flyway saiu do autoconfigure no Boot 4**: só adicionar `flyway-core` **não** registra o `FlywayAutoConfiguration`; é preciso o módulo `org.springframework.boot:spring-boot-flyway`. Sem ele o app sobe sem nenhuma migration aplicada e o `flyway_schema_history` nem existe (verificado em T-F01-04).
+- **`@WebMvcTest` mudou de pacote no Boot 4**: agora é `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`, no módulo `spring-boot-webmvc-test` (o `spring-boot-starter-test` não traz mais). Verificado em T-F01-04.
+- **`PostgreSQLContainer` da Testcontainers 2.x não é mais genérico**: use `org.testcontainers.postgresql.PostgreSQLContainer` sem `<>`. O genérico ficou em `org.testcontainers.containers`. Verificado em T-F01-04.
+- **`HandlerMethodValidationException#getAllValidationResults()` foi removido** no Spring 7: usar `getParameterValidationResults()` (lista de `ParameterValidationResult`).
+- **`allowCredentials(false)` faz o Spring omitir** o header `Access-Control-Allow-Credentials` em vez de mandar `false`.
 
 ## Imagens Docker (tags verificadas em 2026-10-05 com `docker manifest inspect`)
 
@@ -41,10 +40,9 @@ Decisão provisória registrada em STATE.md; confirmar em T-F03-02 / T-F04-02.
 | `postgres` | `17-alpine` | banco | tem `pg_isready` para o healthcheck |
 | `ollama/ollama` | `latest` | LLM local | o binário `ollama` existe na imagem, usado no healthcheck e no pull |
 
-Todas as imagens foram verificadas como multi-arch (amd64 + arm64), exceto `ollama/ollama:latest` (amd64 + arm64) e `postgres:17-alpine` (amd64 + arm64 confirmados).
+Todas as imagens foram verificadas com `docker manifest inspect` e todas suportam amd64 e arm64.
 
 ## Modelo LLM
 
 [NEEDS CLARIFICATION] Modelo exato do Ollama. Candidatos com tool calling: `qwen2.5:7b`, `llama3.1:8b`.
-Não foi possível confirmar via API do Ollama porque o daemon Docker/Ollama não estava em execução durante a verificação.
 Decisão provisória registrada em STATE.md; confirmar em T-F03-02 / T-F04-02.

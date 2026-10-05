@@ -1,0 +1,101 @@
+package com.desafio.taskmanager.common.error;
+
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * ERR-02 e ERR-06: toda resposta de erro e ProblemDetail (RFC 7807) e nenhum
+ * erro vaza stack trace, nome de classe, SQL ou caminho de arquivo.
+ */
+@WebMvcTest(controllers = ErrorProbeController.class)
+class GlobalExceptionHandlerTest {
+
+    private static final String PROBLEM_JSON = MediaType.APPLICATION_PROBLEM_JSON_VALUE;
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void beanValidationDevolve400ComListaDeCampos() throws Exception {
+        mockMvc.perform(post("/__test/validacao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"field\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value(containsString("validacao")))
+                .andExpect(jsonPath("$.title").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.errors", hasSize(1)))
+                .andExpect(jsonPath("$.errors[0].field").value("field"))
+                .andExpect(jsonPath("$.errors[0].reason").value("campo obrigatorio"));
+    }
+
+    @Test
+    void recursoInexistenteDevolve404() throws Exception {
+        mockMvc.perform(get("/__test/inexistente"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.type").value(containsString("nao-encontrado")))
+                .andExpect(jsonPath("$.detail").value(containsString("Tarefa")));
+    }
+
+    @Test
+    void regraDeNegocioDevolve422() throws Exception {
+        mockMvc.perform(get("/__test/regra"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(422))
+                .andExpect(jsonPath("$.type").value(containsString("regra-de-negocio")));
+    }
+
+    @Test
+    void erroGenericoDevolve500ComMensagemFixaESemStackTrace() throws Exception {
+        mockMvc.perform(get("/__test/inesperado"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.detail").value("Erro interno. Tente novamente mais tarde."))
+                // a mensagem original nao pode aparecer em lugar nenhum
+                .andExpect(jsonPath("$.detail", not(containsString("jdbc:postgresql"))))
+                .andExpect(jsonPath("$..trace").doesNotExist())
+                .andExpect(jsonPath("$..exception").doesNotExist())
+                .andExpect(content().string(not(containsString("IllegalStateException"))))
+                .andExpect(content().string(not(containsString("at com.desafio"))))
+                .andExpect(content().string(not(containsString("\\tat "))));
+    }
+
+    @Test
+    void jsonMalformadoDevolve400SemDetalheDoParser() throws Exception {
+        mockMvc.perform(post("/__test/validacao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ isso nao eh json "))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value("Corpo ou parametro de requisicao invalido"))
+                .andExpect(content().string(not(containsString("com.fasterxml"))));
+    }
+
+    @Test
+    void todaRespostaDeErroTemOsCamposObrigatoriosDoRfc7807() throws Exception {
+        mockMvc.perform(get("/__test/inexistente"))
+                .andExpect(jsonPath("$.type").exists())
+                .andExpect(jsonPath("$.title").exists())
+                .andExpect(jsonPath("$.status").exists())
+                .andExpect(jsonPath("$.detail").exists());
+    }
+}

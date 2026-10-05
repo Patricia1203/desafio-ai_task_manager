@@ -39,6 +39,22 @@ Comandos (npm precisa ser chamado como `npm.cmd` no PowerShell deste ambiente):
 & "C:\Program Files\nodejs\npm.cmd" run build
 ```
 
+## Dependências de teste que o Boot 4 exige
+
+`spring-boot-starter-test` **não** traz mais o `@WebMvcTest`. Dependências
+adicionadas em `backend/pom.xml` e verificadas em T-F01-04:
+
+| Artifact | Por quê |
+|---|---|
+| `org.springframework.boot:spring-boot-webmvc-test` | `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest` (novo pacote) e o `MockMvc` autoconfigurado |
+| `org.springframework.boot:spring-boot-testcontainers` | anotação `@ServiceConnection`, que injeta url/usuário/senha do container no `spring.datasource.*` |
+| `org.springframework.boot:spring-boot-flyway` | sem ele o `FlywayAutoConfiguration` não existe no Boot 4 e nenhuma migration roda |
+| `org.testcontainers:testcontainers-postgresql:2.0.5` | `PostgreSQLContainer` **sem** diamond operator na 2.x |
+
+Um `@WebMvcTest` sem `controllers` carrega todos os controllers do projeto. Como o
+`HealthController` depende de `JdbcTemplate`, o slice precisa de um `@TestConfiguration`
+fornecendo um `JdbcTemplate` mockado, ou o contexto não sobe.
+
 ## Regras
 
 - Todo teste deriva dos critérios de aceite do `spec.md` da feature, não da implementação.

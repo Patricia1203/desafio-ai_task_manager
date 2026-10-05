@@ -39,7 +39,7 @@
 - **Nota 3:** o healthcheck do backend aponta para `/api/health`, criado em T-F01-04.
 
 ### T-F01-04 — Config, Flyway, migrations base, ProblemDetail, CORS
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RNF-01, RNF-20, RNF-21, ERR-02, ERR-06, TST-04
 - **Depende de:** T-F01-01
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/common/error/*, backend/src/main/java/com/desafio/taskmanager/common/config/*, backend/src/main/java/com/desafio/taskmanager/common/web/*, backend/src/main/resources/db/migration/V1__schema_base.sql, backend/src/test/java/.../common/error/*, backend/src/test/resources/application-test.yml, backend/pom.xml (exclusão da tag `llm`)
@@ -48,3 +48,6 @@
 - **Testes:** GlobalExceptionHandlerTest (@WebMvcTest, 400/404/500 e formato), CorsTest, AiTaskManagerApplicationTests (@SpringBootTest + Testcontainers Postgres, carrega o contexto e valida o schema).
 - **Gate:** mvn -q test
 - **Commit (rascunho):** `add: Configuração base, Flyway, ProblemDetail e CORS`
+- **Nota:** `V1__schema_base.sql` **não cria tabela de negócio** — fixa as convenções do schema e deixa `tasks` para `V2__create_tasks.sql` (F02) e o chat para `V3` (F04). Assim cada feature é dona do seu DDL e o `ddl-auto=validate` do Hibernate não tem conflito com o Flyway.
+- **Nota 2:** o Boot 4 exige `spring-boot-flyway` no POM (só `flyway-core` não registra o `FlywayAutoConfiguration`) e `spring-boot-webmvc-test` para o `@WebMvcTest`. Sem o primeiro nenhuma migration era aplicada.
+- **Nota 3:** o `HealthController` é montado em `/api/health` pelo `server.servlet.context-path`; ele executa `SELECT 1` e devolve `DOWN` se o banco não responder.

@@ -1,0 +1,21 @@
+-- V1__schema_base.sql
+-- Migracao base do AI Task Manager.
+--
+-- IMPORTANTE: esta migracao NAO cria tabelas de negocio. Cada feature e dona do
+-- seu schema e cria a sua propria migracao versionada:
+--   - F02-task-management  -> V2__create_tasks.sql        (tabela tasks)
+--   - F04-ai-assistant     -> V3__create_assistant.sql   (conversas e mensagens)
+--
+-- O schema das features esta definido em:
+--   .specs/features/F02-task-management/design.md
+--   .specs/features/F04-ai-assistant/design.md
+--
+-- Aqui ficam apenas as convencoes que valem para qualquer tabela futura:
+--   - chave primaria BIGSERIAL gerada pelo banco
+--   - created_at / updated_at em timestamptz (UTC), preenchidos por now()
+--   - enums persistidos como VARCHAR com CHECK explicito (evita tipos ENUM do PG,
+--     que exigem ALTER TYPE para novos valores)
+--   - indices explicitos, nunca dependendo de serializacao automatica do Hibernate
+--     (a aplicacao roda com spring.jpa.hibernate.ddl-auto=validate)
+
+COMMENT ON SCHEMA public IS 'AI Task Manager';
