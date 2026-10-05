@@ -57,13 +57,31 @@ public class TaskController {
     /** Evita que page * size derrube o banco com um size enorme. */
     private static final int MAX_PAGE_SIZE = 100;
 
+    /**
+     * Mais recentes primeiro, com o id desempatando createdAt. O filtro nao
+     * expoe sort: a ordem e decisao de produto, nao parametro do cliente.
+     */
+    private static final Sort ORDENACAO_PADRAO = Sort.by(
+            new Sort.Order(Sort.Direction.DESC, "createdAt"),
+            new Sort.Order(Sort.Direction.ASC, "id"));
+
     private final TaskService service;
 
     public TaskController(TaskService service) {
         this.service = service;
     }
 
-    /** RF-02, RF-23. Filtros e paginacao; ordenacao fixa em createdAt desc. */
+    /**
+     * RF-02, RF-23. Filtros e paginacao; ordenacao fixa em createdAt desc.
+     *
+     * <p><b>Por que o id entra como segundo criterio.</b> {@code createdAt} tem
+     * granularidade de microssegundo, mas nao e unico: varias tarefas salvas no
+     * mesmo instante recebem o mesmo timestamp. Nesses empates o Postgres pode
+     * devolver as linhas em qualquer ordem entre consultas, e como a paginacao
+     * usa OFFSET/LIMIT, a mesma tarefa pode aparecer em duas paginas ou sumir de
+     * uma. O id como desempate torna o sort totalmente determinado: e unico e
+     * nao muda depois de inserido.
+     */
     @GetMapping
     public PageResponse<TaskResponse> list(
             @RequestParam(required = false) TaskStatus status,
@@ -73,7 +91,7 @@ public class TaskController {
             @Max(value = MAX_PAGE_SIZE, message = "size deve ser no maximo " + MAX_PAGE_SIZE) int size) {
         return PageResponse.of(service.list(
                 new TaskFilter(status, priority),
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))));
+                PageRequest.of(page, size, ORDENACAO_PADRAO)));
     }
 
     /** RF-20. Fica antes de /tasks/{id} por causa do casamento de rota. */

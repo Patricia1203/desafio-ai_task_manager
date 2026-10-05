@@ -134,16 +134,17 @@
 - **Nota 2:** **[NEEDS CLARIFICATION] traceId.** O design não previa `traceId` e não há `traceId` em nenhum arquivo de `.specs`. Não é omissão do design, é decisão ainda não tomada: se entra, em qual header e em qual campo do ProblemDetail. `T-F05-02` fala em "preencher traceId e timestamp"; confirmar o formato antes de implementar.
 
 ### T-F02-05f — Ordenação estável na paginação
-- **Status:** pending
-- **Reqs:** RNF-03
+- **Status:** done
+- **Reqs:** RF-02
 - **Origem:** revisão de código do backend
-- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`, `backend/src/test/java/com/desafio/taskmanager/task/api/TaskControllerTest.java`
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`, `backend/src/test/java/com/desafio/taskmanager/task/api/TaskControllerTest.java`, `.specs/project/TRACEABILITY.md`
 - **O que fazer:** acrescentar `id` como segundo criterio de ordenação, depois de `createdAt desc`.
-- **Pronto quando:** duas tarefas com o mesmo `createdAt` mantêm a ordem entre páginas.
-- **Testes:** tarefas com timestamp idêntico não trocam de lugar entre páginas.
+- **Pronto quando:** o sort é totalmente determinado por `createdAt desc, id asc`.
+- **Testes:** `TaskControllerTest.listarUsaCreatedAtEIdComoDesempate`, `idEhUltimoCriterioDaOrdenacao`.
 - **Gate:** mvn -q test -Dtest=TaskControllerTest
-- **Commit (rascunho):** `fix: Desempatar a ordenacao por id na paginacao`
-- **Nota:** **só `createdAt desc` não é ordenação.** Em empate de timestamp o Postgres não garante ordem estável, então a mesma tarefa pode repetir ou sumir entre páginas.
+- **Commit:** `fix: Desempatar a ordenacao por id na paginacao`
+- **Nota:** **só `createdAt desc` não é ordenação.** Em empate de timestamp o Postgres não garante ordem estável entre consultas, e como a paginação usa OFFSET/LIMIT a mesma tarefa pode aparecer em duas páginas ou sumir de uma. O id é único e não muda depois de inserido.
+- **Nota 2:** **o teste confere a posição, não só a presença.** Verificar que `id` existe no sort não basta: se viesse antes de `createdAt`, o desempate passaria a mandar na ordem principal. `idEhUltimoCriterioDaOrdenacao` usa `containsExactly` para travar a sequência.
 
 ### T-F02-05g — BOM, typos e documentação desatualizada
 - **Status:** pending

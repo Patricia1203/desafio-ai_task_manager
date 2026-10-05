@@ -19,14 +19,18 @@ import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -98,6 +102,50 @@ class TaskControllerTest {
         verify(service).list(
                 eq(new TaskFilter(TaskStatus.IN_PROGRESS, TaskPriority.HIGH)),
                 any());
+    }
+
+    /**
+     * RNF-03: a ordenacao precisa ser totalmente determinada, senao a mesma
+     * tarefa aparece em duas paginas ou some de uma. Com createdAt sozinho o
+     * empate de timestamp deixa o Postgres livre para mudar a ordem entre
+     * consultas; o id como desempate remove essa liberdade.
+     */
+    @Test
+    void listarUsaCreatedAtEIdComoDesempate() throws Exception {
+        when(service.list(any(TaskFilter.class), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(
+                        List.of(), org.springframework.data.domain.PageRequest.of(0, 20), 0));
+
+        mockMvc.perform(get("/tasks")).andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(service).list(any(TaskFilter.class), captor.capture());
+
+        Sort.Order porData = captor.getValue().getSort().getOrderFor("createdAt");
+        assertThat(porData).isNotNull();
+        assertThat(porData.getDirection()).isEqualTo(Sort.Direction.DESC);
+
+        Sort.Order porId = captor.getValue().getSort().getOrderFor("id");
+        assertThat(porId).isNotNull();
+        assertThat(porId.getDirection()).isEqualTo(Sort.Direction.ASC);
+    }
+
+    /** O desempate so tem valor se for a ultima clausula do sort. */
+    @Test
+    void idEhUltimoCriterioDaOrdenacao() throws Exception {
+        when(service.list(any(TaskFilter.class), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(
+                        List.of(), org.springframework.data.domain.PageRequest.of(0, 20), 0));
+
+        mockMvc.perform(get("/tasks")).andExpect(status().isOk());
+
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(service).list(any(TaskFilter.class), captor.capture());
+
+        assertThat(captor.getValue().getSort())
+                .containsExactly(
+                        new Sort.Order(Sort.Direction.DESC, "createdAt"),
+                        new Sort.Order(Sort.Direction.ASC, "id"));
     }
 
     @Test
