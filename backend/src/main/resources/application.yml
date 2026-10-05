@@ -40,7 +40,9 @@ app:
     min-subtasks: 2
     max-estimated-hours: 200
 
+# O default e INFO. DEBUG fica no profile dev (application-dev.yml): log verboso
+# em todo ambiente polui a saida e mascara problema real.
 logging:
   level:
     root: INFO
-    com.desafio.taskmanager: DEBUG
+    com.desafio.taskmanager: INFO

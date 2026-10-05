@@ -161,17 +161,19 @@
 - **Nota 3:** **o `RF-03` estava em dois lugares.** `TaskController#update` é RF-03 de verdade (edição de conteúdo); o errado era `createSubtask`, que é RF-14 (decomposição em subtarefas). Corrigir pelo grep sem ler o requisito teria trocado os dois.
 
 ### T-F02-05h — Fragilidade dos testes de integração
-- **Status:** pending
+- **Status:** done (parte 1: asserção de tabelas e log)
 - **Reqs:** TST-04
 - **Origem:** revisão de código do backend
-- **Arquivos (alterar):** `backend/src/test/java/com/desafio/taskmanager/AiTaskManagerApplicationTests.java`, `backend/src/main/resources/application.yml`, base de teste compartilhada
+- **Arquivos (alterar):** `backend/src/test/java/com/desafio/taskmanager/AiTaskManagerApplicationTests.java`, `backend/src/main/resources/application.yml`
 - **O que fazer:** trocar `containsExactlyInAnyOrder("flyway_schema_history", "tasks")` por `contains`, para não quebrar quando a F04 criar as tabelas de chat; mover o log DEBUG do `application.yml` base para o profile `dev`.
 - **Pronto quando:** a suíte não depende da lista exata de tabelas e o profile default não loga em DEBUG.
-- **Testes:** a suíte completa passa.
+- **Testes:** `AiTaskManagerApplicationTests.todoNegocioVeioDoFlywayEAindaEstaNoHistorico` (novo).
 - **Gate:** mvn -q test
-- **Commit (rascunho):** `test: Desacoplar os testes da lista de tabelas e do log de dev`
-- **Nota:** **a asserção de tabelas é uma bomba-relógio para a F04.** `containsExactlyInAnyOrder` falha no dia em que o chat criar a própria tabela, por um motivo que não tem nada a ver com o teste.
-- **Nota 2:** **cada classe de teste sobe seu próprio Postgres; a suíte completa leva minutos.** Base compartilhada ou container singleton é a correção. Um teste unitário puro do domínio vem junto, para cobrir as regras sem subir banco.
+- **Commit:** `test: Desacoplar os testes da lista de tabelas e do log de dev`
+- **Nota:** **a asserção de tabelas era uma bomba-relógio para a F04.** `containsExactlyInAnyOrder` falharia no dia em que o chat criasse a própria tabela, por um motivo sem relação com o que o teste verifica.
+- **Nota 2:** **`contains` sozinho afrouxa o teste sem substituí-lo.** O que o teste realmente quer provar é que o Hibernate não criou nada (`ddl-auto=validate`). `todoNegocioVeioDoFlywayEAindaEstaNoHistorico` mantém essa afirmação: toda tabela presente tem que estar no conjunto que as migrations criaram. Frouxidão sem contrapartida vira perda de cobertura silenciosa.
+- **Nota 3:** **o item de container compartilhado e teste de domínio puro foi para T-F02-05i**, para não misturar duas causas diferentes no mesmo commit.
+- **Nota 4:** `application.yml` agora loga `INFO` na aplicação; `application-dev.yml` mantém `DEBUG` e `org.hibernate.SQL: DEBUG`.
 
 ### T-F02-05 — Frontend Dashboard e Tarefas
 - **Status:** pending

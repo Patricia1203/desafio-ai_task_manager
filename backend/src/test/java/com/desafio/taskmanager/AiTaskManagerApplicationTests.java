@@ -68,9 +68,26 @@ class AiTaskManagerApplicationTests {
                         + "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'",
                 String.class);
 
-        // O conjunto e fechado: as migrations V1..Vn sao a unica fonte do schema.
-        // Se o Hibernate criasse algo, apareceria uma tabela fora desta lista.
-        // (assumindo V1 sem DDL, V2 tasks, V3 chat na F04; na F03 e V1..V2)
-        assertThat(tabelas).containsExactlyInAnyOrder("flyway_schema_history", "tasks");
+        // contains, e nao containsExactlyInAnyOrder: este teste quer provar que as
+        // tabelas do Flyway existem, nao que o schema tem exatamente N tabelas.
+        // containsExactly falharia no dia em que a F04 criar as tabelas de chat,
+        // por um motivo sem relacao com o que esta sendo verificado.
+        assertThat(tabelas).contains("flyway_schema_history", "tasks");
+    }
+
+    /** Nenhuma tabela de negocio pode aparecer fora das migrations aplicadas. */
+    @Test
+    void todoNegocioVeioDoFlywayEAindaEstaNoHistorico() {
+        List<String> tabelas = jdbcTemplate.queryForList(
+                "SELECT table_name FROM information_schema.tables "
+                        + "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'",
+                String.class);
+
+        assertThat(tabelas).allSatisfy(tabela ->
+                assertThat(tabela)
+                        .as("tabela %s nao veio de migration", tabela)
+                        .satisfiesAnyOf(
+                                t -> assertThat(t).isEqualTo("flyway_schema_history"),
+                                t -> assertThat(t).isIn("tasks")));
     }
 }
