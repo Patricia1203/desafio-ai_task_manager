@@ -16,6 +16,8 @@ import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
 import com.desafio.taskmanager.task.infra.TaskRepository;
 
+import com.desafio.taskmanager.support.PostgresIntegrationTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +27,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,32 +35,21 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * TST-04: as regras de negocio contra Postgres real. Nao e mock: o service
  * monta Specification, o repositório gera JPQL e o banco valida — o que o
  * teste precisa provar e que a regra vale no dado persistido.
+ *
+ * <p>O container vem de {@link PostgresIntegrationTest}: o banco é compartilhado
+ * com as outras classes de integração e o {@code @BeforeEach} limpa a tabela, já
+ * que o container é o mesmo.
  */
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
-@Testcontainers
-class TaskServiceTest {
+class TaskServiceTest extends PostgresIntegrationTest {
 
     @Autowired
     private TaskService service;
 
     @Autowired
     private TaskRepository repository;
-
-    /**
-     * Mesmo container e mesmas credenciais de {@code TaskRepositoryTest}: o
-     * {@code @ServiceConnection} sobrescreve o {@code application-test.yml}, sem
-     * o qual o app tenta o Postgres da maquina e falha com "autenticacao do tipo
-     * senha falhou" no meio do build.
-     */
-    @Container
-    @ServiceConnection
-    static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:17-alpine")
-                    .withDatabaseName("taskmanager")
-                    .withUsername("taskmanager")
-                    .withPassword("taskmanager");
 
     @BeforeEach
     void clean() {

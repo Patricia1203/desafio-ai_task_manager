@@ -49,8 +49,8 @@
 | TST-02 | F02,F03,F04 | | | | | pending |
 | TST-03 | F03,F04 | | | | | pending |
 | TST-02 | F02,F03,F04 | T-F02-04 | `TaskControllerTest` (`@WebMvcTest` com `TaskService` mockado), `GlobalExceptionHandlerTest` | `mvn -q test -Dtest=TaskControllerTest` — 27 testes verdes | (T-F02-04) | done (parcial: slices de IA e assistente em F03/F04) |
-| TST-04 | F01,F02 | T-F01-04, T-F02-01, T-F02-02, T-F02-03 | `AiTaskManagerApplicationTests`, `TaskRepositoryTest`, `TaskServiceTest` (`@SpringBootTest` + Testcontainers Postgres), `TaskMapperTest`, `application-test.yml` | `mvn -q test` — 101 testes verdes | (T-F01-04), (T-F02-01), (T-F02-02), (T-F02-03), (T-F02-04) | done |
-| TST-01 | F02,F03,F04 | T-F02-02 | `task/application/TaskMapper`, `task/api/dto/*` | `TaskMapperTest` (17 testes: round-trip, campos ausentes, coerência entidade<->DTO) | (T-F02-02) | done (parcial: mocks do modelo em F03/F04) |
+| TST-04 | F01,F02 | T-F01-04, T-F02-01, T-F02-02, T-F02-03, T-F02-05h, T-F02-05i | `AiTaskManagerApplicationTests`, `TaskRepositoryTest`, `TaskServiceTest` (`@SpringBootTest` + Testcontainers Postgres compartilhado via `support/PostgresIntegrationTest`), `TaskMapperTest`, `application-test.yml` | `mvn -q test` — 132 testes verdes | (T-F01-04), (T-F02-01), (T-F02-02), (T-F02-03), (T-F02-04), (T-F02-05h), (T-F02-05i) | done |
+| TST-01 | F02,F03,F04 | T-F02-02, T-F02-05i | `task/application/TaskMapper`, `task/api/dto/*`; `task/domain/Task` (regras puras, sem Spring e sem banco) | `TaskMapperTest` (17 testes: round-trip, campos ausentes, coerência entidade<->DTO); `TaskTest` (20 testes: criação, transição de status, edição, subtarefas, igualdade) | (T-F02-02), (T-F02-05i) | done (parcial: mocks do modelo em F03/F04) |
 | DOC-01 | F05 | | | | | pending |
 | DEL-01 | F05 | | | | | pending |
 | DEL-02 | F05 | | | | | pending |

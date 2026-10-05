@@ -8,20 +8,18 @@ import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
 
+import com.desafio.taskmanager.support.PostgresIntegrationTest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,20 +27,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * TST-04 contra Postgres real: a entidade Task precisa mapear exatamente o que a
  * migration V2 criou, sob ddl-auto=validate. Qualquer divergência de coluna ou de
  * tipo quebra o boot do contexto, não só um assert.
+ *
+ * <p>O container vem de {@link PostgresIntegrationTest}: o banco é compartilhado
+ * com as outras classes de integração e o {@code @BeforeEach} limpa a tabela.
  */
 @SpringBootTest
 @ActiveProfiles("test")
-@Testcontainers
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
-class TaskRepositoryTest {
-
-    @Container
-    @ServiceConnection
-    static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:17-alpine")
-                    .withDatabaseName("taskmanager")
-                    .withUsername("taskmanager")
-                    .withPassword("taskmanager");
+class TaskRepositoryTest extends PostgresIntegrationTest {
 
     @Autowired
     private TaskRepository repository;

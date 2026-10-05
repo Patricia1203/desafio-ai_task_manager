@@ -3,6 +3,8 @@ package com.desafio.taskmanager;
 import java.util.List;
 import java.util.Map;
 
+import com.desafio.taskmanager.support.PostgresIntegrationTest;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,30 +12,20 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * TST-04: smoke de integracao. Sobe o contexto inteiro contra Postgres real via
  * Testcontainers e verifica que o schema das migrations foi aplicado.
+ *
+ * <p>O container vem de {@link PostgresIntegrationTest}. Esta classe nao escreve
+ * em {@code tasks}, entao nao precisa limpar nada.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Testcontainers
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
-class AiTaskManagerApplicationTests {
-
-    @Container
-    @ServiceConnection
-    static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:17-alpine")
-                    .withDatabaseName("taskmanager")
-                    .withUsername("taskmanager")
-                    .withPassword("taskmanager");
+class AiTaskManagerApplicationTests extends PostgresIntegrationTest {
 
     @Autowired
     private ApplicationContext context;

@@ -175,6 +175,22 @@
 - **Nota 3:** **o item de container compartilhado e teste de domínio puro foi para T-F02-05i**, para não misturar duas causas diferentes no mesmo commit.
 - **Nota 4:** `application.yml` agora loga `INFO` na aplicação; `application-dev.yml` mantém `DEBUG` e `org.hibernate.SQL: DEBUG`.
 
+### T-F02-05i — Container de Postgres compartilhado e teste de domínio puro
+- **Status:** done
+- **Reqs:** TST-01, TST-04
+- **Origem:** revisão de código do backend
+- **Arquivos (criar/alterar):** `backend/src/test/java/com/desafio/taskmanager/support/PostgresIntegrationTest.java` (novo), `TaskRepositoryTest`, `TaskServiceTest`, `AiTaskManagerApplicationTests`; `backend/src/test/java/com/desafio/taskmanager/task/domain/TaskTest.java` (novo)
+- **O que fazer:** extrair o container para uma base compartilhada; escrever testes de regra de domínio sem Spring e sem banco.
+- **Pronto quando:** uma única instância de Postgres atende as três classes de integração e as regras do domínio são cobertas por teste puro.
+- **Testes:** `TaskTest`, 20 casos agrupados por preocupação (criação, transição, edição, subtarefas, igualdade).
+- **Gate:** mvn -q test
+- **Commit:** `test: Compartilhar o container de Postgres e cobrir o dominio sem banco`
+- **Nota:** **o custo era multiplicado sem ganho.** Com `@Container` em cada classe, o JUnit subia e derrubava um Postgres por classe: três containers para o mesmo Postgres. A base compartilhada sobe uma vez e expõe a URL por `@DynamicPropertySource`. Suíte completa: 61s para 48s.
+- **Nota 2:** **a troca é dado compartilhado, e o texto da base diz isso de propósito.** Um banco só significa que `tasks` atravessa as classes de teste. `TaskRepositoryTest` e `TaskServiceTest` já limpavam no `@BeforeEach`; quem escrever um teste de integração novo precisa limpar também, senão herda linha de outro teste e lê um total que não pertence a ele.
+- **Nota 3:** **Flyway passar a rodar uma vez por banco é o comportamento correto.** A migration é a fonte do schema; reaplicar por classe de teste não faria sentido.
+- **Nota 4:** **`Thread.sleep(2)` nos testes de `updatedAt`.** `Instant.now()` tem precisão de microssegundo; sem folga o `isAfter` vira teste flakes.
+- **Nota 5:** **o teste registra que a guarda de auto-referência é inalcançável pela API pública**, em vez de fingir que a exercita. O `id` é um UUID gerado dentro da entidade, então a invariante nunca dispara nesse caminho; a defesa real é o `CHECK (parent_id IS NULL OR parent_id <> id)` de V2, coberto pelo `TaskRepositoryTest`.
+
 ### T-F02-05 — Frontend Dashboard e Tarefas
 - **Status:** pending
 - **Reqs:** RF-20, RF-21, RNF-03
