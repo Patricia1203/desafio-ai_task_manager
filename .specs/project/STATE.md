@@ -1,8 +1,8 @@
 ﻿# STATE.md
 
 ## Task atual
-T-F02-01 — Entidade, migração e repositório Task — **done** (Gate: `mvn -q test -Dtest=TaskRepositoryTest` verde, 13 testes).
-Próxima: T-F02-02 — DTOs, mapper e validações (Gate `mvn -q test -Dtest=TaskMapperTest`).
+T-F02-02 — DTOs, mapper e validações — **done** (Gate: `mvn -q test -Dtest=TaskMapperTest` verde, 17 testes; suíte completa com 44 testes verdes).
+Próxima: T-F02-03 — Service CRUD, filtros, status e summary (Gate `mvn -q test -Dtest=TaskServiceTest`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -39,7 +39,7 @@ Próxima: T-F02-02 — DTOs, mapper e validações (Gate `mvn -q test -Dtest=Tas
 - 2026-10-05 (T-F01-03): Dockerfiles multi-stage com usuário não-root no backend; cache de Maven e de npm em camadas separadas; nginx fazendo proxy de `/api` com timeout de 300s para as chamadas de IA.
 
 ## Decisões — T-F01-04
-- 2026-10-05: **`V1__schema_base.sql` não cria tabela de negócio.** Cada feature é dona do seu DDL: `V2__create_tasks.sql` em F02, `V3` para o chat em F04. A V1 fixa as convenções (BIGSERIAL, `timestamptz`, enums como VARCHAR + CHECK, índices explícitos) para que `ddl-auto=validate` e as entidades JPA não entrem em conflito com o Flyway. Alternativa descartada: criar `tasks` já na V1 e縛ar a F02 com ALTER TABLE.
+- 2026-10-05: **`V1__schema_base.sql` não cria tabela de negócio.** Cada feature é dona do seu DDL: `V2__create_tasks.sql` em F02, `V3` para o chat em F04. A V1 fixa as convenções (BIGSERIAL, `timestamptz`, enums como VARCHAR + CHECK, índices explícitos) para que `ddl-auto=validate` e as entidades JPA não entrem em conflito com o Flyway. Alternativa descartada: criar `tasks` já na V1 e prender a F02 a ALTER TABLE.
 - 2026-10-05: **O Boot 4 exige `org.springframework.boot:spring-boot-flyway`.** Com apenas `flyway-core` o `FlywayAutoConfiguration` não existe, nenhuma migration roda e a tabela `flyway_schema_history` nem é criada — o app subia "verde" com o banco vazio. Detectado pelo smoke test.
 - 2026-10-05: **`@WebMvcTest` passou a `org.springframework.boot.webmvc.test.autoconfigure`** e vem do módulo `spring-boot-webmvc-test`, que o `spring-boot-starter-test` não traz. Adicionado ao POM.
 - 2026-10-05: **`PostgreSQLContainer` da Testcontainers 2.0.5 não é genérico.** O diamond operator não compila; o tipo usable é `org.testcontainers.postgresql.PostgreSQLContainer`.
@@ -57,6 +57,16 @@ Próxima: T-F02-02 — DTOs, mapper e validações (Gate `mvn -q test -Dtest=Tas
 - 2026-10-05: **Valores de `status` gravados como `VARCHAR` com `CHECK`, não como tipo ENUM do Postgres.** Adicionar um valor depois seria `ALTER TYPE`; com `VARCHAR` + `CHECK` é um `ALTER TABLE` e o mapeamento `EnumType.STRING` continua igual dos dois lados.
 - 2026-10-05: **`TaskRepository` estende `JpaSpecificationExecutor`** para os filtros compostos de RF-02 (status + prioridade + paginação); as consultas de summary e as ferramentas somente-leitura do assistente (F04) são `@Query` nomeadas.
 - 2026-10-05: **Timestamp de criação/leitura na entidade, não em trigger do banco.** Uma fonte só de tempo evita divergência entre o que o teste compara e o que o banco devolve.
+
+## Decisões — T-F02-02
+- 2026-10-05: **Mapper escrito à mão, sem MapStruct.** Um record com nove campos tem mapeamento trivial e um `@Mapper` gerado custaria um plugin de build e esconderia o contrato. Todos os campos de `TaskResponse` aparecem explicitamente no `TaskMapper#toResponse`, e o teste cobre o round-trip.
+- 2026-10-05: **`TaskResponse` expõe `parentId` (UUID), nunca a referência `Task parent`.** Como o pai é `LAZY`, serializar a entidade arrastaria proxy ou exigiria sessão aberta; o contrato HTTP fica com um UUID.
+- 2026-10-05: **`UpdateTaskRequest` não tem campo `status`.** PUT substitui conteúdo; status tem endpoint próprio (`PATCH /tasks/{id}/status`). Aceitar status no PUT daria ao mapper um caminho que burla `Task#changeStatus` e deixaria a invariante DONE-terminal sem dono. Se o desafio exigir PUT completo, o mapper passa a chamar `changeStatus` em vez de setar o campo.
+- 2026-10-05: **Limites de validação: título 200 e descrição 5000.** O 200 é o mesmo do `VARCHAR(200)` de `V2__create_tasks.sql`, para a constraint do banco e a do Bean Validation dizerem a mesma coisa; 5000 é a capacidade do `TEXT` e evita payload ilimitado.
+- 2026-10-05: **Mensagens de constraint em português, sem acento.** O `GlobalExceptionHandler` de T-F01-04 joga `getMessage()` direto na propriedade `errors` do ProblemDetail, então a string é contrato visível ao usuário e fica escrita no DTO.
+- 2026-10-05: **`PageResponse<T>` é genérico e é o único ponto que conhece `Page<T>` do Spring Data.** Serve para a lista de tarefas e para as mensagens do assistente em F04 sem formato de paginação duplicado.
+- 2026-10-05: **`toSubtask` é separado de `toDomain`.** A decomposição por IA (RF-14, F03) exige pai; deixar o pai explícito na assinatura impede um caminho da IA criando tarefa de topo por engano.
+- 2026-10-05: **O `trim()` do título fica no DTO (`normalizedTitle()`), não no mapper.** O DTO é a borda: normalizar na entrada evita repetir isso no service e na IA, que vai montar DTOs também.
 
 ## Dúvidas [NEEDS CLARIFICATION]
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
@@ -86,4 +96,7 @@ Próxima: T-F02-02 — DTOs, mapper e validações (Gate `mvn -q test -Dtest=Tas
 - Um método de teste com espaço no nome (`void segundaOrigemConfigurada TambemEhLiberada()`) não compila; o erro do compilador aparece como `'(' expected` na linha seguinte, o que confunde a leitura.
 - **`git commit -m` no PowerShell 5.1 achata o corpo da mensagem numa linha só.** Escrever a mensagem num arquivo e usar `git commit -F <arquivo>`. Ocorre em T-F01-03, T-F01-04 e T-F02-01.
 - **Teste de integração sem `@Transactional` deixa a entidade detached:** depois de `saveAndFlush`, chamar `flush()` não gera UPDATE. Use `saveAndFlush` a cada mudança, ou coloque `@Transactional` no teste.
-- Nomes de variável que colidem com classe do mesmo pacote (`Task hoje`) causam erro de compilação confuso tipo `cannot be converted to Task`; use o nome do tipo (`LocalDate hoje`).
+- Nomes de variável que colidem com classe do mesmo pacote (`Task hoje`) causam erro de compilação confuso tipo `cannot be converted to Task`; usar o nome do tipo (`LocalDate hoje`).
+- **`Validator.validate` devolve `Set`, e `Set` não tem índice.** Guardar o resultado em `List` e chamar `.get(0)` não compila, com o erro "no instance(s) of type variable(s) T exist so that Set<...> conforms to List<...>", que não aponta para a causa. Usar um helper que valida o tamanho e devolve `iterator().next()`.
+- **Asserção tautológica passa no teste e não testa nada.** Escrever `assertThat(x).isEqualTo(condicao ? x : x)` nunca falha. Quando a intenção era comparar com o valor de antes da operação, capturar o valor em variável local antes de chamá-la.
+- A ferramenta de escrita/edição introduziu um caractere CJK (`缚`) em texto português já escrito. Vale varrer os arquivos de spec com uma regex de `\u3000-\u9FFF` depois de edições longas antes de commitar.

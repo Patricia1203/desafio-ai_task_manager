@@ -17,7 +17,7 @@
 - **Nota 5:** o teste `atualizaStatusNoBanco` usa `saveAndFlush` a cada mudança de status, não `flush`. Sem `@Transactional` no teste a entidade fica detached e `flush()` sozinho não gera UPDATE.
 
 ### T-F02-02 — DTOs, mapper e validações
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-07, ERR-02
 - **Depende de:** T-F02-01
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/api/dto/TaskResponse.java, CreateTaskRequest.java, UpdateTaskRequest.java, UpdateStatusRequest.java, PageResponse.java, backend/src/main/java/com/desafio/taskmanager/task/application/TaskMapper.java, backend/src/test/java/.../task/application/TaskMapperTest.java
@@ -26,6 +26,12 @@
 - **Testes:** TaskMapperTest (round-trip completo, campos ausentes) e testes de validação do CreateTaskRequest.
 - **Gate:** mvn -q test -Dtest=TaskMapperTest
 - **Commit (rascunho):** `add: DTOs e mapper de Task`
+- **Nota:** limite de título 200 (o mesmo do `VARCHAR(200)`) e descrição 5000, com as mensagens em português porque o `GlobalExceptionHandler` joga a mensagem da constraint direto no ProblemDetail.
+- **Nota 2:** `TaskResponse` expõe `parentId` (UUID) e nunca o `Task parent`, para o JSON da lista não arrastar a entidade carregada via LAZY.
+- **Nota 3:** **o status não é campo de `UpdateTaskRequest`.** PUT é substituição de conteúdo; a transição de status passa por `PATCH /tasks/{id}/status` e pela regra de domínio. Se o PUT aceitasse status, o mapper burlaria `changeStatus` e a invariante DONE-terminal ficaria sem dono.
+- **Nota 4:** `PageResponse.of(Page<T>)` é o único ponto que conhece o `Page` do Spring Data. O envelope (`content`, `page`, `size`, `totalItems`, `totalPages`, `first`, `last`) é genérico e já serve para as mensagens do assistente em F03.
+- **Nota 5:** `toSubtask` existe separado de `toDomain` porque a decomposição por IA (RF-14, F03) cria subtarefa com pai obrigatório — deixar o pai explícito na assinatura impede que um caminho da IA crie tarefa de topo por engano.
+- **Nota 6:** `Validator.validate` devolve `Set`, que não tem posição fixa. O teste usa um helper `unica(Set)` que valida o tamanho e devolve `iterator().next()`; escrever `violations.get(0)` no lugar dá erro de compilação e induz a mudar o tipo errado.
 
 ### T-F02-03 — Service CRUD, filtros, status e summary
 - **Status:** pending

@@ -11,7 +11,7 @@
 | RF-04 | F02 | | | | | pending |
 | RF-05 | F02 | | | | | pending |
 | RF-06 | F02 | | | | | pending |
-| RF-07 | F02 | T-F02-01 | `task/domain/Task`, `TaskStatus`, `TaskPriority`, `V2__create_tasks.sql` | `TaskRepositoryTest.gravaELeComTodosOsCampos`, `tarefaNovaNasceComStatusInicialEPrioridadePadrao` | (T-F02-01) | done (parcial: DTOs em T-F02-02, API em T-F02-04) |
+| RF-07 | F02 | T-F02-01, T-F02-02 | `task/domain/Task`, `TaskStatus`, `TaskPriority`, `V2__create_tasks.sql`; `task/api/dto/{Create,Update}TaskRequest`, `TaskResponse`, `PageResponse`, `task/application/TaskMapper` | `TaskRepositoryTest.gravaELeComTodosOsCampos`, `tarefaNovaNasceComStatusInicialEPrioridadePadrao`; `TaskMapperTest.toDomainCriaTarefaComTodosOsCampos`, `toResponseCobreTodosOsCamposDaEntidade`, `roundTripPreservaTodosOsCampos` | (T-F02-01), (T-F02-02) | done (parcial: endpoints em T-F02-04) |
 | RF-08 | F02 | T-F02-01 | `task/domain/TaskStatus`, `Task#changeStatus` | `TaskRepositoryTest.atualizaStatusNoBanco` | (T-F02-01) | done (parcial: PATCH em T-F02-04) |
 | RF-09 | F02 | T-F02-01 | `task/domain/TaskPriority`, `task/infra/TaskRepository` (índices e filtros) | `TaskRepositoryTest.filtraPorPrioridade`, `filtraComSpecificationCompostaEOrdena`, `paginaResultados` | (T-F02-01) | done (parcial: endpoint em T-F02-04) |
 | RF-10 | F03 | | | | | pending |
@@ -38,7 +38,7 @@
 | RNF-20 | F01 | T-F01-01, T-F01-04 | `application.yml`, `common/config/WebConfig`, `common/config/CorsProperties`, `common/error/GlobalExceptionHandler` | `AiTaskManagerApplicationTests` (contexto sobe, schema Flyway aplicado) | 530102b, (T-F01-04) | done |
 | RNF-21 | F01,F02 | T-F01-04, T-F02-01 | `common/config/WebConfig`, `common/config/CorsProperties`; `V2__create_tasks.sql` (índices em status/priority/due_date/parent_id) | `CorsConfigTest` (origem permitida e não permitida, preflight); `TaskRepositoryTest.filtraPorStatus`, `filtraPorPrioridade` | (T-F01-04), (T-F02-01) | done (parcial: telas em T-F02-05) |
 | ERR-01 | F02,F05 | | | | | pending |
-| ERR-02 | F02,F05 | T-F01-04 | `common/error/GlobalExceptionHandler` (400 + lista `errors`), `FieldErrorItem` | `GlobalExceptionHandlerTest.beanValidationDevolve400ComListaDeCampos` | (T-F01-04) | done (parcial, revisado em T-F05-02) |
+| ERR-02 | F02,F05 | T-F01-04, T-F02-02 | `common/error/GlobalExceptionHandler` (400 + lista `errors`), `FieldErrorItem`; constraints em `CreateTaskRequest`/`UpdateTaskRequest`/`UpdateStatusRequest` (mensagens em portugues) | `GlobalExceptionHandlerTest.beanValidationDevolve400ComListaDeCampos`; `TaskMapperTest.createRequestComTituloVazioApontaOCampo`, `createRequestComTituloLongoApontaOCampoComMensagem`, `updateStatusRequestExigeStatus` | (T-F01-04), (T-F02-02) | done (parcial, controller em T-F02-04, revisado em T-F05-02) |
 | ERR-03 | F03,F04,F05 | | | | | pending |
 | ERR-04 | F03,F04,F05 | | | | | pending |
 | ERR-05 | F03,F04,F05 | | | | | pending |
@@ -46,7 +46,8 @@
 | TST-01 | F02,F03,F04 | | | | | pending |
 | TST-02 | F02,F03,F04 | | | | | pending |
 | TST-03 | F03,F04 | | | | | pending |
-| TST-04 | F01,F02 | T-F01-04, T-F02-01 | `AiTaskManagerApplicationTests`, `TaskRepositoryTest` (`@SpringBootTest` + Testcontainers Postgres), `application-test.yml` | `mvn -q test` — 27 testes verdes | (T-F01-04), (T-F02-01) | done |
+| TST-04 | F01,F02 | T-F01-04, T-F02-01, T-F02-02 | `AiTaskManagerApplicationTests`, `TaskRepositoryTest` (`@SpringBootTest` + Testcontainers Postgres), `TaskMapperTest`, `application-test.yml` | `mvn -q test` — 44 testes verdes | (T-F01-04), (T-F02-01), (T-F02-02) | done |
+| TST-01 | F02,F03,F04 | T-F02-02 | `task/application/TaskMapper`, `task/api/dto/*` | `TaskMapperTest` (17 testes: round-trip, campos ausentes, coerência entidade<->DTO) | (T-F02-02) | done (parcial: mocks do modelo em F03/F04) |
 | DOC-01 | F05 | | | | | pending |
 | DEL-01 | F05 | | | | | pending |
 | DEL-02 | F05 | | | | | pending |
