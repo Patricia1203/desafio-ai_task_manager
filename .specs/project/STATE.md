@@ -1,7 +1,7 @@
 ﻿# STATE.md
 
 ## Task atual
-Nenhuma task em execução (Fase 0 concluída).
+Pronta para executar F01: T-F01-01 (Fase 0 concluída).
 
 ## Decisões
 - 2026-10-05: Iniciada Fase 0 (bootstrap estrutura de agente/especificações). Repo já tem .git com commit inicial.
