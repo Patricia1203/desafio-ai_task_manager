@@ -192,6 +192,19 @@
 - **Nota 4:** **`Thread.sleep(2)` nos testes de `updatedAt`.** `Instant.now()` tem precisão de microssegundo; sem folga o `isAfter` vira teste flakes.
 - **Nota 5:** **o teste registra que a guarda de auto-referência é inalcançável pela API pública**, em vez de fingir que a exercita. O `id` é um UUID gerado dentro da entidade, então a invariante nunca dispara nesse caminho; a defesa real é o `CHECK (parent_id IS NULL OR parent_id <> id)` de V2, coberto pelo `TaskRepositoryTest`.
 
+### T-F02-05j — Lista de tabelas derivada das migrations
+- **Status:** done
+- **Reqs:** TST-04
+- **Origem:** revisão de T-F02-05h
+- **Arquivos (alterar):** `backend/src/test/java/com/desafio/taskmanager/AiTaskManagerApplicationTests.java`
+- **O que fazer:** o teste que garante "toda tabela de negócio veio do Flyway" lia a lista de tabelas do banco e comparava com uma constante no próprio teste (`flyway_schema_history` + `tasks`). Trocar `containsExactly` por `contains` resolveu a fragilidade do primeiro teste, mas o segundo continuava acorrentado na mesma lista: a F04 criaria `chat_sessions`/`chat_messages` e o teste ficaria vermelho por um motivo sem relação com o que ele verifica.
+- **Pronto quando:** a lista esperada sai da leitura dos próprios scripts `db/migration/V*.sql` do classpath, e o teste falha se o banco tiver tabela que nenhuma migration cria. Verificado por mutação: criar `tabela_fora_da_migration` dentro do teste faz a asserção falhar.
+- **Testes:** `AiTaskManagerApplicationTests.todoNegocioVeioDoFlywayEAindaEstaNoHistorico`.
+- **Gate:** mvn -q test — 132 testes verdes
+- **Commit (rascunho):** `test: Derivar a lista de tabelas das migrations em vez de fixar no teste`
+- **Nota:** o `isSubsetOf` passaria por vazio se o padrão de leitura das migrations deixasse de encontrar nada, então o teste afirma `contains("tasks")` antes de comparar. É a mesma armadilha da asserção tautológica: um `contains` frouxo precisa de uma âncora que prove que ele ainda segura.
+- **Nota 2:** os testes que escrevem no Postgres compartilhado precisam limpar a própria sujeira. A tabela da mutação foi criada no container efêmero e revertida junto com a alteração.
+
 ### T-F02-05 — Frontend Dashboard e Tarefas
 - **Status:** pending
 - **Reqs:** RF-20, RF-21, RNF-03
