@@ -1,7 +1,7 @@
 ﻿# tasks.md — F02-task-management
 
 ### T-F02-01 — Entidade, migração e repositório Task
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-07, RF-08, RF-09, RNF-21, TST-04
 - **Depende de:** T-F01-04
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/domain/Task.java, backend/src/main/java/com/desafio/taskmanager/task/domain/TaskStatus.java, backend/src/main/java/com/desafio/taskmanager/task/domain/TaskPriority.java, backend/src/main/java/com/desafio/taskmanager/task/infra/TaskRepository.java, backend/src/main/resources/db/migration/V2__create_tasks.sql, backend/src/test/java/.../task/infra/TaskRepositoryTest.java
@@ -10,6 +10,11 @@
 - **Testes:** TaskRepositoryTest (save/find, filtro por status/prioridade, busca de subtarefas por parentTaskId) com Testcontainers.
 - **Gate:** mvn -q test -Dtest=TaskRepositoryTest
 - **Commit (rascunho):** `add: Entidade e migração de Task`
+- **Nota:** `parentTaskId` do design virou `Task.parent` com `@ManyToOne(fetch = LAZY)`, e a coluna é `parent_id`. O self-reference tem `ON DELETE CASCADE`: excluir a tarefa pai remove as subtarefas.
+- **Nota 2:** **DONE é terminal.** `Task#changeStatus` só permite sair de DONE para TODO (reabrir). Voltar direto para IN_PROGRESS lança `BusinessRuleException` (422). Regra documentada em `STATE.md` como [ASSUMPTION] — se o desafio permitir reabrir direto, é uma linha no método.
+- **Nota 3:** id é `UUID` gerado em Java (`UUID.randomUUID()` na factory da entidade), não no banco, para o id existir antes do INSERT e a subtarefa poder referenciar o pai já na mesma transação.
+- **Nota 4:** `@BeforeEach repository.deleteAll()` nos testes: os testes de integração compartilham o mesmo container e as contagens do summary não podem depender da ordem de execução.
+- **Nota 5:** o teste `atualizaStatusNoBanco` usa `saveAndFlush` a cada mudança de status, não `flush`. Sem `@Transactional` no teste a entidade fica detached e `flush()` sozinho não gera UPDATE.
 
 ### T-F02-02 — DTOs, mapper e validações
 - **Status:** pending

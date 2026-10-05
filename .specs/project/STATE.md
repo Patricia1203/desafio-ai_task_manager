@@ -1,8 +1,8 @@
 ﻿# STATE.md
 
 ## Task atual
-T-F01-04 — Config, Flyway, migrations base, ProblemDetail, CORS e endpoint /api/health — **done** (Gate: `mvn -q test` verde, 14 testes).
-F01-foundation completa. Próxima: T-F02-01 — Entidade, migração e repositório Task (Gate `mvn -q test -Dtest=TaskRepositoryTest`).
+T-F02-01 — Entidade, migração e repositório Task — **done** (Gate: `mvn -q test -Dtest=TaskRepositoryTest` verde, 13 testes).
+Próxima: T-F02-02 — DTOs, mapper e validações (Gate `mvn -q test -Dtest=TaskMapperTest`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -29,6 +29,8 @@ F01-foundation completa. Próxima: T-F02-01 — Entidade, migração e repositó
 - [ASSUMPTION] O modelo padrão `qwen2.5:7b` suporta tool calling no Ollama. Não verificado (Ollama indisponível). Confirmar em T-F03-02/T-F04-02; se não suportar, trocar para `llama3.1:8b` ou implementar fallback de contexto injetado (registrar decisão).
 - [ASSUMPTION] `dueDate` será `LocalDate` (data sem hora) com formato ISO-8601 `yyyy-MM-dd`. Se o desafio exigir data-hora, ajustar em F02.
 - [ASSUMPTION] `BusinessRuleException` responde **422** e não 400. O `design.md` da F02 lista "ERR-02 400" sem distinguir; se o desafio exigir 400 para regra de negócio, o handler muda em um único ponto.
+- [ASSUMPTION] **DONE é terminal** — reabrir uma tarefa concluída exige passar por TODO, e ir direto para IN_PROGRESS é recusado com 422. O `spec.md` da F02 só diz "altera entre TODO, IN_PROGRESS, DONE", sem definir transições inválidas. Se o desafio exigir transição livre, remover o bloco em `Task#changeStatus`.
+- [NEEDS CLARIFICATION] O que fazer ao excluir uma tarefa que tem subtarefas. Implementado como cascata (`ON DELETE CASCADE`). A alternativa é bloquear com 422 e obrigar o usuário a mover ou excluir as subtarefas primeiro. Decidir em T-F02-03 e ajustar o `DELETE`.
 
 - 2026-10-05 (T-F01-03): **A imagem `eclipse-temurin:21-jdk-alpine` não contém o Maven.** O build do backend falhou com `mvn: not found`. Corrigido usando `maven:3.9-eclipse-temurin-21-alpine` no estágio de build e `eclipse-temurin:21-jre-alpine` no runtime.
 - 2026-10-05 (T-F01-03): Tags de imagem **verificadas** com `docker manifest inspect` antes de fixar: maven 3.9-eclipse-temurin-21-alpine, eclipse-temurin 21-jre-alpine, node 24-alpine, nginx 1.29-alpine, postgres 17-alpine, ollama/ollama latest.
@@ -45,6 +47,16 @@ F01-foundation completa. Próxima: T-F02-01 — Entidade, migração e repositó
 - 2026-10-05: `HealthController` devolve `/api/health` com `status`, `timestamp` e o resultado de um `SELECT 1`. O compose depende dele para subir o frontend, então ele responde `DOWN` em vez de mentir `UP` quando o banco cai.
 - 2026-10-05: CORS **falha fechado**: `app.cors.allowed-origins` vazio não registra mapeamento nenhum, em vez de liberalizar com `*`. `allowedOrigins` explícito (nunca `allowedOriginPatterns`) impede o eco de origens tipo `http://localhost:5173.evil.example.com`.
 - 2026-10-05: O `pom.xml` agora exclui a tag `llm` do build padrão (`excludedGroups=llm`), como previsto no TESTING.md.
+
+## Decisões — T-F02-01
+- 2026-10-05: **`V2__create_tasks.sql` cria a tabela `tasks`.** Colunas: `id UUID`, `title`, `description`, `status`, `priority`, `due_date DATE`, `parent_id UUID` (auto-relacionamento, `ON DELETE CASCADE`), `created_at`/`updated_at` em `timestamptz`. Índices em `status`, `priority`, `due_date` e `parent_id`, como pede o design da F02.
+- 2026-10-05: **O `id` é `UUID` gerado em Java**, não no banco. Assim a entidade já tem identidade antes do INSERT e a F03 pode criar a tarefa pai e as subtarefas na mesma transação referenciando o pai.
+- 2026-10-05: **DONE é estado terminal.** `Task#changeStatus` recusa DONE → IN_PROGRESS e lança `BusinessRuleException` (→ 422); reabrir exige ir a TODO. Ver [ASSUMPTION] abaixo.
+- 2026-10-05: **O `design.md` fala em `parentTaskId UUID`; implementado como `Task parent` com `@ManyToOne(fetch = LAZY)` e coluna `parent_id`.** Motivo: o design pede subtarefas por `parentTaskId`, e uma referência fraca basta para a listagem; o `fetch = LAZY` evita carregar a árvore inteira em toda listagem. O `TaskResponse` vai expor `parentId`, então o contrato HTTP não muda.
+- 2026-10-05: **`ON DELETE CASCADE` em `parent_id`.** Excluir a tarefa pai remove as subtarefas; não deixar órfãos pendurados. A alternativa (bloquear a exclusão) fica como pergunta em aberto para F02-03, que decide a regra de negócio do `DELETE`.
+- 2026-10-05: **Valores de `status` gravados como `VARCHAR` com `CHECK`, não como tipo ENUM do Postgres.** Adicionar um valor depois seria `ALTER TYPE`; com `VARCHAR` + `CHECK` é um `ALTER TABLE` e o mapeamento `EnumType.STRING` continua igual dos dois lados.
+- 2026-10-05: **`TaskRepository` estende `JpaSpecificationExecutor`** para os filtros compostos de RF-02 (status + prioridade + paginação); as consultas de summary e as ferramentas somente-leitura do assistente (F04) são `@Query` nomeadas.
+- 2026-10-05: **Timestamp de criação/leitura na entidade, não em trigger do banco.** Uma fonte só de tempo evita divergência entre o que o teste compara e o que o banco devolve.
 
 ## Dúvidas [NEEDS CLARIFICATION]
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.

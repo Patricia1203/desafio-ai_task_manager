@@ -68,7 +68,9 @@ class AiTaskManagerApplicationTests {
                         + "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'",
                 String.class);
 
-        // apenas o historico do Flyway; as tabelas de negocio entram em F02/F04.
-        assertThat(tabelas).containsExactly("flyway_schema_history");
+        // O conjunto e fechado: as migrations V1..Vn sao a unica fonte do schema.
+        // Se o Hibernate criasse algo, apareceria uma tabela fora desta lista.
+        // (assumindo V1 sem DDL, V2 tasks, V3 chat na F04; na F03 e V1..V2)
+        assertThat(tabelas).containsExactlyInAnyOrder("flyway_schema_history", "tasks");
     }
 }
