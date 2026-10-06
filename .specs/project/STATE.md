@@ -16,14 +16,16 @@
 # STATE.md
 
 ## Task atual
-T-F04-01 - Entidades e migração do histórico de conversa - **pending**
-Anterior: T-F03-04 - Painel de IA no frontend - done (gate frontend: lint + 24 testes + build).
+T-F04-02 - Ferramentas somente-leitura do assistente - **pending**
+Anterior: T-F04-01 - Entidades e migração do histórico de conversa - done (gate: mvn -q test -Dtest=ChatRepositoryTest, 4 verdes; suíte completa 192).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
 - 2026-10-05: **Maven não está no PATH** desta máquina; o binário usado nos Gates está em
   `$MAVEN_HOME/bin/mvn` (Maven 3.9.15).
-  Todos os Gates de backend devem invocar esse caminho até o Maven ser adicionado ao PATH.
+  **2026-10-06: repositório mudou de máquina e o caminho correto passou a ser
+  `$MAVEN_HOME/bin/mvn`**
+  (mesma versão, mesmo diretório de hash; confirmado por `find`). Todos os Gates de backend devem invocar esse caminho até o Maven ser adicionado ao PATH.
 - 2026-10-05: **Versões verificadas no Maven Central** (não estimadas): Spring Boot **4.1.1** (GA), Spring AI **2.0.1**, Testcontainers **2.0.5**.
   As versões de milestone usadas no primeiro commit (Boot 4.0.0-M3 / Spring AI 1.0.0-M4) estavam erradas e foram substituídas.
 - 2026-10-05: `spring-boot-starter-web` foi substituído por `spring-boot-starter-webmvc` (starter renomeado/deprecado no Boot 4).
@@ -153,6 +155,14 @@ Anterior: T-F03-04 - Painel de IA no frontend - done (gate frontend: lint + 24 t
 - 2026-10-06: **`horasEstimadas` formatado com `toLocaleString('pt-BR')` + "h"** (ex.: 12,5 h), `null` vira "Não estimadas" na análise e some do item da lista — coerente com o restante do front em português.
 - 2026-10-06: **`node_modules` veio incompleto na mudança de máquina (53 pacotes); `npm install` o restaurou (129 auditados, `package-lock.json` sem alteração, 0 vulnerabilidades).** Mesmo padrão de T-F02-05; vitest/oxlint só passaram a existir depois do install.
 - Gate desta task: `npm run lint` (2 warnings pré-existentes de `set-state-in-effect` em `TasksPage`/`DashboardPage`), `npm run test` (5 arquivos, **24 testes verdes** — 18 anteriores + 6 novos do `AiPanel.test.tsx`), `npm run build` (`tsc -b` + vite). Backend intocado — suíte permanece em 188.
+
+## Decisões — T-F04-01
+- 2026-10-06: **`ChatRole` em inglês (USER/ASSISTANT), igual a `TaskComplexity` da F03.** O banco é contrato interno; o RF-24 (português) vale para o JSON público da API, que só nasce em T-F04-03. O `CHECK` da `chat_messages` fixa os dois valores.
+- 2026-10-06: **`content` é `VARCHAR(5000)` com `CHECK` de não-vazio, alinhado ao `app.ai.max-text-length`.** T-F04-03 vai rejeitar mensagem acima desse limite com 400; ter o mesmo número no banco e no domínio evita o "400 aqui, estouro de coluna ali".
+- 2026-10-06: **Índice composto `(conversation_id, created_at)`, não dois índices separados.** A janela de histórico (T-F04-03) sempre filtra por conversa e ordena por `created_at`; o composto cobre exatamente essa consulta e satisfaz o "índices em conversationId e createdAt" do enunciado.
+- 2026-10-06: **Mensagens com `id BIGSERIAL` e ordenação `created_at ASC, id ASC`.** O id é só desempate: gravações no mesmo instante não invertem ordem (o Postgres guarda `timestamptz` em microssegundos; `Instant.now()` pode ter dois registros no mesmo timestamp). Conversa mantém `UUID` gerado pela aplicação, como `tasks`.
+- 2026-10-06: **`conversationId` é referência fraca na entidade (coluna UUID), com FK `ON DELETE CASCADE` no banco** — só a leitura do histórico precisa da conversa, então não há associação JPA; o teste de tirar a conversa e sumir as mensagens prova o comportamento.
+- 2026-10-06: **Máquina nova: Docker Desktop estava parado e foi iniciado (29.4.3) antes do Gate** — mesmo procedimento de T-F01-02; o `PostgresIntegrationTest` reaproveitou o container compartilhado e a suite inteira rodou de uma vez (16 suítes, 192 testes verdes). Java 25.0.1 (LTS) compila o alvo Java 21 do POM sem ajuste.
 
 ## Dúvidas [NEEDS CLARIFICATION]
 - ~~[NEEDS CLARIFICATION] (resolver em T-F03-03) **Idioma do JSON público da API de IA.** O RF-24 pede contrato em português e o TRACEABILITY marca "parcial: IA e assistente em F03/F04"; o `spec.md` da F03, porém, escreve os campos em inglês (US-020 `(title,description)`, US-021 `{priority, complexity, estimatedHours, reason}`). Os DTOs internos da porta (T-F03-01) seguem o `design.md` em inglês; na T-F03-03 decidir se a camada de api traduz para português (RF-24) ou mantém o inglês do spec da F03.~~ **Resolvido em T-F03-03: RF-24 vence — JSON em português, porta em inglês.** Ver "Decisões — T-F03-03".

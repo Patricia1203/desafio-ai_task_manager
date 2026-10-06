@@ -1,7 +1,7 @@
-﻿# tasks.md — F04-ai-assistant
+# tasks.md — F04-ai-assistant
 
 ### T-F04-01 — Entidades e migração do histórico de conversa
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-17, RF-18, RNF-21, TST-04
 - **Depende de:** T-F01-04
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/assistant/domain/ChatConversation.java, ChatMessage.java, ChatRole.java, backend/src/main/java/com/desafio/taskmanager/assistant/infra/ChatConversationRepository.java, ChatMessageRepository.java, backend/src/main/resources/db/migration/V3__create_chat.sql, backend/src/test/java/.../assistant/infra/ChatRepositoryTest.java
