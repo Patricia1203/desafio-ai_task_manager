@@ -16,9 +16,9 @@
 # STATE.md
 
 ## Task atual
-T-F03-01 - Porta de IA, DTOs estruturados e prompts - **done** (gate + suíte: 156 testes verdes)
-Próxima: T-F03-02 - Adaptador Spring AI com structured output e retry - pending.
-Anterior: T-F02-05 - Frontend Dashboard e Tarefas - done (commit b550ab0).
+T-F03-02 - Adaptador Spring AI com structured output e retry - **done** (gate + suíte: 168 testes verdes)
+Próxima: T-F03-03 - Serviço e endpoints de IA para tarefas - pending.
+Anterior: T-F03-01 - Porta de IA, DTOs estruturados e prompts - done (commit e483c23, suíte 156 verdes).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -125,9 +125,21 @@ Anterior: T-F02-05 - Frontend Dashboard e Tarefas - done (commit b550ab0).
 - 2026-10-06: **`TaskAiContext` carrega só `title`, `description` e `priority` (RNF-11).** Título e descrição alimentam os três prompts; a prioridade atual é o contexto da análise. Status e prazo ficam de fora até um prompt precisar deles.
 - 2026-10-06: **Nenhuma rota lança `InvalidLlmResponseException` ainda** (o mapeamento 502/ERR-04 é de T-F03-03); a exceção nasce em `common/error` junto do validador para o adaptador de T-F03-02 já poder usá-la.
 
+## Decisões — T-F03-02
+- 2026-10-06: **Structured output via `responseEntity(Class)` e não `entity(Class)`.** A task exige "validar sempre a resposta": o `responseEntity` devolve `ResponseEntity<ChatResponse, T>` com o body já convertido para o record **e** o texto cru (`getResult().getOutput().getText()`), que vai para o `LlmResponseValidator`. Se a conversão falhar (enum inválido quebra no Jackson, JSON malformado), cai na mesma trilha de retry do validador — um único caminho de rejeição.
+- 2026-10-06: **Retry: até `app.ai.max-retries + 1` tentativas; a correção vai como `SystemMessage` em `.messages()`, não como template.** A instrução de correção contém chaves de JSON que o ST4 tentaria interpretar se passasse por `text(...)`; `messages(Message...)` entra cru no `Prompt`. Não há retry em falha de transporte (repetir não conserta rede) e não há retry agressivo em validação além do limite configurado. Esgotado, a mensagem final é `resposta da IA invalida apos N tentativas: <motivo>`.
+- 2026-10-06: **Classificação de falha (o texto dos testes é a spec):** `ConnectException`/`UnknownHostException` em qualquer nível da causa → `LlmUnavailableException` (ERR-05 → 503); qualquer outro `IOException`/`RestClientException` (inclui `ResourceAccessException` e `SocketTimeoutException`) → `LlmCommunicationException` (ERR-03 → 502); todo o resto (`IllegalStateException`, Jackson, validador) → retry e depois `InvalidLlmResponseException` (ERR-04). O mapeamento HTTP fica para T-F03-03/T-F04-03/T-F05-02; aqui só nascem as exceções.
+- 2026-10-06: **`StTemplateRenderer` fixado no builder do `ChatClient` e o `.st` vai como mensagem de usuário.** `text(resource, UTF_8)` + `params(...)` deixa o Spring AI renderizar uma vez com os delimitadores `{}` do próprio template; `ChatClient` sem mensagem de usuário não recebe as instruções de formato, porque `Prompt.augmentUserMessage` anexa o formato na mensagem **user**. Assumir o renderer default do `ChatClient` seria acoplar a um detalhe de versão.
+- 2026-10-06: **O schema chega sozinho no prompt:** `responseEntity(Class)` seta o `OUTPUT_FORMAT` da request spec e o `ChatModelCallAdvisor` anexa `BeanOutputConverter.getFormat()` + o JSON Schema do record. Teste fixa a string `Your response should be in JSON format` no prompt capturado, para regressão de comportamento.
+- 2026-10-06: **`AiProperties` é record `@ConfigurationProperties("app.ai")` com os 7 campos** (timeout, max-retries, min/max-subtasks, max-estimated-hours, max-title-length, max-text-length). Repete os mesmos números dos `@Value` do `LlmResponseValidator` (T-F03-01 não foi refatorado): mudar um limite hoje exige mudar os dois — limitação registrada, candidata a unificar quando o validador receber os limites por construtor.
+- 2026-10-06: **Timeout real do Ollama via `RestClientCustomizer`.** O `spring-boot-starter-restclient` está no classpath de compile, o `RestClientAutoConfiguration` expõe o customizer ao `RestClient.Builder` que o `OllamaApi` consome (`ObjectProvider`), e o bean configura `SimpleClientHttpRequestFactory` com connect+read = `app.ai.timeout` (60s). Verificado estaticamente (javap + jars locais); não exercitado contra Ollama de verdade — fica para T-F05-01/T-F04-03.
+- 2026-10-06: **Contexto truncado por substring, sem reticências**, em `max-title-length`/`max-text-length` antes de virar variável do prompt; só `title`/`description` (e `priority` no analyze) chegam ao modelo (RNF-11).
+- 2026-10-06: **`excludedGroups=llm` mantido no `pom.xml`.** A lista de arquivos da task dizia "pom.xml (excluir tag `llm`)", mas o `TESTING.md` manda "testes com LLM real ... excluídos do build padrão (configurar exclusão no `pom.xml` em T-F03-02)" e a exclusão já existe desde T-F01-04. Remover seria contrariar o `TESTING.md`; nenhum teste usa `@Tag("llm")` hoje, então a configuração está inerte mas pronta.
+
 ## Dúvidas [NEEDS CLARIFICATION]
 - [NEEDS CLARIFICATION] (resolver em T-F03-03) **Idioma do JSON público da API de IA.** O RF-24 pede contrato em português e o TRACEABILITY marca "parcial: IA e assistente em F03/F04"; o `spec.md` da F03, porém, escreve os campos em inglês (US-020 `(title,description)`, US-021 `{priority, complexity, estimatedHours, reason}`). Os DTOs internos da porta (T-F03-01) seguem o `design.md` em inglês; na T-F03-03 decidir se a camada de api traduz para português (RF-24) ou mantém o inglês do spec da F03.
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
+- [NEEDS CLARIFICATION] (texto ausente nas specs) **RNF-02, RNF-13 e TST-03 não têm definição em nenhum arquivo de `.specs`** — só a atribuição em `tasks.md` e na matriz. As linhas desses REQs no TRACEABILITY foram preenchidas com o que a T-F03-02 construiu, não com o texto do requisito; se o desafio trouxer o texto, reavaliar status e cobertura.
 
 ## Bloqueios
 - Nenhum. Docker daemon em execução (verificado em T-F01-02).
@@ -163,3 +175,5 @@ Anterior: T-F02-05 - Frontend Dashboard e Tarefas - done (commit b550ab0).
 - **`Validator.validate` devolve `Set`, e `Set` não tem índice.** Guardar o resultado em `List` e chamar `.get(0)` não compila, com o erro "no instance(s) of type variable(s) T exist so that Set<...> conforms to List<...>", que não aponta para a causa. Usar um helper que valida o tamanho e devolve `iterator().next()`.
 - **Asserção tautológica passa no teste e não testa nada.** Escrever `assertThat(x).isEqualTo(condicao ? x : x)` nunca falha. Quando a intenção era comparar com o valor de antes da operação, capturar o valor em variável local antes de chamá-la.
 - A ferramenta de escrita/edição introduziu um caractere CJK (U+7F1A, por exemplo) em texto português já escrito. Vale varrer os arquivos de spec com uma regex de `\u3000-\u9FFF` depois de edições longas antes de commitar.
+- **A ferramenta de escrita grava LF; este repositório usa CRLF (`core.autocrlf=true`).** Arquivos Java novos saem LF-only e divergem do resto do repo. Depois de escrever, converter (`-replace "`r`n","`n"` e depois `"`n","`r`n"`) e conferir com leitura de bytes — feito em T-F03-02 antes do commit.
+- **`-Dtest=A+B` não roda nada no Surefire 3.5.6** (erro `No tests matching pattern`); o separador é vírgula. Os Gates escritos na `tasks.md` de T-F03-03 e T-F04-03 usam `+` — corrigir a spec ao executar essas tasks, senão o gate falha por não achar teste.

@@ -12,7 +12,7 @@
 - **Commit (rascunho):** `add: Porta de IA, DTOs estruturados e prompts versionados`
 
 ### T-F03-02 — Adaptador Spring AI com structured output e retry
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RNF-02, RNF-10, RNF-11, RNF-13, RNF-14, ERR-03, ERR-04, ERR-05, TST-03
 - **Depende de:** T-F03-01
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/ai/adapter/SpringAiTaskAiAdapter.java, backend/src/main/java/com/desafio/taskmanager/ai/adapter/config/AiProperties.java, backend/src/main/java/com/desafio/taskmanager/ai/adapter/config/AiAdapterConfig.java, backend/src/main/java/com/desafio/taskmanager/common/error/LlmUnavailableException.java, LlmCommunicationException.java, backend/src/test/java/.../ai/adapter/SpringAiTaskAiAdapterTest.java, backend/src/test/java/.../ai/adapter/FakeChatModelSupport.java, backend/pom.xml (excluir tag `llm`)
