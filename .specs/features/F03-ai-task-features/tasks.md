@@ -1,7 +1,7 @@
-﻿# tasks.md — F03-ai-task-features
+# tasks.md — F03-ai-task-features
 
 ### T-F03-01 — Porta de IA, DTOs estruturados e prompts
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-10, RF-11, RF-12, RNF-10, RNF-11, RNF-14
 - **Depende de:** T-F02-04
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/ai/port/TaskAiPort.java, backend/src/main/java/com/desafio/taskmanager/ai/port/dto/TaskImprovement.java, TaskAnalysis.java, TaskComplexity.java, TaskDecomposition.java, ProposedSubtask.java, TaskAiContext.java, backend/src/main/java/com/desafio/taskmanager/ai/application/LlmResponseValidator.java, backend/src/main/resources/prompts/task-improve.st, task-analyze.st, task-decompose.st, backend/src/main/java/com/desafio/taskmanager/common/error/InvalidLlmResponseException.java, backend/src/test/java/.../ai/application/LlmResponseValidatorTest.java

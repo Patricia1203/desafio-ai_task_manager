@@ -39,6 +39,10 @@ app:
     max-subtasks: 10
     min-subtasks: 2
     max-estimated-hours: 200
+    # Limites do validador pos-LLM (T-F03-01): o titulo espelha o VARCHAR(200)
+    # da migration V2 e a descricao, o maxLength do formulario do frontend.
+    max-title-length: 200
+    max-text-length: 5000
 
 # O default e INFO. DEBUG fica no profile dev (application-dev.yml): log verboso
 # em todo ambiente polui a saida e mascara problema real.

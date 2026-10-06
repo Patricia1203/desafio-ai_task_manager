@@ -16,8 +16,9 @@
 # STATE.md
 
 ## Task atual
-T-F02-05 - Frontend Dashboard e Tarefas - **done** (Gate: `npm run lint && npm run test && npm run build` verdes, 18 testes no frontend).
-Pendente de decisao do usuario: mvnw (proposta abaixo, em Melhorias propostas).
+T-F03-01 - Porta de IA, DTOs estruturados e prompts - **done** (gate + suíte: 156 testes verdes)
+Próxima: T-F03-02 - Adaptador Spring AI com structured output e retry - pending.
+Anterior: T-F02-05 - Frontend Dashboard e Tarefas - done (commit b550ab0).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -115,7 +116,17 @@ Pendente de decisao do usuario: mvnw (proposta abaixo, em Melhorias propostas).
 - 2026-10-05: **O modelo JPA e as colunas continuam em inglês** (`title`, `priority`, `due_date`). Traduzir a coluna exigiria uma migration nova e reescrever `@Entity` sem mudar o contrato HTTP, que é o ponto do desafio.
 - 2026-10-05: **A `V2__create_tasks.sql` foi editada, não criada uma `V3`.** Os valores default e os `CHECK` do banco precisam casar com o enum novo; `CREATE TABLE IF NOT EXISTS` esconde o banco velho, então quem já aplicou a V2 anterior precisa limpar/recriar o schema (checksum divergente quebra o boot do Flyway).
 
+## Decisões — T-F03-01
+- 2026-10-06: **DTOs da porta em inglês (`title`, `description`, `priority`, `complexity`, `estimatedHours`, `reason`), como o `design.md` da F03 escreve.** São contrato interno da porta, não o JSON da API (o RF-24 em português se resolve na camada de api, em T-F03-03 — ver Dúvidas). `priority` do `TaskAnalysis` é o enum de domínio `TaskPriority` (BAIXA/MEDIA/ALTA, o próprio javadoc do enum já diz que a análise de IA devolve este valor); `complexity` é o novo enum `TaskComplexity` (LOW/MEDIUM/HIGH, valores do schema que o modelo deve devolver).
+- 2026-10-06: **O validador recebe o JSON bruto (`String`) e devolve o record tipado**, em vez de receber record já parseado. Só assim ele — e não o adaptador — é quem rejeita enum inválido, como a definição de "Pronto quando" da task exige; nesse caminho também entram campo desconhecido (`FAIL_ON_UNKNOWN_PROPERTIES` ligado no mapper) e resposta vazia/não-JSON.
+- 2026-10-06: **Dois limites novos em `app.ai`:** `max-title-length: 200` (mesmo número do `VARCHAR(200)` da V2) e `max-text-length: 5000` (mesmo do `maxLength` da descrição no formulário do frontend). Os `@Value` têm default, então o teste unitário constrói o validador sem Spring e sem YAML.
+- 2026-10-06: **Teste de arquitetura sem ArchUnit: varredura de fontes.** Adicionar ArchUnit seria dependência nova (exigiria parar e perguntar); o `LayerDependenciesTest` caminha os diretórios protegidos e falha na primeira ocorrência de `org.springframework.ai` — inclusive em javadoc, o que pegou a própria `TaskAiPort` na primeira execução e provou que o teste funciona.
+- 2026-10-06: **Prompts em PT-BR, UTF-8, com JSON literal escapado em `\{`/`\}`** (delimitadores do ST4 são `{}`). O ST4 remove o `\` só antes do próprio delimitador: `\[`/`\]` ficam com a barra — corrigido no gate e congelado pelo `PromptsTest`, que também congela a leitura UTF-8 dos `.st` (acentos chegam inteiros ao renderer).
+- 2026-10-06: **`TaskAiContext` carrega só `title`, `description` e `priority` (RNF-11).** Título e descrição alimentam os três prompts; a prioridade atual é o contexto da análise. Status e prazo ficam de fora até um prompt precisar deles.
+- 2026-10-06: **Nenhuma rota lança `InvalidLlmResponseException` ainda** (o mapeamento 502/ERR-04 é de T-F03-03); a exceção nasce em `common/error` junto do validador para o adaptador de T-F03-02 já poder usá-la.
+
 ## Dúvidas [NEEDS CLARIFICATION]
+- [NEEDS CLARIFICATION] (resolver em T-F03-03) **Idioma do JSON público da API de IA.** O RF-24 pede contrato em português e o TRACEABILITY marca "parcial: IA e assistente em F03/F04"; o `spec.md` da F03, porém, escreve os campos em inglês (US-020 `(title,description)`, US-021 `{priority, complexity, estimatedHours, reason}`). Os DTOs internos da porta (T-F03-01) seguem o `design.md` em inglês; na T-F03-03 decidir se a camada de api traduz para português (RF-24) ou mantém o inglês do spec da F03.
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
 
 ## Bloqueios

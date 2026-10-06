@@ -14,9 +14,9 @@
 | RF-07 | F02 | T-F02-01, T-F02-02, T-F02-05e | `task/domain/Task`, `TaskStatus`, `TaskPriority`, `V2__create_tasks.sql` (valores default/`CHECK` em portugues); `task/api/dto/{Create,Update}TaskRequest`, `TaskResponse`, `PageResponse` (campos JSON em portugues), `task/api/TaskMapper` | `TaskRepositoryTest.gravaELeComTodosOsCampos`, `tarefaNovaNasceComStatusInicialEPrioridadePadrao`; `TaskMapperTest.toResponseCobreTodosOsCamposDaEntidade`; `TaskTest.tituloEAparado`, `prioridadeExplicitaVence` | (T-F02-01), (T-F02-02) | done (parcial: endpoints em T-F02-04) |
 | RF-08 | F02 | T-F02-01, T-F02-05e | `task/domain/TaskStatus` (A_FAZER/EM_ANDAMENTO/CONCLUIDA), `Task#changeStatus` | `TaskRepositoryTest.atualizaStatusNoBanco` | (T-F02-01) | done (parcial: PATCH em T-F02-04) |
 | RF-09 | F02 | T-F02-01, T-F02-05e | `task/domain/TaskPriority` (BAIXA/MEDIA/ALTA), `task/infra/TaskRepository` (índices e filtros) | `TaskRepositoryTest.filtraPorPrioridade`, `filtraComSpecificationCompostaEOrdena`, `paginaResultados` | (T-F02-01) | done (parcial: endpoint em T-F02-04) |
-| RF-10 | F03 | | | | | pending |
-| RF-11 | F03 | | | | | pending |
-| RF-12 | F03 | | | | | pending |
+| RF-10 | F03 | T-F03-01 | `ai/port/TaskAiPort#improve`, `ai/port/dto/TaskImprovement`, `prompts/task-improve.st`, `LlmResponseValidator#validateImprovement` | `LlmResponseValidatorTest` (melhoria valida, titulo em branco, titulo 201, campo desconhecido), `PromptsTest.taskImproveRenderiza` | (T-F03-01) | done (parcial: adaptador e endpoint em T-F03-02/03) |
+| RF-11 | F03 | T-F03-01 | `ai/port/TaskAiPort#analyze`, `TaskAnalysis`, `TaskComplexity`, `prompts/task-analyze.st`, `LlmResponseValidator#validateAnalysis` | `LlmResponseValidatorTest` (analise valida, enums invalidos, horas 500/0/ausente, motivo vazio/longo), `PromptsTest.taskAnalyzeRenderiza` | (T-F03-01) | done (parcial: adaptador e endpoint em T-F03-02/03) |
+| RF-12 | F03 | T-F03-01 | `ai/port/TaskAiPort#decompose`, `TaskDecomposition`, `ProposedSubtask`, `prompts/task-decompose.st`, `LlmResponseValidator#validateDecomposition` | `LlmResponseValidatorTest` (decomposicao valida, 1/11 subtarefas, duplicadas, titulo vazio, horas de subtarefa), `PromptsTest.taskDecomposeRenderiza` | (T-F03-01) | done (parcial: adaptador e decompose/apply em T-F03-02/03) |
 | RF-13 | F03 | | | | | pending |
 | RF-14 | F03 | | | | | pending |
 | RF-15 | F04 | | | | | pending |
@@ -31,11 +31,11 @@
 | RF-22 | F04 | | | | | pending |
 | RF-23 | F02 | | | | | pending |
 | RF-24 | F03,F04 | | | | | pending |
-| RNF-10 | F03,F04 | | | | | pending |
-| RNF-11 | F03,F04 | | | | | pending |
+| RNF-10 | F03,F04 | T-F03-01 | prompts `.st` versionados/parametrizados em `backend/src/main/resources/prompts` (improve/analyze/decompose), `LlmResponseValidator` (validacao pos-LLM), DTOs record com `@JsonProperty` (schema do structured output), `TaskAiPort` | `PromptsTest` (4 testes: render UTF-8, JSON escapado, enums fixados, variavel extra), `LlmResponseValidatorTest` (21 casos) | (T-F03-01) | done (parcial: structured output, retry e adaptador em T-F03-02) |
+| RNF-11 | F03,F04 | T-F03-01 | `ai/port/dto/TaskAiContext` (title, description, priority — o minimo que os prompts usam) | `PromptsTest` (variaveis do contrato sao exatamente estas); o envio em si cobre em T-F03-02 | (T-F03-01) | done (parcial: adaptador em T-F03-02) |
 | RNF-12 | F03,F04 | | | | | pending |
 | RNF-13 | F03,F04 | | | | | pending |
-| RNF-14 | F03,F04 | | | | | pending |
+| RNF-14 | F03,F04 | T-F03-01 | `ai/port/TaskAiPort` (nenhum import de Spring AI), `LayerDependenciesTest` (falha se `task.domain`, `task.application` ou `ai/port` citarem `org.springframework.ai`) | `LayerDependenciesTest.nenhumaCamadaDeNegocioImportaSpringAi` | (T-F03-01) | done (parcial: adaptador + config em T-F03-02) |
 | RNF-15 | F03,F04 | | | | | pending |
 | RNF-20 | F01,F02 | T-F01-01, T-F01-04, T-F02-05d | `application.yml`, `common/config/WebConfig`, `common/config/CorsProperties`, `common/error/GlobalExceptionHandler`; `task/application` sem imports de `task.api` (`TaskCommand` na entrada, entidade na saida) | `AiTaskManagerApplicationTests` (contexto sobe, schema Flyway aplicado); grep de `import com.desafio.taskmanager.task.api` em `task/application/**` sem ocorrências | 530102b, (T-F01-04), (T-F02-05d) | done |
 | RNF-21 | F01,F02 | T-F01-04, T-F02-01 | `common/config/WebConfig`, `common/config/CorsProperties`; `V2__create_tasks.sql` (índices em status/priority/due_date/parent_id) | `CorsConfigTest` (origem permitida e não permitida, preflight); `TaskRepositoryTest.filtraPorStatus`, `filtraPorPrioridade` | (T-F01-04), (T-F02-01) | done (parcial: telas em T-F02-05) |
