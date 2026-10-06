@@ -23,14 +23,14 @@
 - **Commit (rascunho):** `add: Adaptador Spring AI com structured output e retry`
 
 ### T-F03-03 — Serviço e endpoints de IA para tarefas
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-10, RF-11, RF-12, RF-13, RF-14, RF-24, RNF-12, RNF-15, ERR-01, ERR-04
 - **Depende de:** T-F03-02
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/application/AiTaskService.java, backend/src/main/java/com/desafio/taskmanager/ai/api/AiTaskController.java, backend/src/main/java/com/desafio/taskmanager/ai/api/dto/ImproveTaskRequest.java, AnalyzeTaskResponse.java, DecomposeTaskResponse.java, ApplyDecompositionRequest.java, SubtaskDraft.java, backend/src/test/java/.../task/application/AiTaskServiceTest.java, backend/src/test/java/.../ai/api/AiTaskControllerTest.java
 - **O que fazer:** improve e decompose retornam apenas sugestão e não persistem nada; analyze devolve a análise tipada e nunca altera a tarefa automaticamente; decompose/apply recebe as subtarefas aceitas pelo usuário, valida cada uma e cria tarefas com parentTaskId apontando para a original.
 - **Pronto quando:** nenhum endpoint de sugestão grava no banco; apply cria exatamente as subtarefas enviadas e rejeita drafts inválidos com 400; tarefa inexistente devolve 404; resposta de LLM inválida devolve 502 com código LLM_INVALID_RESPONSE.
 - **Testes:** AiTaskServiceTest (improve/decompose não persistem, analyze não altera prioridade, apply cria subtarefas e valida drafts) com a porta fake; AiTaskControllerTest (200/400/404/502 e formato ProblemDetail).
-- **Gate:** mvn -q test -Dtest=AiTaskServiceTest+AiTaskControllerTest
+- **Gate:** mvn -q test -Dtest=AiTaskServiceTest,AiTaskControllerTest
 - **Commit (rascunho):** `add: Serviço e endpoints de IA para tarefas`
 
 ### T-F03-04 — Painel de IA no frontend

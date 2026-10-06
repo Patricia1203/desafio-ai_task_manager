@@ -55,6 +55,7 @@ public class GlobalExceptionHandler {
     private static final URI MALFORMED_TYPE = URI.create(BASE_TYPE + "requisicao-malformada");
     private static final URI RULE_TYPE = URI.create(BASE_TYPE + "regra-de-negocio");
     private static final URI DATABASE_TYPE = URI.create(BASE_TYPE + "banco-indisponivel");
+    private static final URI LLM_INVALID_TYPE = URI.create(BASE_TYPE + "resposta-llm-invalida");
     private static final URI INTERNAL_TYPE = URI.create(BASE_TYPE + "erro-interno");
 
     private static final String GENERIC_500_MESSAGE =
@@ -147,6 +148,28 @@ public class GlobalExceptionHandler {
         log.error("Falha de acesso ao banco", ex);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, DATABASE_TYPE, "Erro interno",
                 GENERIC_500_MESSAGE);
+    }
+
+    /**
+     * ERR-04: a resposta do LLM continuou fora do contrato depois do retry e o
+     * adaptador lancou {@link InvalidLlmResponseException} (T-F03-03).
+     *
+     * <p>502 (bad gateway): o servidor chamou um servico externo e recebeu
+     * resposta invalida. O codigo {@code LLM_INVALID_RESPONSE} entra como
+     * propriedade identificadora do cenario — o {@code type} segue o padrao em
+     * portugues do resto da classe.
+     *
+     * <p>O detalhe e fixo: a mensagem da excecao carrega o motivo do validador
+     * e pode conter trecho do JSON devolvido pelo modelo, que e interno. O
+     * motivo real vai para o log, como em todo 5xx daqui.
+     */
+    @ExceptionHandler(InvalidLlmResponseException.class)
+    public ProblemDetail handleInvalidLlmResponse(InvalidLlmResponseException ex) {
+        log.error("Resposta do LLM fora do contrato", ex);
+        ProblemDetail problem = problem(HttpStatus.BAD_GATEWAY, LLM_INVALID_TYPE,
+                "Resposta invalida da IA", "O servico de IA devolveu uma resposta fora do contrato");
+        problem.setProperty("code", "LLM_INVALID_RESPONSE");
+        return problem;
     }
 
     /** Qualquer erro nao mapeado. A causa vai para o log; a resposta e fixa. */
