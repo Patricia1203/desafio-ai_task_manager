@@ -16,8 +16,8 @@
 # STATE.md
 
 ## Task atual
-T-F04-02 - Ferramentas somente-leitura do assistente - **pending**
-Anterior: T-F04-01 - Entidades e migração do histórico de conversa - done (gate: mvn -q test -Dtest=ChatRepositoryTest, 4 verdes; suíte completa 192).
+T-F04-03 - Serviço de chat com grounding e memória - **pending**
+Anterior: T-F04-02 - Ferramentas somente-leitura do assistente - done (gate: mvn -q test -Dtest=TaskQueryToolsTest,TaskRepositoryTest, 24 verdes; suíte completa 203 testes / 17 suítes).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -43,7 +43,7 @@ Anterior: T-F04-01 - Entidades e migração do histórico de conversa - done (ga
   - `vitest` + `@testing-library/react` + `@testing-library/jest-dom` + `@testing-library/user-event` + `jsdom` — base de testes exigida por TST-02 na parte de frontend.
   - `oxlint` (já vindo do template) — lint rápido sem configuração pesada.
   Nenhum UI kit, nenhuma lib de estado global, nenhuma lib de forms.
-- [ASSUMPTION] O modelo padrão `qwen2.5:7b` suporta tool calling no Ollama. Não verificado (Ollama indisponível). Confirmar em T-F03-02/T-F04-02; se não suportar, trocar para `llama3.1:8b` ou implementar fallback de contexto injetado (registrar decisão).
+- [ASSUMPTION] O modelo padrão `qwen2.5:7b` suporta tool calling no Ollama. Não verificado (Ollama indisponível). Confirmar em T-F04-03 (registro do tool calling); se não suportar, trocar para `llama3.1:8b` ou implementar fallback de contexto injetado (registrar decisão).
 - [ASSUMPTION] `prazo` (coluna `due_date`, atributo `dueDate`) será `LocalDate` (data sem hora) com formato ISO-8601 `yyyy-MM-dd`. Se o desafio exigir data-hora, ajustar em F02.
 - [ASSUMPTION] `BusinessRuleException` responde **422** e não 400. O `design.md` da F02 lista "ERR-02 400" sem distinguir; se o desafio exigir 400 para regra de negócio, o handler muda em um único ponto.
 - [ASSUMPTION] **CONCLUIDA é terminal** — reabrir uma tarefa concluída exige passar por A_FAZER, e ir direto para EM_ANDAMENTO é recusado com 422. O `spec.md` da F02 só diz "altera entre A_FAZER, EM_ANDAMENTO, CONCLUIDA", sem definir transições inválidas. Se o desafio exigir transição livre, remover o bloco em `Task#changeStatus`.
@@ -164,6 +164,14 @@ Anterior: T-F04-01 - Entidades e migração do histórico de conversa - done (ga
 - 2026-10-06: **`conversationId` é referência fraca na entidade (coluna UUID), com FK `ON DELETE CASCADE` no banco** — só a leitura do histórico precisa da conversa, então não há associação JPA; o teste de tirar a conversa e sumir as mensagens prova o comportamento.
 - 2026-10-06: **Máquina nova: Docker Desktop estava parado e foi iniciado (29.4.3) antes do Gate** — mesmo procedimento de T-F01-02; o `PostgresIntegrationTest` reaproveitou o container compartilhado e a suite inteira rodou de uma vez (16 suítes, 192 testes verdes). Java 25.0.1 (LTS) compila o alvo Java 21 do POM sem ajuste.
 
+## Decisões — T-F04-02
+- 2026-10-06: **Config nova como record `@ConfigurationProperties` habilitado por `@EnableConfigurationProperties`, nunca `@Component`.** Record anotado com `@Component` é instanciado pelo component scan como bean comum: o construtor é satisfeito por beans do container e o binding não acontece — o primeiro gate quebrou com `No qualifying bean of type 'int'`. `AssistantLimitsProperties` foi registrado no `@EnableConfigurationProperties` do `AiAdapterConfig` (que já habilitava `AiProperties`); a lista de arquivos de T-F04-02 não previa uma classe de config própria, então reutilizou-se a existente.
+- 2026-10-06: **`app.assistant.max-tool-results` com default `${ASSISTANT_MAX_TOOL_RESULTS:10}`** — teto de resultados de cada ferramenta, aplicado com `stream().limit(...)` antes de mapear o DTO. O teste `resultadoRespeitaOLimiteConfigurado` prova o corte com limite 3 sobre 5 tarefas.
+- 2026-10-06: **`TaskToolResult` replica o contrato do `TaskResponse` em português (id/titulo/status/prioridade/prazo), sem descrição e timestamps** — contexto enxuto para o modelo (RNF-13). `getTaskSummary` reusa o `TaskSummary` do dashboard (RF-20), então ferramentas e dashboard contam da mesma fonte.
+- 2026-10-06: **Nova consulta derivada `findByStatusInOrderByCreatedAtDesc` no `TaskRepository`** para `getPendingTasks` (A_FAZER + EM_ANDAMENTO), com caso em `TaskRepositoryTest`. As demais ferramentas reutilizam consultas existentes (`findByDueDateLessThanAndStatusNotOrderByDueDateAsc`, `findByPriorityAndStatusInOrderByCreatedAtDesc`, `findByDueDateBetweenOrderByDueDateAsc`, `findById`, contagens do summary) — extrapola a lista de arquivos da task e fica registrado no tasks.md.
+- 2026-10-06: **`getTaskById` devolve `Optional` (vazio para id inexistente, sem erro) e `getTasksDueSoon` valida days 1..365 com `BusinessRuleException`.** Nenhuma ferramenta escreve: o teste `nenhumMetodoDeEscritaDoRepositorioEhChamado` verifica com `verify(never())` que `save/saveAndFlush/saveAll/delete/deleteById/deleteAll/flush` nunca são chamados.
+- 2026-10-06: **Suíte backend: 17 suítes, 203 testes / 0 erros / 0 falhas / 0 skipped** (192 + 11: 10 do `TaskQueryToolsTest` com `@ExtendWith(MockitoExtension.class)` + `@Mock TaskRepository`, 1 do caso novo de `TaskRepositoryTest`).
+
 ## Dúvidas [NEEDS CLARIFICATION]
 - ~~[NEEDS CLARIFICATION] (resolver em T-F03-03) **Idioma do JSON público da API de IA.** O RF-24 pede contrato em português e o TRACEABILITY marca "parcial: IA e assistente em F03/F04"; o `spec.md` da F03, porém, escreve os campos em inglês (US-020 `(title,description)`, US-021 `{priority, complexity, estimatedHours, reason}`). Os DTOs internos da porta (T-F03-01) seguem o `design.md` em inglês; na T-F03-03 decidir se a camada de api traduz para português (RF-24) ou mantém o inglês do spec da F03.~~ **Resolvido em T-F03-03: RF-24 vence — JSON em português, porta em inglês.** Ver "Decisões — T-F03-03".
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
@@ -208,3 +216,7 @@ Anterior: T-F04-01 - Entidades e migração do histórico de conversa - done (ga
 - **`-Dtest=A+B` não roda nada no Surefire 3.5.6** (erro `No tests matching pattern`); o separador é vírgula. Os Gates escritos na `tasks.md` de T-F03-03 e T-F04-03 usam `+` — corrigir a spec ao executar essas tasks, senão o gate falha por não achar teste.
 - **Atribuir REQs por eliminação (RF-10..14 → improve/analyze/decompose) errou: o parêntese da user story é o mapeamento.** O `spec.md` da F03 escreve `US-021: Analisar tarefa (RF-11, RF-12)` — RF-12 é de analisar, não de decompor. A linha da matriz preenchida em T-F03-01 refletiu o chute; a correção só veio ao reler a US em T-F03-03. Antes de preencher a matriz, conferir o REQ na linha da US correspondente.
 - **Nunca embutir PowerShell com crases dentro de `bash -c "powershell ... -Command"`:** o bash interpreta `` `r` ``/`` `n` `` como substituição de comando, a sequência de CRLF vira texto quebrado e, em T-F03-04, sete arquivos `.tsx`/`.ts` recém-escritos tiveram todas as quebras de linha substituídas por letra `n` (conteúdo íntegro, formato destruído — recuperado reescrevendo os arquivos). Para qualquer script PowerShell não trivial, gravar um `.ps1` e chamar `powershell -File`, depois apagar o script.
+- **O mesmo vale para `$`:** `bash -c "powershell ... -Command '... $var ...'"` expande as variáveis do PowerShell na camada do bash — `$t`/`$sum` viram vazio e o script quebra com sintaxe estranha. Nunca inlinar PS com `$` ou `` ` ``; usar `.ps1`.
+- **Record `@ConfigurationProperties` não funciona como `@Component`.** O component scan instancia o record como bean comum, o construtor é resolvido por beans do container (falha `No qualifying bean of type 'int'`) e o binding de propriedades não roda. Registrar com `@EnableConfigurationProperties` (padrão do projeto, como `AiProperties`) ou `@ConfigurationPropertiesScan`.
+- **`verify(repository, never()).delete(any())` é ambíguo no `JpaRepository`** (sobrecargas `delete(T)` e `delete(DeleteSpecification)`); tipar o matcher (`any(Task.class)`) para compilar.
+- **`ORDER BY created_at DESC` com inserts no mesmo instante devolve na ordem do banco** — `Instant.now()` na JVM tem precisão de ms, e três `new Task(...)` em loop caem no mesmo timestamp; asserção de ordem nesses casos é flaky. Afirmar `containsExactlyInAnyOrder` no teste de repositório e deixar a ordem estável para dados com timestamps distintos.

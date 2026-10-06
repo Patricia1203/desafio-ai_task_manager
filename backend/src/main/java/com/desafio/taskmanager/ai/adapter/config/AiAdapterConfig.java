@@ -3,6 +3,7 @@ package com.desafio.taskmanager.ai.adapter.config;
 import com.desafio.taskmanager.ai.adapter.SpringAiTaskAiAdapter;
 import com.desafio.taskmanager.ai.application.LlmResponseValidator;
 import com.desafio.taskmanager.ai.port.TaskAiPort;
+import com.desafio.taskmanager.common.config.AssistantLimitsProperties;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
@@ -28,9 +29,14 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
  * {@code OllamaApi} consome. Sem isto {@code app.ai.timeout} seria
  * configuracao morta e a {@code SocketTimeoutException} mapeada pelo
  * adaptador nunca aconteceria de verdade.
+ *
+ * <p>Tambem registra {@link AssistantLimitsProperties} (F04): a lista de
+ * arquivos de T-F04-02 nao previa uma classe de config propria para o
+ * assistente, entao o mesmo {@code @EnableConfigurationProperties} de
+ * {@code AiProperties} ganha a segunda entrada.
  */
 @Configuration
-@EnableConfigurationProperties(AiProperties.class)
+@EnableConfigurationProperties({AiProperties.class, AssistantLimitsProperties.class})
 public class AiAdapterConfig {
 
     @Bean

@@ -12,7 +12,7 @@
 - **Commit (rascunho):** `add: Entidades e migração do histórico de conversa`
 
 ### T-F04-02 — Ferramentas somente-leitura do assistente
-- **Status:** pending
+- **Status:** done (commit `0eaed8d`, 2026-10-06)
 - **Reqs:** RF-16, RF-19, RNF-13, TST-01
 - **Depende de:** T-F04-01, T-F02-03
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/TaskQueryTools.java, backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/dto/TaskToolResult.java, backend/src/main/java/com/desafio/taskmanager/common/config/AssistantLimitsProperties.java, backend/src/test/java/.../assistant/application/tools/TaskQueryToolsTest.java
@@ -21,6 +21,7 @@
 - **Testes:** TaskQueryToolsTest com repositório mockado: filtros corretos, limites aplicados, id inexistente, days inválido e garantia de que nenhuma dependência de escrita é exposta.
 - **Gate:** mvn -q test -Dtest=TaskQueryToolsTest
 - **Commit (rascunho):** `add: Ferramentas somente-leitura para o assistente`
+- **Evidências:** TaskQueryTools com 6 ferramentas limitadas por `app.assistant.max-tool-results`; getTasksDueSoon valida 1..365; getTaskById usa Optional (vazio p/ id inexistente). Extras além da lista prevista: `findByStatusInOrderByCreatedAtDesc` no TaskRepository (query nova p/ pendentes) + caso em TaskRepositoryTest; `app.assistant.max-tool-results` em application.yml; AssistantLimitsProperties habilitado via `@EnableConfigurationProperties` do AiAdapterConfig (record @Component quebra o binding — decisão registrada). Gate `mvn -q test -Dtest=TaskQueryToolsTest,TaskRepositoryTest`: 24 verdes; suíte completa 203/0/0/0 (17 suítes).
 
 ### T-F04-03 — Serviço de chat com grounding e memória
 - **Status:** pending
@@ -30,7 +31,7 @@
 - **O que fazer:** System prompt com grounding estrito (responder apenas com base nos dados das ferramentas, dizer que não encontrou quando não houver dado, recusar assuntos fora de tarefas), data atual injetada pelo backend, delimitação explícita do conteúdo do usuário como dado não confiável, e nenhuma ferramenta de escrita. Histórico por conversationId, com janela limitada e persistido no banco. Tool calling registrado apenas se o modelo suportar; caso contrário, fallback de contexto injetado com a decisão registrada.
 - **Pronto quando:** a resposta se baseia só nos dados disponíveis; o histórico é retomado pelo conversationId; mensagem acima do limite é rejeitada com 400; falha do LLM vira 502/503 conforme ERR-03/ERR-05.
 - **Testes:** AssistantServiceTest com a porta fake (grounding preservado, histórico retomado, janela limitada, conversa nova quando não há conversationId); AssistantControllerTest (200/400/502/503 e formato ProblemDetail).
-- **Gate:** mvn -q test -Dtest=AssistantServiceTest+AssistantControllerTest
+- **Gate:** mvn -q test -Dtest=AssistantServiceTest,AssistantControllerTest
 - **Commit (rascunho):** `add: Serviço e endpoints do assistente com grounding e memória`
 
 ### T-F04-04 — Tela do assistente

@@ -31,6 +31,8 @@ public interface TaskRepository
 
     List<Task> findByStatusOrderByCreatedAtDesc(TaskStatus status);
 
+    List<Task> findByStatusInOrderByCreatedAtDesc(List<TaskStatus> statuses);
+
     List<Task> findByPriorityAndStatusInOrderByCreatedAtDesc(
             TaskPriority priority, List<TaskStatus> statuses);
 

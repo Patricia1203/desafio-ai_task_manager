@@ -103,6 +103,19 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
     }
 
     @Test
+    void filtraPorListaDeStatusParaFerramentasDoAssistente() {
+        repository.saveAllAndFlush(List.of(
+                nova("A", TaskStatus.A_FAZER),
+                nova("B", TaskStatus.EM_ANDAMENTO),
+                nova("C", TaskStatus.CONCLUIDA)));
+
+        assertThat(repository.findByStatusInOrderByCreatedAtDesc(
+                List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO)))
+                .extracting(Task::getTitle)
+                .containsExactlyInAnyOrder("A", "B");
+    }
+
+    @Test
     void filtraPorPrioridade() {
         repository.saveAllAndFlush(List.of(
                 new Task("A", null, TaskPriority.BAIXA, null, null),

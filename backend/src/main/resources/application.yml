@@ -43,6 +43,9 @@ app:
     # da migration V2 e a descricao, o maxLength do formulario do frontend.
     max-title-length: 200
     max-text-length: 5000
+  assistant:
+    # Limite de resultados das ferramentas somente-leitura do assistente (F04).
+    max-tool-results: ${ASSISTANT_MAX_TOOL_RESULTS:10}
 
 # O default e INFO. DEBUG fica no profile dev (application-dev.yml): log verboso
 # em todo ambiente polui a saida e mascara problema real.
