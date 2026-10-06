@@ -219,13 +219,15 @@
 - **Nota 2:** **o filtro e `@Component`, nao `FilterRegistrationBean`.** Registrado assim ele entra no filtro da servlet em producao, e o `@Import(TraceIdFilter.class)` no `@WebMvcTest` o reproduz no MockMvc sem arrastar o contexto inteiro para um teste de web.
 - **Nota 3:** **`%X{traceId:--}` no pattern de log traz `-` quando nao ha requisicao ativa.** Bootstrap, shutdown e chamadas assincronas ficam sem MDC; o traco deixa explicito que nao ha id, em vez de uma lacuna vazia que parece linha truncada.
 ### T-F02-05 — Frontend Dashboard e Tarefas
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-20, RF-21, RNF-03
 - **Depende de:** T-F02-04
 - **Arquivos (criar/alterar):** frontend/src/api/tasks.ts, frontend/src/types/task.ts, frontend/src/pages/DashboardPage.tsx, frontend/src/pages/TasksPage.tsx, frontend/src/components/task/TaskForm.tsx, frontend/src/components/task/TaskList.tsx, frontend/src/components/task/TaskDetail.tsx, frontend/src/components/task/StatusSelect.tsx, frontend/src/components/common/AsyncState.tsx, frontend/src/test/*.test.tsx
 - **O que fazer:** Dashboard com os indicadores do summary; tela de tarefas com lista filtrável, formulário criar/editar, detalhe com alteração de status e exclusão; estados de loading, erro e vazio em todas as telas; botões de ação desabilitados durante chamadas.
 - **Pronto quando:** `npm run lint`, `npm run test` e `npm run build` passam; os fluxos críticos estão cobertos por teste.
-- **Testes:** TaskForm (validação e submit), TaskList (render, filtro, vazio), TaskDetail (mudança de status e exclusão) com a camada api/ mockada.
+- **Testes:** TaskForm (validação e submit), TaskList (render, filtro, vazio), TaskDetail (mudança de status e exclusão) com a camada api/ mockada. Todos escritos e verdes (18 testes no total).
 - **Gate:** cd frontend && npm run lint && npm run test && npm run build
-- **Commit (rascunho):** `add: Telas de Dashboard e Tarefas com CRUD completo`
-- **Nota (decisão do usuário):** **a exclusão em cascata pede confirmação na interface, listando as subtarefas que serão arrastadas.** Ao clicar em excluir, a tela busca `GET /tasks/{id}/subtasks`; havendo filhas, mostra os títulos numa caixa de confirmação antes de chamar o `DELETE`. Sem subtarefas, confirma direto. O backend não ganha parâmetro de confirmação — o contrato é "remove ou 404" e a lista já está disponível. Teste obrigatório: `TaskDetail` mostra os títulos das subtarefas no diálogo e o DELETE só é disparado após confirmar.
+- **Commit:** `add: Telas de Dashboard e Tarefas com CRUD completo`
+- **Nota (decisão do usuário):** **a exclusão em cascata pede confirmação na interface, listando as subtarefas que serão arrastadas.** Ao clicar em excluir, a tela busca `GET /tasks/{id}/subtasks`; havendo filhas, mostra os títulos numa caixa de confirmação antes de chamar o `DELETE`. Sem subtarefas, confirma direto. O backend não ganha parâmetro de confirmação - o contrato é "remove ou 404" e a lista já está disponível. Teste obrigatório: `TaskDetail` mostra os títulos das subtarefas no diálogo e o DELETE só é disparado após confirmar. Implementado: diálogo `alertdialog` listando as filhas; sem filhas, o mesmo diálogo sem a lista; `deleteTask` só roda no clique de confirmação (coberto por teste).
+- **Nota 2 (execução):** `StatusSelect` oferece os 3 status, mas o backend recusa `CONCLUIDA -> EM_ANDAMENTO` com 422 (regra de domínio T-F02-03); o erro aparece no diálogo via `role="alert"` e o status volta ao valor anterior. Filtro de status usa query param em inglês (`?status=`), filtro de título é client-side. `npm install` foi necessário (o `node_modules` não existia na máquina); `package-lock.json` não alterou.
+

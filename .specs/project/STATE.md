@@ -1,3 +1,8 @@
+## Decisoes - T-F02-05 (frontend Dashboard e Tarefas)
+- 2026-10-06: **Exclusao em cascata confirma na UI listando as filhas (decisao do usuario).** Ao clicar em Excluir, `TaskDetail` busca `GET /tasks/{id}/subtasks`; havendo filhas os titulos entram num `role="alertdialog"` e o `DELETE` so roda no clique de confirmacao; sem filhas, o mesmo dialogo aparece sem a lista. Backend nao mudou. Coberto por teste obrigatorio da task.
+- 2026-10-06: **`StatusSelect` expoe os 3 status, mas `CONCLUIDA -> EM_ANDAMENTO` volta 422** (regra de dominio de T-F02-03: CONCLUIDA e terminal, reabrir exige A_FAZER). O erro aparece no detalhe via `role="alert"` e o select mantem o valor anterior - a UI nao esconde a regra do backend, mostra a recusa.
+- 2026-10-06: **Filtro de status usa o query param em ingles (`?status=`); filtro de titulo e client-side** sobre a pagina carregada (size=50). Paginacao com botoes anterior/proxima nao foi implementada: a spec cobra "lista filtravel", nao paginacao.
+- 2026-10-06: **`node_modules` nao existia na máquina; `npm install` foi rodado** (128 pacotes, 0 vulnerabilidades, `package-lock.json` sem alteracao).
 ## Decisoes - T-F02-05d (separacao de camadas)
 - 2026-10-06: **`task.application` nao importa mais `task.api` (RNF-20).** Direcao escolhida: DTOs continuam em `api.dto` e o controller mapeia. O service devolve a entidade (`Task`/`Page<Task>`/`List<Task>`) e recebe o novo `TaskCommand` (record neutro em `task/application/dto`); o `TaskMapper` foi movido para `task.api` e agora so converte entidade -> `TaskResponse`.
 - 2026-10-06: **`tituloNormalizado()` foi removido dos requests.** O trim ja acontece em `Task#requireTitle`, entao a camada de aplicacao nao normaliza nada: `TaskCommand` carrega o valor tal qual chegou e o dominio aparada na construcao/edicao.
@@ -11,8 +16,8 @@
 # STATE.md
 
 ## Task atual
-T-F02-05d - Separacao entre service e DTO de API - **done** (Gate: `mvn -q test` verde, 130 testes; grep confirma nenhum import de `task.api` em `task/application/**`).
-Todas as tasks de correcao do review de F02 estao done. Proxima: T-F02-05 - Frontend Dashboard e Tarefas (Gate `npm run lint && npm run test && npm run build` no frontend), com confirmacao de exclusao em cascata na UI.
+T-F02-05 - Frontend Dashboard e Tarefas - **done** (Gate: `npm run lint && npm run test && npm run build` verdes, 18 testes no frontend).
+Pendente de decisao do usuario: mvnw (proposta abaixo, em Melhorias propostas).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
