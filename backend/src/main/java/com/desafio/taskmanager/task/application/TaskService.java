@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
-import com.desafio.taskmanager.task.api.dto.CreateTaskRequest;
-import com.desafio.taskmanager.task.api.dto.TaskResponse;
-import com.desafio.taskmanager.task.api.dto.UpdateTaskRequest;
+import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.application.dto.TaskFilter;
 import com.desafio.taskmanager.task.application.dto.TaskSummary;
 import com.desafio.taskmanager.task.domain.Task;
@@ -26,71 +24,69 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>O service orquestra; as invariantes (titulo obrigatorio, CONCLUIDA terminal)
  * ficam em {@link Task}. Aqui ficam so as regras que dependem de outras linhas
  * ou do filtro pedido.
+ *
+ * <p>RNF-20: a camada de aplicacao nao conhece a API. A entrada e o neutro
+ * {@link TaskCommand} e a saida e a propria entidade — converter para
+ * {@code TaskResponse} e papel do controller.
  */
 @Service
 @Transactional(readOnly = true)
 public class TaskService {
 
     private final TaskRepository repository;
-    private final TaskMapper mapper;
 
-    public TaskService(TaskRepository repository, TaskMapper mapper) {
+    public TaskService(TaskRepository repository) {
         this.repository = repository;
-        this.mapper = mapper;
     }
 
     /** RF-01. A tarefa nasce A_FAZER; quem decide o status inicial e a entidade. */
     @Transactional
-    public TaskResponse create(CreateTaskRequest request) {
-        Task task = mapper.toDomain(request);
-        return mapper.toResponse(repository.save(task));
+    public Task create(TaskCommand command) {
+        return repository.save(toTask(command, null));
     }
 
     /** RF-14. Cria subtarefa sob um pai existente. Pai invalido vira 404. */
     @Transactional
-    public TaskResponse createSubtask(UUID parentId, CreateTaskRequest request) {
+    public Task createSubtask(UUID parentId, TaskCommand command) {
         Task parent = getOrThrow(parentId);
-        Task sub = mapper.toSubtask(request, parent);
-        return mapper.toResponse(repository.save(sub));
+        return repository.save(toTask(command, parent));
     }
 
     /** RF-02. Filtros de status e prioridade, opcionalmente paginados. */
-    public Page<TaskResponse> list(TaskFilter filter, Pageable pageable) {
-        return repository.findAll(toSpecification(filter), pageable).map(mapper::toResponse);
+    public Page<Task> list(TaskFilter filter, Pageable pageable) {
+        return repository.findAll(toSpecification(filter), pageable);
     }
 
     /** Leitura sem paginacao, usada pelas ferramentas somente-leitura (F04). */
-    public List<TaskResponse> findAll(TaskFilter filter) {
-        return repository.findAll(toSpecification(filter)).stream().map(mapper::toResponse).toList();
+    public List<Task> findAll(TaskFilter filter) {
+        return repository.findAll(toSpecification(filter));
     }
 
     /** RF-02. Id inexistente vira 404 pelo GlobalExceptionHandler. */
-    public TaskResponse findById(UUID id) {
-        return mapper.toResponse(getOrThrow(id));
+    public Task findById(UUID id) {
+        return getOrThrow(id);
     }
 
     /** RF-02. Subtarefas em ordem de criacao. */
-    public List<TaskResponse> findSubtasks(UUID parentId) {
+    public List<Task> findSubtasks(UUID parentId) {
         getOrThrow(parentId);
-        return repository.findByParentIdOrderByCreatedAtAsc(parentId).stream()
-                .map(mapper::toResponse)
-                .toList();
+        return repository.findByParentIdOrderByCreatedAtAsc(parentId);
     }
 
     /** RF-04. Nao mexe em status: a transicao tem o proprio endpoint. */
     @Transactional
-    public TaskResponse update(UUID id, UpdateTaskRequest request) {
+    public Task update(UUID id, TaskCommand command) {
         Task task = getOrThrow(id);
-        mapper.updateDomain(task, request);
-        return mapper.toResponse(task);
+        task.updateContent(command.titulo(), command.descricao(), command.prioridade(), command.prazo());
+        return task;
     }
 
     /** RF-06. A regra de transicao e de dominio e vira 422 se for violada. */
     @Transactional
-    public TaskResponse changeStatus(UUID id, TaskStatus newStatus) {
+    public Task changeStatus(UUID id, TaskStatus newStatus) {
         Task task = getOrThrow(id);
         task.changeStatus(newStatus);
-        return mapper.toResponse(task);
+        return task;
     }
 
     /**
@@ -113,6 +109,16 @@ public class TaskService {
                 repository.countByStatusValue(TaskStatus.EM_ANDAMENTO),
                 repository.countByStatusValue(TaskStatus.CONCLUIDA),
                 repository.countByPriorityValue(TaskPriority.ALTA));
+    }
+
+    /** O status inicial e da entidade; o pai so existe na variante de subtarefa. */
+    private static Task toTask(TaskCommand command, Task parent) {
+        return new Task(
+                command.titulo(),
+                command.descricao(),
+                command.prioridade(),
+                command.prazo(),
+                parent);
     }
 
     private Task getOrThrow(UUID id) {

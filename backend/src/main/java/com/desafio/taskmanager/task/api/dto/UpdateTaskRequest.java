@@ -25,8 +25,4 @@ public record UpdateTaskRequest(
         TaskPriority prioridade,
 
         LocalDate prazo) {
-
-    public String tituloNormalizado() {
-        return titulo == null ? null : titulo.trim();
-    }
 }

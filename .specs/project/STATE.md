@@ -1,3 +1,8 @@
+## Decisoes - T-F02-05d (separacao de camadas)
+- 2026-10-06: **`task.application` nao importa mais `task.api` (RNF-20).** Direcao escolhida: DTOs continuam em `api.dto` e o controller mapeia. O service devolve a entidade (`Task`/`Page<Task>`/`List<Task>`) e recebe o novo `TaskCommand` (record neutro em `task/application/dto`); o `TaskMapper` foi movido para `task.api` e agora so converte entidade -> `TaskResponse`.
+- 2026-10-06: **`tituloNormalizado()` foi removido dos requests.** O trim ja acontece em `Task#requireTitle`, entao a camada de aplicacao nao normaliza nada: `TaskCommand` carrega o valor tal qual chegou e o dominio aparada na construcao/edicao.
+- 2026-10-06: **Contagem de testes caiu de 135 para 130.** Os 5 testes removidos do `TaskMapperTest` antigo cobriam `toDomain`/`updateDomain`/`roundTrip`, que agora sao regra de dominio ja coberta por `TaskTest` (trim, prioridade default, edicao) e pelo fluxo completo em `TaskServiceTest`; nenhum comportamento ficou sem teste.
+
 ## Decisoes - T-F02-05k (traceId e timestamp)
 - 2026-10-06: **traceId e timestamp agora sao enviados em toda resposta de erro.** `traceId` vem do `TraceIdFilter` (MDC), aparece no header `X-Trace-Id` (tambem em sucesso) e como propriedade do ProblemDetail; `timestamp` e `Instant.now()` em ISO-8601. Quem quiser abrir chamada de suporte usa o id para achar a linha de log correspondente.
 - 2026-10-06: **O design nunca previu traceId: nao havia a palavra em nenhum arquivo de `.specs`.** Foi pedido na revisao do backend, portanto decisao nova registrada aqui, e nao preenchimento de omissao. `T-F05-02` ("preencher traceId e timestamp") herda a infraestrutura pronta e so precisa cobrir os cenarios 502/503 de IA.
@@ -6,8 +11,8 @@
 # STATE.md
 
 ## Task atual
-T-F02-04 — Controller REST de tarefas — **done** (Gate: `mvn -q test -Dtest=TaskControllerTest` verde, 27 testes; suíte completa com 101 testes verdes).
-Próxima: T-F02-05 — Frontend Dashboard e Tarefas (Gate `npm run lint && npm run test && npm run build` no frontend).
+T-F02-05d - Separacao entre service e DTO de API - **done** (Gate: `mvn -q test` verde, 130 testes; grep confirma nenhum import de `task.api` em `task/application/**`).
+Todas as tasks de correcao do review de F02 estao done. Proxima: T-F02-05 - Frontend Dashboard e Tarefas (Gate `npm run lint && npm run test && npm run build` no frontend), com confirmacao de exclusao em cascata na UI.
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -141,4 +146,4 @@ Próxima: T-F02-05 — Frontend Dashboard e Tarefas (Gate `npm run lint && npm r
 - Nomes de variável que colidem com classe do mesmo pacote (`Task hoje`) causam erro de compilação confuso tipo `cannot be converted to Task`; usar o nome do tipo (`LocalDate hoje`).
 - **`Validator.validate` devolve `Set`, e `Set` não tem índice.** Guardar o resultado em `List` e chamar `.get(0)` não compila, com o erro "no instance(s) of type variable(s) T exist so that Set<...> conforms to List<...>", que não aponta para a causa. Usar um helper que valida o tamanho e devolve `iterator().next()`.
 - **Asserção tautológica passa no teste e não testa nada.** Escrever `assertThat(x).isEqualTo(condicao ? x : x)` nunca falha. Quando a intenção era comparar com o valor de antes da operação, capturar o valor em variável local antes de chamá-la.
-- A ferramenta de escrita/edição introduziu um caractere CJK (`缚`) em texto português já escrito. Vale varrer os arquivos de spec com uma regex de `\u3000-\u9FFF` depois de edições longas antes de commitar.
+- A ferramenta de escrita/edição introduziu um caractere CJK (U+7F1A, por exemplo) em texto português já escrito. Vale varrer os arquivos de spec com uma regex de `\u3000-\u9FFF` depois de edições longas antes de commitar.

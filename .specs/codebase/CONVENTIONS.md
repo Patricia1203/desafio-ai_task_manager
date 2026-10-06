@@ -1,4 +1,4 @@
-﻿# CONVENTIONS.md
+# CONVENTIONS.md
 
 ## Camadas e empacotamento
 Pacotes por feature, camadas dentro do pacote:
@@ -19,7 +19,11 @@ com.desafio.taskmanager
 ```
 
 - **A entidade JPA nunca sai do backend.** A API responde com records de
-  `task.api.dto`, convertidos por `TaskMapper`. Regra já aplicada em T-F02-01.
+  `task.api.dto`, convertidos por `TaskMapper`, que mora em `task.api` junto
+  do controller (RNF-20, T-F02-05d).
+- **`task.application` não importa nada de `task.api`.** A entrada da camada de
+  aplicação é o neutro `TaskCommand` e a saída é a própria entidade; o controller
+  mapeia nas duas pontas.
 - **O domínio não importa Spring Data nem Spring AI.** Invariantes (status
   inicial, transições, título obrigatório) vivem nos métodos da entidade; o
   `TaskMapper` e o `TaskService` só orquestram.

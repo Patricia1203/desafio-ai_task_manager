@@ -108,18 +108,18 @@
 - **Nota 2:** **o teste declara `contextPath("/api")` e posta em `/api/tasks` de propósito.** O MockMvc não aplica o `context-path` do `application-test.yml` automaticamente; sem declarar, o `ServletUriComponentsBuilder` não teria prefixo nenhum para montar e o teste passaria vazio — validando de novo o caminho errado.
 
 ### T-F02-05d — Separação entre service e DTO de API
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RNF-20
 - **Origem:** revisão de código do backend
-- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/application/TaskService.java`, `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`
-- **O que fazer:** parar de devolver `task.api.dto.TaskResponse` a partir de `task.application`. O service devolve a entidade ou um objeto de aplicação neutro; o mapper fica no controller.
-- **Pronto quando:** `task.application` não importa nada de `task.api`.
-- **Testes:** ajustar `TaskServiceTest` para o novo tipo de retorno; `TaskControllerTest` continua cobrindo o JSON.
+- **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/application/TaskService.java`, `backend/src/main/java/com/desafio/taskmanager/task/api/TaskController.java`, `task/application/dto/TaskCommand.java` (novo), `task/api/TaskMapper.java` (movido), DTOs de request
+- **O que fazer:** parar de devolver `task.api.dto.TaskResponse` a partir de `task.application`. Feito: o service devolve a entidade (`Task`, `Page<Task>`, `List<Task>`) e recebe o neutro `TaskCommand`; o `TaskMapper` foi para `task.api` e só converte entidade → `TaskResponse`; o controller mapeia nas duas pontas.
+- **Pronto quando:** `task.application` não importa nada de `task.api`. Verificado por grep: nenhum import de `task.api` em `task/application/**`.
+- **Testes:** `TaskServiceTest` ajustado para a entidade (30 testes); `TaskMapperTest` movido para `task.api` (12 testes — os de `toDomain`/`updateDomain`/`roundTrip` saíram porque construir/editar a entidade é regra de domínio, coberta por `TaskTest`, e o fluxo completo por `TaskServiceTest`); `TaskControllerTest` mocka o service devolvendo `Task`. `mvn -q test` — 130 testes verdes.
 - **Gate:** mvn -q test -Dtest=TaskServiceTest
-- **Commit (rascunho):** `refactor: Remover a dependencia de application sobre api`
-- **Nota:** **decidir a direção antes de escrever código.** Duas saídas: mover os DTOs para `application` (churn alto em toda a feature, e passa a ser `application` quem define o formato de saída) ou deixar os DTOs em `api.dto` e fazer o controller mapear (o service devolve a entidade). A segunda é mais limpa em camadas e é a proposta.
-- **Nota 2:** **`parent.getId()` foi testado e não causa N+1.** Sonda que roda `findAll()` + `TaskMapper#toResponse` fora de transação, com `open-in-view: false`: se o `getId()` tocasse o banco, a sessão estaria fechada e estouraria `LazyInitializationException`. Rodou limpo (6 tarefas mapeadas, 5 com `parentId`). O Hibernate devolve o identificador do proxy sem inicializar. Não criar coluna `parent_id` de leitura: seria mudança de schema sem problema para resolver.
-
+- **Commit:** `refactor: Remover a dependencia de application sobre api`
+- **Nota:** **decidir a direção antes de escrever código.** Duas saídas: mover os DTOs para `application` (churn alto em toda a feature, e passa a ser `application` quem define o formato de saída) ou deixar os DTOs em `api.dto` e fazer o controller mapear (o service devolve a entidade). A segunda é mais limpa em camadas e é a proposta — escolhida.
+- **Nota 2 (execução):** `tituloNormalizado()` saiu dos dois requests: o trim já é feito por `Task#requireTitle`, então a camada de aplicação não normaliza nada — `TaskCommand` carrega o valor tal qual chegou. O `@WebMvcTest` precisou de `@Import(TaskMapper.class)`: o mapper é `@Component`, fora do alcance do slice web. Ids nos testes do controller agora saem da própria entidade, não de uma constante.
+- **Nota 3:** **`parent.getId()` foi testado e não causa N+1.** Sonda que roda `findAll()` + `TaskMapper#toResponse` fora de transação, com `open-in-view: false`: se o `getId()` tocasse o banco, a sessão estaria fechada e estouraria `LazyInitializationException`. Rodou limpo (6 tarefas mapeadas, 5 com `parentId`). O Hibernate devolve o identificador do proxy sem inicializar. Não criar coluna `parent_id` de leitura: seria mudança de schema sem problema para resolver.
 ### T-F02-05e — JSON em português
 - **Status:** done
 - **Reqs:** RF-01, RF-07, RF-20, RF-23, RF-24, ERR-02

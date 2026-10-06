@@ -1,6 +1,5 @@
 package com.desafio.taskmanager.task.api;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -8,13 +7,11 @@ import java.util.UUID;
 import com.desafio.taskmanager.common.error.BusinessRuleException;
 import com.desafio.taskmanager.common.error.GlobalExceptionHandler;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
-import com.desafio.taskmanager.task.api.dto.CreateTaskRequest;
-import com.desafio.taskmanager.task.api.dto.PageResponse;
-import com.desafio.taskmanager.task.api.dto.TaskResponse;
-import com.desafio.taskmanager.task.api.dto.UpdateTaskRequest;
 import com.desafio.taskmanager.task.application.TaskService;
+import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.application.dto.TaskFilter;
 import com.desafio.taskmanager.task.application.dto.TaskSummary;
+import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
 
@@ -52,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * negocio sao testadas contra o banco em {@code TaskServiceTest}.
  */
 @WebMvcTest(TaskController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, TaskMapper.class})
 class TaskControllerTest {
 
     private static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -63,24 +60,28 @@ class TaskControllerTest {
     @MockitoBean
     private TaskService service;
 
-    private static TaskResponse resposta() {
-        return new TaskResponse(
-                ID, "Titulo", "Descricao", TaskStatus.A_FAZER, TaskPriority.ALTA,
-                LocalDate.of(2026, 12, 31), null,
-                Instant.parse("2026-10-05T10:00:00Z"), Instant.parse("2026-10-05T10:00:00Z"));
+    /**
+     * A entidade gera o proprio id, entao os testes leem o id real daqui em vez
+     * de fixar uma constante — o service e mockado, mas a coerencia do JSON com
+     * a entidade devolvida continua sendo conferida.
+     */
+    private static Task tarefa() {
+        return new Task("Titulo", "Descricao", TaskPriority.ALTA,
+                LocalDate.of(2026, 12, 31), null);
     }
 
     // --- GET /tasks ---
 
     @Test
     void listarRetorna200ComEnvelopeDePagina() throws Exception {
+        Task primeira = tarefa();
         when(service.list(any(TaskFilter.class), any()))
                 .thenReturn(new org.springframework.data.domain.PageImpl<>(
-                        List.of(resposta()), org.springframework.data.domain.PageRequest.of(0, 20), 1));
+                        List.of(primeira), org.springframework.data.domain.PageRequest.of(0, 20), 1));
 
         mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.conteudo[0].id").value(ID.toString()))
+                .andExpect(jsonPath("$.conteudo[0].id").value(primeira.getId().toString()))
                 .andExpect(jsonPath("$.conteudo[0].titulo").value("Titulo"))
                 .andExpect(jsonPath("$.pagina").value(0))
                 .andExpect(jsonPath("$.tamanho").value(20))
@@ -188,11 +189,12 @@ class TaskControllerTest {
 
     @Test
     void buscarPorIdRetorna200() throws Exception {
-        when(service.findById(ID)).thenReturn(resposta());
+        Task tarefa = tarefa();
+        when(service.findById(tarefa.getId())).thenReturn(tarefa);
 
-        mockMvc.perform(get("/tasks/{id}", ID))
+        mockMvc.perform(get("/tasks/{id}", tarefa.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(ID.toString()))
+                .andExpect(jsonPath("$.id").value(tarefa.getId().toString()))
                 .andExpect(jsonPath("$.status").value("A_FAZER"))
                 .andExpect(jsonPath("$.prioridade").value("ALTA"))
                 .andExpect(jsonPath("$.prazo").value("2026-12-31"))
@@ -222,14 +224,14 @@ class TaskControllerTest {
 
     @Test
     void listarSubtarefasRetorna200() throws Exception {
-        TaskResponse sub = new TaskResponse(UUID.randomUUID(), "Filha", null, TaskStatus.A_FAZER,
-                TaskPriority.MEDIA, null, ID, Instant.now(), Instant.now());
-        when(service.findSubtasks(ID)).thenReturn(List.of(sub));
+        Task pai = new Task("Pai", null, null, null, null);
+        Task sub = new Task("Filha", null, TaskPriority.MEDIA, null, pai);
+        when(service.findSubtasks(pai.getId())).thenReturn(List.of(sub));
 
-        mockMvc.perform(get("/tasks/{id}/subtasks", ID))
+        mockMvc.perform(get("/tasks/{id}/subtasks", pai.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].titulo").value("Filha"))
-                .andExpect(jsonPath("$[0].idTarefaPai").value(ID.toString()));
+                .andExpect(jsonPath("$[0].idTarefaPai").value(pai.getId().toString()));
     }
 
     @Test
@@ -250,7 +252,8 @@ class TaskControllerTest {
      */
     @Test
     void criarRetorna201ComLocationIncluindoOContextPath() throws Exception {
-        when(service.create(any(CreateTaskRequest.class))).thenReturn(resposta());
+        Task criada = tarefa();
+        when(service.create(any(TaskCommand.class))).thenReturn(criada);
 
         mockMvc.perform(post("/api/tasks")
                         .contextPath("/api")
@@ -259,8 +262,8 @@ class TaskControllerTest {
                                 {"titulo":"Titulo","descricao":"Descricao","prioridade":"ALTA",
                                  "prazo":"2026-12-31"}"""))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "http://localhost/api/tasks/" + ID))
-                .andExpect(jsonPath("$.id").value(ID.toString()))
+                .andExpect(header().string("Location", "http://localhost/api/tasks/" + criada.getId()))
+                .andExpect(jsonPath("$.id").value(criada.getId().toString()))
                 .andExpect(jsonPath("$.titulo").value("Titulo"));
     }
 
@@ -321,7 +324,7 @@ class TaskControllerTest {
 
     @Test
     void editarRetorna200() throws Exception {
-        when(service.update(eq(ID), any(UpdateTaskRequest.class))).thenReturn(resposta());
+        when(service.update(eq(ID), any(TaskCommand.class))).thenReturn(tarefa());
 
         mockMvc.perform(put("/tasks/{id}", ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -345,7 +348,7 @@ class TaskControllerTest {
 
     @Test
     void editarInexistenteRetorna404() throws Exception {
-        when(service.update(eq(ID), any(UpdateTaskRequest.class)))
+        when(service.update(eq(ID), any(TaskCommand.class)))
                 .thenThrow(ResourceNotFoundException.of("tarefa", ID));
 
         mockMvc.perform(put("/tasks/{id}", ID)
@@ -357,7 +360,7 @@ class TaskControllerTest {
 
     @Test
     void editarIgnoraStatusEnviadoNoCorpo() throws Exception {
-        when(service.update(eq(ID), any(UpdateTaskRequest.class))).thenReturn(resposta());
+        when(service.update(eq(ID), any(TaskCommand.class))).thenReturn(tarefa());
 
         mockMvc.perform(put("/tasks/{id}", ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -365,16 +368,16 @@ class TaskControllerTest {
                                 {"titulo":"X","status":"CONCLUIDA"}"""))
                 .andExpect(status().isOk());
 
-        // status nao existe em UpdateTaskRequest: se aparecesse no log de called
-        // com status, o mapper teria mudado de tipo
-        verify(service).update(eq(ID), any(UpdateTaskRequest.class));
+        // status nao existe em TaskCommand: se aparecesse no log de called com
+        // status, o mapeamento teria mudado de tipo
+        verify(service).update(eq(ID), any(TaskCommand.class));
     }
 
     // --- PATCH /tasks/{id}/status ---
 
     @Test
     void alterarStatusRetorna200() throws Exception {
-        when(service.changeStatus(ID, TaskStatus.EM_ANDAMENTO)).thenReturn(resposta());
+        when(service.changeStatus(ID, TaskStatus.EM_ANDAMENTO)).thenReturn(tarefa());
 
         mockMvc.perform(patch("/tasks/{id}/status", ID)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -10,8 +10,10 @@ import com.desafio.taskmanager.task.api.dto.TaskResponse;
 import com.desafio.taskmanager.task.api.dto.UpdateStatusRequest;
 import com.desafio.taskmanager.task.api.dto.UpdateTaskRequest;
 import com.desafio.taskmanager.task.application.TaskService;
+import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.application.dto.TaskFilter;
 import com.desafio.taskmanager.task.application.dto.TaskSummary;
+import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
 
@@ -66,9 +68,11 @@ public class TaskController {
             new Sort.Order(Sort.Direction.ASC, "id"));
 
     private final TaskService service;
+    private final TaskMapper mapper;
 
-    public TaskController(TaskService service) {
+    public TaskController(TaskService service, TaskMapper mapper) {
         this.service = service;
+        this.mapper = mapper;
     }
 
     /**
@@ -90,8 +94,9 @@ public class TaskController {
             @RequestParam(defaultValue = "20") @Min(value = 1, message = "size deve ser no minimo 1")
             @Max(value = MAX_PAGE_SIZE, message = "size deve ser no maximo " + MAX_PAGE_SIZE) int size) {
         return PageResponse.of(service.list(
-                new TaskFilter(status, priority),
-                PageRequest.of(page, size, ORDENACAO_PADRAO)));
+                        new TaskFilter(status, priority),
+                        PageRequest.of(page, size, ORDENACAO_PADRAO))
+                .map(mapper::toResponse));
     }
 
     /** RF-20. Fica antes de /tasks/{id} por causa do casamento de rota. */
@@ -103,13 +108,13 @@ public class TaskController {
     /** RF-02. Id inexistente vira 404 pelo service. */
     @GetMapping("/{id}")
     public TaskResponse findById(@PathVariable UUID id) {
-        return service.findById(id);
+        return mapper.toResponse(service.findById(id));
     }
 
     /** RF-02. Subtarefas em ordem de criacao; 404 se o pai nao existir. */
     @GetMapping("/{id}/subtasks")
     public List<TaskResponse> findSubtasks(@PathVariable UUID id) {
-        return service.findSubtasks(id);
+        return service.findSubtasks(id).stream().map(mapper::toResponse).toList();
     }
 
     /**
@@ -125,25 +130,25 @@ public class TaskController {
      */
     @PostMapping
     public ResponseEntity<TaskResponse> create(@Valid @RequestBody CreateTaskRequest request) {
-        TaskResponse created = service.create(request);
+        Task created = service.create(comandoDe(request));
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(created.id())
+                .buildAndExpand(created.getId())
                 .toUri();
-        return ResponseEntity.created(location).body(created);
+        return ResponseEntity.created(location).body(mapper.toResponse(created));
     }
 
     /** RF-03. Substituicao de conteudo; o status tem endpoint proprio. */
     @PutMapping("/{id}")
     public TaskResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateTaskRequest request) {
-        return service.update(id, request);
+        return mapper.toResponse(service.update(id, comandoDe(request)));
     }
 
     /** RF-06. Transicao de status; recusa vira 422, id inexistente vira 404. */
     @PatchMapping("/{id}/status")
     public TaskResponse changeStatus(@PathVariable UUID id, @Valid @RequestBody UpdateStatusRequest request) {
-        return service.changeStatus(id, request.status());
+        return mapper.toResponse(service.changeStatus(id, request.status()));
     }
 
     /**
@@ -158,5 +163,18 @@ public class TaskController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Request da API para o comando neutro do application. A normalizacao do
+     * titulo (trim) nao acontece aqui: o dominio faz isso ao construir a
+     * entidade, entao o comando carrega o valor tal qual chegou.
+     */
+    private static TaskCommand comandoDe(CreateTaskRequest request) {
+        return new TaskCommand(request.titulo(), request.descricao(), request.prioridade(), request.prazo());
+    }
+
+    private static TaskCommand comandoDe(UpdateTaskRequest request) {
+        return new TaskCommand(request.titulo(), request.descricao(), request.prioridade(), request.prazo());
     }
 }

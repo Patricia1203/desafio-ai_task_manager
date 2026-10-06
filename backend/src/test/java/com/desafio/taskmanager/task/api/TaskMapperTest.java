@@ -1,10 +1,8 @@
-package com.desafio.taskmanager.task.application;
+package com.desafio.taskmanager.task.api;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import com.desafio.taskmanager.task.api.dto.CreateTaskRequest;
 import com.desafio.taskmanager.task.api.dto.PageResponse;
@@ -25,9 +23,13 @@ import org.springframework.data.domain.PageRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * TST-01: o contrato entre entidade e DTO. Cobre round-trip completo, campos
- * opcionais e a validacao de entrada, que e o que o ProblemDetail vai mostrar
- * ao usuario.
+ * TST-01: o contrato de saida da API e a validacao de entrada. Cobre o
+ * mapeamento entidade -> DTO, campos opcionais e as constraints que viram
+ * ProblemDetail para o usuario.
+ *
+ * <p>A outra metade do antigo round-trip (DTO -> entidade) agora mora na
+ * entidade: construcao, trim e prioridade default sao regras de dominio,
+ * cobertas por {@code TaskTest}, e o fluxo completo por {@code TaskServiceTest}.
  */
 class TaskMapperTest {
 
@@ -39,31 +41,6 @@ class TaskMapperTest {
     private static <T> ConstraintViolation<T> unica(Set<ConstraintViolation<T>> violations) {
         assertThat(violations).hasSize(1);
         return violations.iterator().next();
-    }
-
-    @Test
-    void toDomainCriaTarefaComTodosOsCampos() {
-        Task task = mapper.toDomain(new CreateTaskRequest(
-                "  Escrever testes  ", "cobrir o service", TaskPriority.ALTA,
-                LocalDate.of(2026, 11, 15)));
-
-        assertThat(task.getTitle()).isEqualTo("Escrever testes");
-        assertThat(task.getDescription()).isEqualTo("cobrir o service");
-        assertThat(task.getPriority()).isEqualTo(TaskPriority.ALTA);
-        assertThat(task.getDueDate()).isEqualTo(LocalDate.of(2026, 11, 15));
-        assertThat(task.getStatus()).isEqualTo(TaskStatus.A_FAZER);
-        assertThat(task.getParent()).isNull();
-        assertThat(task.getId()).isNotNull();
-    }
-
-    @Test
-    void toDomainAceitaCamposOpcionaisAusentes() {
-        Task task = mapper.toDomain(new CreateTaskRequest("Minima", null, null, null));
-
-        assertThat(task.getTitle()).isEqualTo("Minima");
-        assertThat(task.getDescription()).isNull();
-        assertThat(task.getPriority()).isEqualTo(TaskPriority.MEDIA);
-        assertThat(task.getDueDate()).isNull();
     }
 
     @Test
@@ -86,7 +63,7 @@ class TaskMapperTest {
     @Test
     void toResponseExpoeParentIdDaSubtarefa() {
         Task parent = new Task("Pai", null, null, null, null);
-        Task sub = mapper.toSubtask(new CreateTaskRequest("Filha", null, null, null), parent);
+        Task sub = new Task("Filha", null, null, null, parent);
 
         TaskResponse response = mapper.toResponse(sub);
 
@@ -95,50 +72,10 @@ class TaskMapperTest {
     }
 
     @Test
-    void updateDomainAlteraConteudoEMantemStatusEPai() {
-        Task parent = new Task("Pai", null, null, null, null);
-        Task task = mapper.toSubtask(new CreateTaskRequest("Original", "antes", TaskPriority.BAIXA, null), parent);
-        task.changeStatus(TaskStatus.EM_ANDAMENTO);
-        Instant createdAt = task.getCreatedAt();
+    void toResponseExpoeTituloJaAparadoPeloDominio() {
+        Task task = new Task("  Espacado  ", null, null, null, null);
 
-        mapper.updateDomain(task, new UpdateTaskRequest(
-                "  Editada  ", "depois", TaskPriority.ALTA, LocalDate.of(2026, 3, 3)));
-
-        assertThat(task.getTitle()).isEqualTo("Editada");
-        assertThat(task.getDescription()).isEqualTo("depois");
-        assertThat(task.getPriority()).isEqualTo(TaskPriority.ALTA);
-        assertThat(task.getDueDate()).isEqualTo(LocalDate.of(2026, 3, 3));
-        // o PUT nao mexe em status nem em parent
-        assertThat(task.getStatus()).isEqualTo(TaskStatus.EM_ANDAMENTO);
-        assertThat(task.getParent()).isSameAs(parent);
-        assertThat(task.getCreatedAt()).isEqualTo(createdAt);
-    }
-
-    @Test
-    void updateDomainLimpaCamposOpcionaisQuandoOmitidos() {
-        Task task = new Task("T", "descricao", TaskPriority.ALTA, LocalDate.of(2026, 5, 5), null);
-
-        mapper.updateDomain(task, new UpdateTaskRequest("T2", null, null, null));
-
-        assertThat(task.getDescription()).isNull();
-        assertThat(task.getDueDate()).isNull();
-        assertThat(task.getPriority()).isEqualTo(TaskPriority.MEDIA);
-    }
-
-    @Test
-    void roundTripPreservaTodosOsCampos() {
-        CreateTaskRequest original = new CreateTaskRequest(
-                "Round trip", "texto", TaskPriority.ALTA, LocalDate.of(2026, 7, 7));
-
-        TaskResponse response = mapper.toResponse(mapper.toDomain(original));
-        TaskResponse volta = mapper.toResponse(mapper.toDomain(new CreateTaskRequest(
-                response.titulo(), response.descricao(), response.prioridade(), response.prazo())));
-
-        assertThat(volta.titulo()).isEqualTo(response.titulo());
-        assertThat(volta.descricao()).isEqualTo(response.descricao());
-        assertThat(volta.prioridade()).isEqualTo(response.prioridade());
-        assertThat(volta.prazo()).isEqualTo(response.prazo());
-        assertThat(volta.status()).isEqualTo(response.status());
+        assertThat(mapper.toResponse(task).titulo()).isEqualTo("Espacado");
     }
 
     @Test
@@ -225,13 +162,5 @@ class TaskMapperTest {
         assertThat(response.primeira()).isTrue();
         assertThat(response.ultima()).isTrue();
         assertThat(response.totalPaginas()).isEqualTo(1);
-    }
-
-    @Test
-    void idsSaoUnicosPorTarefa() {
-        UUID primeiro = new Task("A", null, null, null, null).getId();
-        UUID segundo = new Task("B", null, null, null, null).getId();
-
-        assertThat(primeiro).isNotNull().isNotEqualTo(segundo);
     }
 }

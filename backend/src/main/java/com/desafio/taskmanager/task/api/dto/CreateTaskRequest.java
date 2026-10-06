@@ -28,9 +28,4 @@ public record CreateTaskRequest(
 
         /** Prazo em data (sem hora). Opcional. */
         LocalDate prazo) {
-
-    /** Titulo ja normalizado, para a camada de aplicacao nao repetir o trim. */
-    public String tituloNormalizado() {
-        return titulo == null ? null : titulo.trim();
-    }
 }
