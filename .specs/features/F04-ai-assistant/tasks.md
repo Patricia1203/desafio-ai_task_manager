@@ -12,7 +12,7 @@
 - **Commit (rascunho):** `add: Entidades e migração do histórico de conversa`
 
 ### T-F04-02 — Ferramentas somente-leitura do assistente
-- **Status:** done (commit `0eaed8d`, 2026-10-06)
+- **Status:** done (commit `6c7bdb3`, 2026-10-06)
 - **Reqs:** RF-16, RF-19, RNF-13, TST-01
 - **Depende de:** T-F04-01, T-F02-03
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/TaskQueryTools.java, backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/dto/TaskToolResult.java, backend/src/main/java/com/desafio/taskmanager/common/config/AssistantLimitsProperties.java, backend/src/test/java/.../assistant/application/tools/TaskQueryToolsTest.java
