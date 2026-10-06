@@ -34,7 +34,7 @@
 - **Commit (rascunho):** `add: Serviço e endpoints de IA para tarefas`
 
 ### T-F03-04 — Painel de IA no frontend
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RF-10, RF-11, RF-12, RF-13, RF-14, RF-21, RNF-15
 - **Depende de:** T-F03-03
 - **Arquivos (criar/alterar):** frontend/src/api/ai.ts, frontend/src/types/ai.ts, frontend/src/components/task/AiPanel.tsx, frontend/src/components/task/ImproveResult.tsx, frontend/src/components/task/AnalysisResult.tsx, frontend/src/components/task/DecompositionResult.tsx, frontend/src/pages/TasksPage.tsx, frontend/src/test/AiPanel.test.tsx

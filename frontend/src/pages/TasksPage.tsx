@@ -5,6 +5,7 @@ import { createTask, listTasks, updateTask } from '../api/tasks';
 import TaskList from '../components/task/TaskList';
 import TaskForm from '../components/task/TaskForm';
 import TaskDetail from '../components/task/TaskDetail';
+import AiPanel from '../components/task/AiPanel';
 
 type Modo = 'lista' | 'criar' | 'editar' | 'detalhe';
 
@@ -139,6 +140,12 @@ export default function TasksPage() {
             onChanged={aposTrocaStatus}
             onDeleted={aposExclusao}
             onEdit={() => setModo('editar')}
+          />
+          <AiPanel
+            key={`ia-${selecionada.id}`}
+            task={selecionada}
+            onChanged={aposTrocaStatus}
+            onSubtasksCreated={carregar}
           />
         </>
       )}

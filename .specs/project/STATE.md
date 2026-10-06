@@ -16,8 +16,8 @@
 # STATE.md
 
 ## Task atual
-T-F03-04 - Painel de IA no frontend - **pending**
-Anterior: T-F03-03 - Serviço e endpoints de IA para tarefas - done (gate + suíte: 188 testes verdes).
+T-F04-01 - Entidades e migração do histórico de conversa - **pending**
+Anterior: T-F03-04 - Painel de IA no frontend - done (gate frontend: lint + 24 testes + build).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -145,6 +145,15 @@ Anterior: T-F03-03 - Serviço e endpoints de IA para tarefas - done (gate + suí
 - 2026-10-06: **ERR-04 mapeado em 502 com propriedade `code: LLM_INVALID_RESPONSE`** (`GlobalExceptionHandler#handleInvalidLlmResponse`, `type` `.../errors/resposta-llm-invalida`). O `detail` é fixo: a mensagem da exceção carrega o motivo do validador e pode conter trecho do JSON do modelo — isso vai só para o log. Propriedades do envelope de erro seguem em inglês (`timestamp`/`traceId`/`code`), como definido em T-F02-05k. ERR-03/05 (502/503 de transporte) continuam caindo no catch-all 500 até T-F04-03/T-F05-02 mapeá-los — fora do escopo desta task (Reqs só incluem ERR-01 e ERR-04).
 - 2026-10-06: **`AiTaskService` fica em `task/application`** porque orquestra `TaskService` (regras de tarefa) + `TaskAiPort` (porta da F03) e nenhuma das duas direções é proibida: o `LayerDependenciesTest` só barra `org.springframework.ai` em `task.domain`/`task.application`/`ai.port`. O `AiTaskController` fica em `ai/api` e importa `task.api.TaskMapper`/`TaskResponse` (api→api, mesma camada de adaptador).
 
+## Decisões — T-F03-04
+- 2026-10-06: **`AiPanel` fica em `components/task` e é montado no modo detalhe com `key={ia-${id}}`.** A chave por tarefa remonta o painel ao trocar de seleção, limpando sugestões/erros da IA anterior; `onChanged={aposTrocaStatus}` reaproveita o handler já existente do `TaskDetail` (aplicar melhoria atualiza a lista) e `onSubtasksCreated={carregar}` recarrega a lista ao criar subtarefas.
+- 2026-10-06: **"Aplicar à tarefa" grava via `updateTask` (API de tarefas), não via endpoint de IA.** `POST /ai/tasks/improve` é só sugestão (RF-10 não persiste); a UI envia `titulo`/`descricao` propostos preservando `prioridade` e `prazo` atuais para não zerar campos fora do escopo da sugestão.
+- 2026-10-06: **Erro de LLM vira mensagem amigável só quando o `problem.code` é `LLM_INVALID_RESPONSE`** (`AiPanel#mensagemDeErro`); outros `ApiError` e erros inesperados mostram a própria mensagem. A mensagem amigável é fixa — não vaza detalhe interno — e é coberta pelo teste de rejeição da API com `ApiError(502, {code: 'LLM_INVALID_RESPONSE'})`.
+- 2026-10-06: **Ocupação do painel é um único `Operacao | null`:** um botão por vez (os demais ficam desabilitados), texto do botão muda para o gerúndio ("Melhorando...") e um `role="status"` fixo ("Consultando a IA...") aparece durante a chamada. Sugestões de subtarefas nascem todas selecionadas; remoção apaga o item, desmarcar exclui do envio, e "Adicionar como tarefas" fica desabilitado sem seleção.
+- 2026-10-06: **`horasEstimadas` formatado com `toLocaleString('pt-BR')` + "h"** (ex.: 12,5 h), `null` vira "Não estimadas" na análise e some do item da lista — coerente com o restante do front em português.
+- 2026-10-06: **`node_modules` veio incompleto na mudança de máquina (53 pacotes); `npm install` o restaurou (129 auditados, `package-lock.json` sem alteração, 0 vulnerabilidades).** Mesmo padrão de T-F02-05; vitest/oxlint só passaram a existir depois do install.
+- Gate desta task: `npm run lint` (2 warnings pré-existentes de `set-state-in-effect` em `TasksPage`/`DashboardPage`), `npm run test` (5 arquivos, **24 testes verdes** — 18 anteriores + 6 novos do `AiPanel.test.tsx`), `npm run build` (`tsc -b` + vite). Backend intocado — suíte permanece em 188.
+
 ## Dúvidas [NEEDS CLARIFICATION]
 - ~~[NEEDS CLARIFICATION] (resolver em T-F03-03) **Idioma do JSON público da API de IA.** O RF-24 pede contrato em português e o TRACEABILITY marca "parcial: IA e assistente em F03/F04"; o `spec.md` da F03, porém, escreve os campos em inglês (US-020 `(title,description)`, US-021 `{priority, complexity, estimatedHours, reason}`). Os DTOs internos da porta (T-F03-01) seguem o `design.md` em inglês; na T-F03-03 decidir se a camada de api traduz para português (RF-24) ou mantém o inglês do spec da F03.~~ **Resolvido em T-F03-03: RF-24 vence — JSON em português, porta em inglês.** Ver "Decisões — T-F03-03".
 - [NEEDS CLARIFICATION] `docs/desafio.pdf` não existe no repositório. Se o usuário fornecê-lo, comparar com a tabela de requisitos do prompt e registrar divergências aqui.
@@ -188,3 +197,4 @@ Anterior: T-F03-03 - Serviço e endpoints de IA para tarefas - done (gate + suí
 - **A ferramenta de escrita grava LF; este repositório usa CRLF (`core.autocrlf=true`).** Arquivos Java novos saem LF-only e divergem do resto do repo. Depois de escrever, converter (`-replace "`r`n","`n"` e depois `"`n","`r`n"`) e conferir com leitura de bytes — feito em T-F03-02 antes do commit.
 - **`-Dtest=A+B` não roda nada no Surefire 3.5.6** (erro `No tests matching pattern`); o separador é vírgula. Os Gates escritos na `tasks.md` de T-F03-03 e T-F04-03 usam `+` — corrigir a spec ao executar essas tasks, senão o gate falha por não achar teste.
 - **Atribuir REQs por eliminação (RF-10..14 → improve/analyze/decompose) errou: o parêntese da user story é o mapeamento.** O `spec.md` da F03 escreve `US-021: Analisar tarefa (RF-11, RF-12)` — RF-12 é de analisar, não de decompor. A linha da matriz preenchida em T-F03-01 refletiu o chute; a correção só veio ao reler a US em T-F03-03. Antes de preencher a matriz, conferir o REQ na linha da US correspondente.
+- **Nunca embutir PowerShell com crases dentro de `bash -c "powershell ... -Command"`:** o bash interpreta `` `r` ``/`` `n` `` como substituição de comando, a sequência de CRLF vira texto quebrado e, em T-F03-04, sete arquivos `.tsx`/`.ts` recém-escritos tiveram todas as quebras de linha substituídas por letra `n` (conteúdo íntegro, formato destruído — recuperado reescrevendo os arquivos). Para qualquer script PowerShell não trivial, gravar um `.ps1` e chamar `powershell -File`, depois apagar o script.
