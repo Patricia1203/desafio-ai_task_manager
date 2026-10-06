@@ -42,7 +42,11 @@ app:
 
 # O default e INFO. DEBUG fica no profile dev (application-dev.yml): log verboso
 # em todo ambiente polui a saida e mascara problema real.
+# O traceId no pattern amarra a linha de log ao header X-Trace-Id e ao campo
+# traceId do ProblemDetail que o TraceIdFilter gera por requisicao.
 logging:
   level:
     root: INFO
     com.desafio.taskmanager: INFO
+  pattern:
+    level: "%5p [${spring.application.name:ai-task-manager},%X{traceId:--}]"

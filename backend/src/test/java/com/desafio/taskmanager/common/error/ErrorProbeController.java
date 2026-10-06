@@ -58,7 +58,10 @@ class ErrorProbeController {
         throw new HttpMediaTypeNotSupportedException("application/xml");
     }
 
-    /** Lanca DataAccessException de proposito, para cobrir o handler de ERR-06. */
+    /**
+     * Simula a falha de persistencia de ERR-06. Nao toca em banco: a excecao
+     * em si e o que o handler deve mapear.
+     */
     @GetMapping("/banco")
     void banco() {
         throw new DataAccessResourceFailureException(

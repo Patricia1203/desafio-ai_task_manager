@@ -4,17 +4,23 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.desafio.taskmanager.common.web.TraceIdFilter;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * saem como 500.
  */
 @WebMvcTest(controllers = ErrorProbeController.class)
+@Import(TraceIdFilter.class)
 class GlobalExceptionHandlerTest {
 
     private static final String PROBLEM_JSON = MediaType.APPLICATION_PROBLEM_JSON_VALUE;
@@ -152,5 +159,35 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(delete("/__test/metodo"))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(jsonPath("$.status").value(405));
+    }
+
+    @Test
+    void todaRespostaDeErroLevaOTraceIdDoMdc() throws Exception {
+        mockMvc.perform(get("/__test/inexistente"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.traceId").exists())
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                // timestamp em ISO-8601 UTC, legivel por qualquer cliente
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")));
+    }
+
+    @Test
+    void sucessoTambemExpoemOTraceIdNoHeader() throws Exception {
+        mockMvc.perform(get("/__test/regra"))
+                .andExpect(header().string("X-Trace-Id", matchesPattern("[0-9a-f]{16}")));
+    }
+
+    @Test
+    void traceIdNaoVazaEntreRequisicoesDiferentes() throws Exception {
+        String traceId = mockMvc.perform(get("/__test/regra"))
+                .andExpect(header().exists("X-Trace-Id"))
+                .andReturn().getResponse().getHeader("X-Trace-Id");
+
+        // segunda requisicao tem outro id: o traceId nao vaza entre pedidos
+        String outro = mockMvc.perform(get("/__test/regra"))
+                .andReturn().getResponse().getHeader("X-Trace-Id");
+
+        assertThat(traceId).isNotEqualTo(outro);
     }
 }

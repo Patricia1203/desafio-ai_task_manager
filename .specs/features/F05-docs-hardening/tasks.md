@@ -1,4 +1,4 @@
-﻿# tasks.md — F05-docs-hardening
+# tasks.md — F05-docs-hardening
 
 ### T-F05-01 — Compose com Ollama e pull automático do modelo
 - **Status:** pending
@@ -16,7 +16,7 @@
 - **Reqs:** ERR-01, ERR-02, ERR-03, ERR-04, ERR-05, ERR-06
 - **Depende de:** T-F02-04, T-F03-03, T-F04-03
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/common/error/GlobalExceptionHandler.java, backend/src/test/java/.../common/error/*, .specs/project/TRACEABILITY.md
-- **O que fazer:** Conferir cada cenário do desafio contra a implementação: 404 para tarefa inexistente, 400 com lista de campos para dados inválidos, 502 para erro de comunicação com o LLM, 502 com código LLM_INVALID_RESPONSE para resposta inválida, 503 para Ollama indisponível e 500 genérico para erro de persistência. Nenhuma resposta pode conter stack trace; a causa é logada no servidor. Preencher traceId e timestamp.
+- **O que fazer:** Conferir cada cenário do desafio contra a implementação: 404 para tarefa inexistente, 400 com lista de campos para dados inválidos, 502 para erro de comunicação com o LLM, 502 com código LLM_INVALID_RESPONSE para resposta inválida, 503 para Ollama indisponível e 500 genérico para erro de persistência. Nenhuma resposta pode conter stack trace; a causa é logada no servidor. traceId e timestamp ja existem desde T-F02-05k (`TraceIdFilter` + propriedades do ProblemDetail): aqui so falta verificar que os cenarios de IA (502/503) herdam os dois.
 - **Pronto quando:** cada cenário tem teste automatizado que verifica status, formato ProblemDetail e ausência de stack trace.
 - **Testes:** suíte de testes de erro cobrindo ERR-01 a ERR-06 ponta a ponta (slice web para 400/404/500, integração com porta de IA fake para 502/503).
 - **Gate:** mvn -q test

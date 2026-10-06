@@ -1,10 +1,12 @@
 package com.desafio.taskmanager.common.error;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -19,6 +21,8 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import com.desafio.taskmanager.common.web.TraceIdFilter;
 
 /**
  * Handler global de erros. Toda resposta de erro da API e um ProblemDetail
@@ -157,6 +161,13 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
         problem.setTitle(title);
         problem.setType(type);
+        // instante em UTC, sempre no formato ISO-8601
+        problem.setProperty("timestamp", Instant.now().toString());
+        // vem do MDC colocado pelo TraceIdFilter; sem ele, a propriedade fica ausente
+        String traceId = MDC.get(TraceIdFilter.TRACE_ID);
+        if (traceId != null) {
+            problem.setProperty(TraceIdFilter.TRACE_ID, traceId);
+        }
         return problem;
     }
 }

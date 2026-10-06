@@ -1,4 +1,4 @@
-﻿# tasks.md — F02-task-management
+# tasks.md — F02-task-management
 
 ### T-F02-01 — Entidade, migração e repositório Task
 - **Status:** done
@@ -132,7 +132,7 @@
 - **Commit (rascunho):** `refactor: Renomear o contrato JSON para portugues`
 - **Nota (decisão do usuário):** **JSON em português, por ser projeto brasileiro.** Feito agora, antes do frontend consumir: depois seria breaking change com telas já escritas. Cuidado com os valores de enum, que também são string no JSON e com migration quando o valor mudar no banco.
 - **Nota 2:** Query params seguem em ingles (`status`, `priority`, `page`, `size`) e `ProblemDetail` segue o padrao RFC 7807: a traducao cobre corpo e resposta JSON, nao a URL nem os campos padrao de erro. Quem ja aplicou a `V2` anterior precisa limpar/recriar o schema (checksum divergente).
-- **Nota 3:** **[NEEDS CLARIFICATION] traceId.** O design não previa `traceId` e não há `traceId` em nenhum arquivo de `.specs`. Não é omissão do design, é decisão ainda não tomada: se entra, em qual header e em qual campo do ProblemDetail. `T-F05-02` fala em "preencher traceId e timestamp"; confirmar o formato antes de implementar.
+- **Nota 3:** **traceId estava aberto aqui, e foi fechado em T-F02-05k.** O design nao previa `traceId` (a palavra nao aparecia em nenhum `.specs`), portanto era decisao nova, nao omisao. Resolveu em 2026-10-06: header `X-Trace-Id`, propriedade `traceId` e `timestamp` em todo ProblemDetail. Ver T-F02-05k.
 
 ### T-F02-05f — Ordenação estável na paginação
 - **Status:** done
@@ -205,6 +205,19 @@
 - **Nota:** o `isSubsetOf` passaria por vazio se o padrão de leitura das migrations deixasse de encontrar nada, então o teste afirma `contains("tasks")` antes de comparar. É a mesma armadilha da asserção tautológica: um `contains` frouxo precisa de uma âncora que prove que ele ainda segura.
 - **Nota 2:** os testes que escrevem no Postgres compartilhado precisam limpar a própria sujeira. A tabela da mutação foi criada no container efêmero e revertida junto com a alteração.
 
+### T-F02-05k - traceId e timestamp no ProblemDetail
+- **Status:** done
+- **Reqs:** ERR-02, ERR-06, RNF-20
+- **Origem:** revisao de codigo do backend
+- **Arquivos (criar/alterar):** `backend/src/main/java/com/desafio/taskmanager/common/web/TraceIdFilter.java` (novo), `backend/src/main/java/com/desafio/taskmanager/common/error/GlobalExceptionHandler.java`, `backend/src/main/resources/application.yml`, `backend/src/test/java/com/desafio/taskmanager/common/error/GlobalExceptionHandlerTest.java`
+- **O que fazer:** gerar um `traceId` por requisicao (filtro servlet em MDC), devolve-lo no header `X-Trace-Id` e como propriedade `traceId` de todo ProblemDetail, junto de `timestamp` em ISO-8601, e colocar o mesmo id no pattern de log.
+- **Pronto quando:** toda resposta de erro traz `traceId` e `timestamp`, o header existe tambem em sucesso, e duas requisicoes nunca compartilham o mesmo id.
+- **Testes:** `GlobalExceptionHandlerTest.todaRespostaDeErroLevaOTraceIdDoMdc`, `sucessoTambemExpoemOTraceIdNoHeader`, `traceIdNaoVazaEntreRequisicoesDiferentes`.
+- **Gate:** mvn -q test
+- **Commit (rascunho):** `feat: Correlacionar erros por traceId e timestamp`
+- **Nota (decisao registrada):** **o design nao previa `traceId` — nao havia a palavra em nenhum arquivo de `.specs`.** Foi pedido na revisao, portanto decisao nova, nao omisao de implementacao. `T-F05-02` manda "preencher traceId e timestamp": a infraestrutura existe agora, e a F05 so precisa verificar os cenarios 502/503 de IA sobre ela.
+- **Nota 2:** **o filtro e `@Component`, nao `FilterRegistrationBean`.** Registrado assim ele entra no filtro da servlet em producao, e o `@Import(TraceIdFilter.class)` no `@WebMvcTest` o reproduz no MockMvc sem arrastar o contexto inteiro para um teste de web.
+- **Nota 3:** **`%X{traceId:--}` no pattern de log traz `-` quando nao ha requisicao ativa.** Bootstrap, shutdown e chamadas assincronas ficam sem MDC; o traco deixa explicito que nao ha id, em vez de uma lacuna vazia que parece linha truncada.
 ### T-F02-05 — Frontend Dashboard e Tarefas
 - **Status:** pending
 - **Reqs:** RF-20, RF-21, RNF-03

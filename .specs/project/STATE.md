@@ -1,4 +1,9 @@
-﻿# STATE.md
+## Decisoes - T-F02-05k (traceId e timestamp)
+- 2026-10-06: **traceId e timestamp agora sao enviados em toda resposta de erro.** `traceId` vem do `TraceIdFilter` (MDC), aparece no header `X-Trace-Id` (tambem em sucesso) e como propriedade do ProblemDetail; `timestamp` e `Instant.now()` em ISO-8601. Quem quiser abrir chamada de suporte usa o id para achar a linha de log correspondente.
+- 2026-10-06: **O design nunca previu traceId: nao havia a palavra em nenhum arquivo de `.specs`.** Foi pedido na revisao do backend, portanto decisao nova registrada aqui, e nao preenchimento de omissao. `T-F05-02` ("preencher traceId e timestamp") herda a infraestrutura pronta e so precisa cobrir os cenarios 502/503 de IA.
+- 2026-10-06: **O id e aleatorio de 16 hex, sem informacao de usuario, IP ou timestamp embutido.** Um id derivado de dados de negocio exporia informacao a quem le a resposta; o aleatorio so serve para correlacao.
+- 2026-10-06: **O header e `X-Trace-Id` e a propriedade e `traceId`, em ingles.** Entra na mesma categoria de `type/status/detail`: parte do envelope de erro, nao do contrato de negocio de tarefas que ficou em portugues em T-F02-05e.
+# STATE.md
 
 ## Task atual
 T-F02-04 — Controller REST de tarefas — **done** (Gate: `mvn -q test -Dtest=TaskControllerTest` verde, 27 testes; suíte completa com 101 testes verdes).
