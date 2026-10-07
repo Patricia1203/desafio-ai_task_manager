@@ -80,7 +80,7 @@
 - **Commit (rascunho):** `update: Ferramentas do assistente com {total, itens} e ordem por urgencia`
 
 ### T-F06-08 — Timeout padrão do LLM para 180s
-- **Status:** pending
+- **Status:** done (commit `05a11d8`, 2026-10-07)
 - **Reqs:** RNF-12 (se confirmado; ver T-F06-01)
 - **Depende de:** —
 - **Arquivos (criar/alterar):** backend/src/main/resources/application.yml:37, docker-compose.yml:65, .env.example:26, README.md (seção Configuração do LLM), eventuais testes de config

@@ -16,7 +16,7 @@
 # STATE.md
 
 ## Task atual
-2026-10-07: **T-F06-01, T-F06-02 a T-F06-07 e T-F06-15 concluídas; T-F06-08 é a próxima.** O enunciado do desafio foi localizado (`Desafio de Programação — AI Task Manager.pdf`, na raiz, fora do git) e cada ID da matriz foi mapeado na seção que o origina (`PROJECT.md`). As 7 linhas `done (parcial)` foram fechadas — nenhuma linha de requisito ficou sem origem ou pela metade. Gates verdes: `mvn test` 236 testes / 0 falhas; `npx oxlint` sem warnings, `npx vitest run` 31 testes, `npx tsc -b && npx vite build` OK. O contrato de tasks e o de IA/assistente estão em inglês no backend e no frontend, com rótulos de interface em português. Gates verdes: `mvn test` 233 testes / 0 falhas; `npx oxlint` sem warnings, `npx vitest run` 31 testes, `npx tsc -b && npx vite build` OK.
+2026-10-07: **T-F06-01, T-F06-02 a T-F06-08 e T-F06-15 concluídas; T-F06-09 é a próxima.** O enunciado do desafio foi localizado (`Desafio de Programação — AI Task Manager.pdf`, na raiz, fora do git) e cada ID da matriz foi mapeado na seção que o origina (`PROJECT.md`). As 7 linhas `done (parcial)` foram fechadas — nenhuma linha de requisito ficou sem origem ou pela metade. Gates verdes: `mvn test` 236 testes / 0 falhas; `npx oxlint` sem warnings, `npx vitest run` 31 testes, `npx tsc -b && npx vite build` OK. O contrato de tasks e o de IA/assistente estão em inglês no backend e no frontend, com rótulos de interface em português. Gates verdes: `mvn test` 233 testes / 0 falhas; `npx oxlint` sem warnings, `npx vitest run` 31 testes, `npx tsc -b && npx vite build` OK.
 
 - T-F06-02 — contrato de tasks EN no backend (commit `65abc3d`): enums `TODO/IN_PROGRESS/DONE` e `LOW/MEDIUM/HIGH`, campos JSON de tasks/summary/página em inglês, migration `V4__tasks_contract_english.sql` (dados/`CHECK`/`DEFAULT` convertidos; `V2` intocada), prompt `task-analyze.st` com os valores EN e `CRITICA` fora do domínio. **O arquivo da migration chama-se `V4__tasks_contract_english.sql`** (o rascunho da task previa `V4__tasks_enum_migrate_pt_to_en.sql`).
 - T-F06-03 — contrato de tasks EN no frontend (commit `5bc0bf3`): `types/task.ts`, `api/tasks.ts`, páginas e componentes em campos EN; rótulos preservados em PT via `STATUS_LABELS`/`PRIORITY_LABELS`; badges CSS `badge--todo/in_progress/done`. Os 2 warnings `set-state-in-effect` foram eliminados deixando o estado só em callbacks de promise (`loading` inicia `true` e quem dispara a recarga — filtro, retry, submit — liga o spinner).
@@ -29,7 +29,9 @@
 
 - T-F06-07 (commit `d6098cb`) — as ferramentas de lista do assistente devolvem `ToolResultPage` `{total, items}`: o total vem do filtro inteiro e o corte vai para o banco via `Pageable`, então "quantas pendentes?" tem resposta verdadeira. `get_pending_tasks` passou a ordenar por prazo (sem prazo por último), prioridade e recência. **Duas decisões fechadas a pedido do usuário:** (a) o campo do envelope é `items`, para acompanhar `TaskToolResult`, que está em inglês desde a T-F06-04; (b) as duas ferramentas ordenam pelas três chaves do design da F06 (prazo, prioridade, recência), mesmo que em `get_tasks_by_priority` o critério de prioridade fique constante por o filtro — o design está alinhado com o enunciado, cuja §7 traz "Qual tarefa deveria ser realizada primeiro?" entre as perguntas do assistente.
 
-Pendências que continuam: T-F06-08 a T-F06-14.
+- T-F06-08 (commit `05a11d8`) — `AI_TIMEOUT` padrão foi de 60s para 180s em `application.yml`, `docker-compose.yml` e `.env.example`, com o motivo no README. Um modelo de 7b em CPU e a primeira chamada passam de um minuto, o que virava 502 na demonstração; o nginx do frontend já aceitava 300s. Gate da task: nenhum `60s` sobrando nos arquivos de config e `docker compose config -q` OK.
+
+Pendências que continuam: T-F06-09 a T-F06-14.
 
 Anterior: F05 concluída (F01..F05 todas `done`) — T-F05-04.
 
