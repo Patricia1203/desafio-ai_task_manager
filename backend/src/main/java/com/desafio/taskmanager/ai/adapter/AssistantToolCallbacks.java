@@ -54,7 +54,7 @@ final class AssistantToolCallbacks {
     @Tool(name = "get_tasks_by_priority",
             description = "Lista as tarefas de uma prioridade (qualquer status), da mais recente para a mais antiga.")
     public List<TaskToolResult> get_tasks_by_priority(
-            @ToolParam(description = "prioridade: BAIXA, MEDIA, ALTA ou CRITICA") TaskPriority priority) {
+            @ToolParam(description = "prioridade: LOW, MEDIUM ou HIGH") TaskPriority priority) {
         return tools.getTasksByPriority(priority);
     }
 

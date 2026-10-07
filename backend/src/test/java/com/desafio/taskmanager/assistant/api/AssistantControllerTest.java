@@ -55,11 +55,11 @@ class AssistantControllerTest {
         mockMvc.perform(post("/assistant/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mensagem":"Quais tarefas estao pendentes?"}
+                                {"message":"Quais tarefas estao pendentes?"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.conversationId").value(ID.toString()))
-                .andExpect(jsonPath("$.resposta").value("Temos 2 tarefas em aberto."));
+                .andExpect(jsonPath("$.response").value("Temos 2 tarefas em aberto."));
     }
 
     @Test
@@ -70,7 +70,7 @@ class AssistantControllerTest {
                                 {"conversationId":"%s"}
                                 """.formatted(ID)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("mensagem"))
+                .andExpect(jsonPath("$.errors[0].field").value("message"))
                 .andExpect(jsonPath("$.errors[0].reason").value("mensagem nao pode ser vazia"));
 
         verifyNoInteractions(service);
@@ -83,10 +83,10 @@ class AssistantControllerTest {
         mockMvc.perform(post("/assistant/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mensagem":"%s"}
+                                {"message":"%s"}
                                 """.formatted(mensagem)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("mensagem"))
+                .andExpect(jsonPath("$.errors[0].field").value("message"))
                 .andExpect(jsonPath("$.errors[0].reason").value("mensagem deve ter no maximo 5000 caracteres"));
 
         verifyNoInteractions(service);
@@ -97,7 +97,7 @@ class AssistantControllerTest {
         mockMvc.perform(post("/assistant/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"conversationId":"nao-e-uuid","mensagem":"oi"}
+                                {"conversationId":"nao-e-uuid","message":"oi"}
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.type", containsString("requisicao-malformada")));
@@ -113,7 +113,7 @@ class AssistantControllerTest {
         mockMvc.perform(post("/assistant/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"conversationId":"%s","mensagem":"oi"}
+                                {"conversationId":"%s","message":"oi"}
                                 """.formatted(ID)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type", containsString("nao-encontrado")))
@@ -130,7 +130,7 @@ class AssistantControllerTest {
         mockMvc.perform(post("/assistant/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mensagem":"oi"}
+                                {"message":"oi"}
                                 """))
                 .andExpect(status().isBadGateway())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
@@ -151,7 +151,7 @@ class AssistantControllerTest {
         mockMvc.perform(post("/assistant/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mensagem":"oi"}
+                                {"message":"oi"}
                                 """))
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.type", containsString("erro-de-comunicacao-com-llm")))
@@ -170,7 +170,7 @@ class AssistantControllerTest {
         mockMvc.perform(post("/assistant/chat")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"mensagem":"oi"}
+                                {"message":"oi"}
                                 """))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.type", containsString("llm-indisponivel")))

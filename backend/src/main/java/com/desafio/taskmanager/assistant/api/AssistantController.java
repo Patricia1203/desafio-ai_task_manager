@@ -36,7 +36,7 @@ public class AssistantController {
     /** RF-15/RF-16. 200 com a conversa e a resposta; 404 se o conversationId nao existe. */
     @PostMapping("/chat")
     public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-        AssistantService.RespostaChat resultado = service.chat(request.conversationId(), request.mensagem());
+        AssistantService.RespostaChat resultado = service.chat(request.conversationId(), request.message());
         return new ChatResponse(resultado.conversationId(), resultado.resposta());
     }
 }

@@ -19,5 +19,5 @@ public record ApplyDecompositionRequest(
 
         @NotEmpty(message = "subtarefas nao pode ser vazia")
         @Size(max = 10, message = "subtarefas deve ter no maximo 10 itens")
-        List<@Valid SubtaskDraft> subtarefas) {
+        List<@Valid SubtaskDraft> subtasks) {
 }

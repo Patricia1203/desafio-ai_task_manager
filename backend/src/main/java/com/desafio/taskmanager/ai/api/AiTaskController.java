@@ -32,10 +32,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  * API de IA sobre tarefas (US-020 a US-022): POST /improve, /{id}/analyze,
  * /{id}/decompose e /{id}/decompose/apply.
  *
- * <p>O controller valida a borda, delega ao {@link AiTaskService} e traduz os
- * records da porta (em ingles, contrato interno) para o JSON em portugues que
- * o RF-24 exige — o mesmo salto de camadas do {@code TaskMapper} na API de
- * tarefas. Erros nao sao tratados aqui: {@code InvalidLlmResponseException},
+ * <p>O controller valida a borda e delega ao {@link AiTaskService}, expondo
+ * os records da porta em ingles (RNF-10) — o mesmo contrato dos outros DTOs da
+ * api. Erros nao sao tratados aqui: {@code InvalidLlmResponseException},
  * {@code ResourceNotFoundException} e as violacoes de Bean Validation viram
  * ProblemDetail pelo {@code GlobalExceptionHandler}.
  *
@@ -58,7 +57,7 @@ public class AiTaskController {
     /** RF-10. 200 com a sugestao; nada e persistido. */
     @PostMapping("/improve")
     public ImproveTaskResponse improve(@Valid @RequestBody ImproveTaskRequest request) {
-        TaskImprovement sugestao = service.improve(request.titulo(), request.descricao());
+        TaskImprovement sugestao = service.improve(request.title(), request.description());
         return new ImproveTaskResponse(sugestao.title(), sugestao.description());
     }
 
@@ -75,7 +74,7 @@ public class AiTaskController {
     public DecomposeTaskResponse decompose(@PathVariable UUID id) {
         TaskDecomposition decomposicao = service.decompose(id);
         return new DecomposeTaskResponse(decomposicao.subtasks().stream()
-                .map(proposta -> new DecomposeTaskResponse.SubtarefaSugerida(
+                .map(proposta -> new DecomposeTaskResponse.SubtaskSuggestion(
                         proposta.title(), proposta.description(), proposta.estimatedHours()))
                 .toList());
     }
@@ -93,7 +92,7 @@ public class AiTaskController {
     public ResponseEntity<List<TaskResponse>> apply(
             @PathVariable UUID id,
             @Valid @RequestBody ApplyDecompositionRequest request) {
-        List<TaskCommand> comandos = request.subtarefas().stream()
+        List<TaskCommand> comandos = request.subtasks().stream()
                 .map(AiTaskController::comandoDe)
                 .toList();
         List<TaskResponse> criadas = service.apply(id, comandos).stream()
@@ -106,8 +105,8 @@ public class AiTaskController {
         return ResponseEntity.created(location).body(criadas);
     }
 
-    /** HorasEstimadas nao tem coluna na tabela; o valor cai na validacao e no usuario, nao no banco. */
+    /** estimatedHours nao tem coluna na tabela; o valor cai na validacao e no usuario, nao no banco. */
     private static TaskCommand comandoDe(SubtaskDraft draft) {
-        return new TaskCommand(draft.titulo(), draft.descricao(), null, null);
+        return new TaskCommand(draft.title(), draft.description(), null, null);
     }
 }

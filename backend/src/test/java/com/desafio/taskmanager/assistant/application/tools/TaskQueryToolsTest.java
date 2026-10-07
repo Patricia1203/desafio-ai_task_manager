@@ -58,7 +58,7 @@ class TaskQueryToolsTest {
 
         List<TaskToolResult> resultados = tools.getPendingTasks();
 
-        assertThat(resultados).extracting(TaskToolResult::titulo)
+        assertThat(resultados).extracting(TaskToolResult::title)
                 .containsExactly("T1", "T2");
         assertThat(resultados).extracting(TaskToolResult::status)
                 .containsExactly(TaskStatus.IN_PROGRESS, TaskStatus.TODO);
@@ -88,7 +88,7 @@ class TaskQueryToolsTest {
         when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.DONE))
                 .thenReturn(List.of(tarefa("Vencida", TaskStatus.TODO, TaskPriority.HIGH)));
 
-        assertThat(tools.getOverdueTasks()).extracting(TaskToolResult::titulo)
+        assertThat(tools.getOverdueTasks()).extracting(TaskToolResult::title)
                 .containsExactly("Vencida");
         verify(repository).findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
                 eq(hoje), eq(TaskStatus.DONE));
@@ -109,10 +109,10 @@ class TaskQueryToolsTest {
         TaskToolResult resultado = tools.getTaskById(tarefa.getId()).orElseThrow();
 
         assertThat(resultado.id()).isEqualTo(tarefa.getId());
-        assertThat(resultado.titulo()).isEqualTo("Recurso");
+        assertThat(resultado.title()).isEqualTo("Recurso");
         assertThat(resultado.status()).isEqualTo(TaskStatus.IN_PROGRESS);
-        assertThat(resultado.prioridade()).isEqualTo(TaskPriority.HIGH);
-        assertThat(resultado.prazo()).isNull();
+        assertThat(resultado.priority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(resultado.dueDate()).isNull();
     }
 
     @Test
@@ -123,7 +123,7 @@ class TaskQueryToolsTest {
                 .thenReturn(List.of(tarefa("Critica", TaskStatus.TODO, TaskPriority.HIGH)));
 
         assertThat(tools.getTasksByPriority(TaskPriority.HIGH))
-                .extracting(TaskToolResult::titulo)
+                .extracting(TaskToolResult::title)
                 .containsExactly("Critica");
         verify(repository).findByPriorityAndStatusInOrderByCreatedAtDesc(
                 eq(TaskPriority.HIGH),
@@ -136,7 +136,7 @@ class TaskQueryToolsTest {
         when(repository.findByDueDateBetweenOrderByDueDateAsc(hoje, hoje.plusDays(7)))
                 .thenReturn(List.of(tarefa("Quase", TaskStatus.TODO, TaskPriority.MEDIUM)));
 
-        assertThat(tools.getTasksDueSoon(7)).extracting(TaskToolResult::titulo)
+        assertThat(tools.getTasksDueSoon(7)).extracting(TaskToolResult::title)
                 .containsExactly("Quase");
         verify(repository).findByDueDateBetweenOrderByDueDateAsc(eq(hoje), eq(hoje.plusDays(7)));
     }

@@ -67,18 +67,18 @@ class AiTaskControllerTest {
     // --- POST /ai/tasks/improve ---
 
     @Test
-    void improveRetorna200ComOsCamposEmPortugues() throws Exception {
+    void improveRetorna200ComOsCamposEmIngles() throws Exception {
         when(service.improve("Titulo", "Descricao"))
                 .thenReturn(new TaskImprovement("Novo titulo", "Nova descricao"));
 
         mockMvc.perform(post("/ai/tasks/improve")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"titulo":"Titulo","descricao":"Descricao"}
+                                {"title":"Titulo","description":"Descricao"}
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.titulo").value("Novo titulo"))
-                .andExpect(jsonPath("$.descricao").value("Nova descricao"));
+                .andExpect(jsonPath("$.title").value("Novo titulo"))
+                .andExpect(jsonPath("$.description").value("Nova descricao"));
     }
 
     @Test
@@ -86,10 +86,10 @@ class AiTaskControllerTest {
         mockMvc.perform(post("/ai/tasks/improve")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"descricao":"so descricao"}
+                                {"description":"so descricao"}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("titulo"))
+                .andExpect(jsonPath("$.errors[0].field").value("title"))
                 .andExpect(jsonPath("$.errors[0].reason").value("titulo e obrigatorio"));
 
         verifyNoInteractions(service);
@@ -104,10 +104,10 @@ class AiTaskControllerTest {
 
         mockMvc.perform(post("/ai/tasks/{id}/analyze", ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.prioridade").value("HIGH"))
-                .andExpect(jsonPath("$.complexidade").value("MEDIUM"))
-                .andExpect(jsonPath("$.horasEstimadas").value(12.5))
-                .andExpect(jsonPath("$.justificativa").value("justificativa"));
+                .andExpect(jsonPath("$.priority").value("HIGH"))
+                .andExpect(jsonPath("$.complexity").value("MEDIUM"))
+                .andExpect(jsonPath("$.estimatedHours").value(12.5))
+                .andExpect(jsonPath("$.reason").value("justificativa"));
     }
 
     @Test
@@ -123,17 +123,17 @@ class AiTaskControllerTest {
     // --- POST /ai/tasks/{id}/decompose ---
 
     @Test
-    void decomposeRetorna200ComAsSugestoesEmPortugues() throws Exception {
+    void decomposeRetorna200ComAsSugestoesEmIngles() throws Exception {
         when(service.decompose(ID)).thenReturn(new TaskDecomposition(List.of(
                 new ProposedSubtask("Subtitulo 1", "Subdescricao 1", 2.0),
                 new ProposedSubtask("Subtitulo 2", "Subdescricao 2", null))));
 
         mockMvc.perform(post("/ai/tasks/{id}/decompose", ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.subtarefas.length()").value(2))
-                .andExpect(jsonPath("$.subtarefas[0].titulo").value("Subtitulo 1"))
-                .andExpect(jsonPath("$.subtarefas[0].horasEstimadas").value(2.0))
-                .andExpect(jsonPath("$.subtarefas[1].titulo").value("Subtitulo 2"));
+                .andExpect(jsonPath("$.subtasks.length()").value(2))
+                .andExpect(jsonPath("$.subtasks[0].title").value("Subtitulo 1"))
+                .andExpect(jsonPath("$.subtasks[0].estimatedHours").value(2.0))
+                .andExpect(jsonPath("$.subtasks[1].title").value("Subtitulo 2"));
     }
 
     // --- POST /ai/tasks/{id}/decompose/apply ---
@@ -145,9 +145,9 @@ class AiTaskControllerTest {
                 new Task("Sub 1", "Descricao 1", TaskPriority.LOW, null, pai),
                 new Task("Sub 2", null, null, null, pai)));
         String corpo = """
-                {"subtarefas":[
-                    {"titulo":"Sub 1","descricao":"Descricao 1","horasEstimadas":2.0},
-                    {"titulo":"Sub 2","descricao":null,"horasEstimadas":null}
+                {"subtasks":[
+                    {"title":"Sub 1","description":"Descricao 1","estimatedHours":2.0},
+                    {"title":"Sub 2","description":null,"estimatedHours":null}
                 ]}
                 """;
 
@@ -172,14 +172,14 @@ class AiTaskControllerTest {
     @Test
     void applyComTituloEmBrancoRetorna400ApontandoOItemDaLista() throws Exception {
         String corpo = """
-                {"subtarefas":[{"titulo":"","descricao":"x","horasEstimadas":1.0}]}
+                {"subtasks":[{"title":"","description":"x","estimatedHours":1.0}]}
                 """;
 
         mockMvc.perform(post("/ai/tasks/{id}/decompose/apply", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("subtarefas[0].titulo"))
+                .andExpect(jsonPath("$.errors[0].field").value("subtasks[0].title"))
                 .andExpect(jsonPath("$.errors[0].reason").value("titulo nao pode ser vazio"));
 
         verifyNoInteractions(service);
@@ -188,14 +188,14 @@ class AiTaskControllerTest {
     @Test
     void applyComHorasForaDoIntervaloRetorna400() throws Exception {
         String corpo = """
-                {"subtarefas":[{"titulo":"Sub","descricao":null,"horasEstimadas":500.0}]}
+                {"subtasks":[{"title":"Sub","description":null,"estimatedHours":500.0}]}
                 """;
 
         mockMvc.perform(post("/ai/tasks/{id}/decompose/apply", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("subtarefas[0].horasEstimadas"))
+                .andExpect(jsonPath("$.errors[0].field").value("subtasks[0].estimatedHours"))
                 .andExpect(jsonPath("$.errors[0].reason").value("horasEstimadas deve ter no maximo 200"));
 
         verifyNoInteractions(service);
@@ -206,10 +206,10 @@ class AiTaskControllerTest {
         mockMvc.perform(post("/ai/tasks/{id}/decompose/apply", ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"subtarefas":[]}
+                                {"subtasks":[]}
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("subtarefas"))
+                .andExpect(jsonPath("$.errors[0].field").value("subtasks"))
                 .andExpect(jsonPath("$.errors[0].reason").value("subtarefas nao pode ser vazia"));
 
         verifyNoInteractions(service);
@@ -218,14 +218,14 @@ class AiTaskControllerTest {
     @Test
     void applyComMaisDezSubtarefasRetorna400() throws Exception {
         String itens = IntStream.range(0, 11)
-                .mapToObj(i -> "{\"titulo\":\"Sub " + i + "\",\"descricao\":null,\"horasEstimadas\":null}")
+                .mapToObj(i -> "{\"title\":\"Sub " + i + "\",\"description\":null,\"estimatedHours\":null}")
                 .collect(Collectors.joining(","));
 
         mockMvc.perform(post("/ai/tasks/{id}/decompose/apply", ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"subtarefas\":[" + itens + "]}"))
+                        .content("{\"subtasks\":[" + itens + "]}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].field").value("subtarefas"))
+                .andExpect(jsonPath("$.errors[0].field").value("subtasks"))
                 .andExpect(jsonPath("$.errors[0].reason").value("subtarefas deve ter no maximo 10 itens"));
 
         verifyNoInteractions(service);
@@ -235,7 +235,7 @@ class AiTaskControllerTest {
     void applyComIdInexistenteRetorna404() throws Exception {
         when(service.apply(eq(ID), any())).thenThrow(ResourceNotFoundException.of("tarefa", ID));
         String corpo = """
-                {"subtarefas":[{"titulo":"Sub","descricao":null,"horasEstimadas":null}]}
+                {"subtasks":[{"title":"Sub","description":null,"estimatedHours":null}]}
                 """;
 
         mockMvc.perform(post("/ai/tasks/{id}/decompose/apply", ID)

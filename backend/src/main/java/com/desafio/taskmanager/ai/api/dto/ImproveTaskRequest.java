@@ -8,16 +8,16 @@ import jakarta.validation.constraints.Size;
  * conteudo a melhorar, nao o id — quem chama ja tem a tarefa aberta e decide
  * depois se aplica a sugestao via PUT /api/tasks/{id} (RF-10).
  *
- * <p>Os nomes dos campos estao em portugues como o resto do contrato de
- * negocio (RF-24); a record {@code TaskImprovement} da porta continua em
- * ingles, porque e contrato interno.
+ * <p>Os nomes dos campos estao em ingles (RNF-10); a record
+ * {@code TaskImprovement} da porta continua em ingles, porque e contrato
+ * interno.
  */
 public record ImproveTaskRequest(
 
         @NotBlank(message = "titulo e obrigatorio")
         @Size(max = 200, message = "titulo deve ter no maximo 200 caracteres")
-        String titulo,
+        String title,
 
         @Size(max = 5000, message = "descricao deve ter no maximo 5000 caracteres")
-        String descricao) {
+        String description) {
 }
