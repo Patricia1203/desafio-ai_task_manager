@@ -2,13 +2,14 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Task } from '../types/task';
-import { changeStatus, deleteTask, getSubtasks } from '../api/tasks';
+import { changeStatus, deleteTask, getSubtasks, getTask } from '../api/tasks';
 import TaskDetail from '../components/task/TaskDetail';
 
 vi.mock('../api/tasks', () => ({
   changeStatus: vi.fn(),
   deleteTask: vi.fn(),
   getSubtasks: vi.fn(),
+  getTask: vi.fn(),
 }));
 
 const tarefa: Task = {
@@ -24,19 +25,33 @@ const tarefa: Task = {
   subtaskCount: 0,
 };
 
-function montar() {
+const filha: Task = {
+  ...tarefa,
+  id: '3f1d3f6e-0000-4000-8000-000000000002',
+  title: 'Contratar empresa',
+};
+
+function montar(sobrescrita: Partial<Task> = {}, onOpen = vi.fn()) {
   const onChanged = vi.fn();
   const onDeleted = vi.fn();
   const onEdit = vi.fn();
   render(
-    <TaskDetail task={tarefa} onChanged={onChanged} onDeleted={onDeleted} onEdit={onEdit} />,
+    <TaskDetail
+      task={{ ...tarefa, ...sobrescrita }}
+      onChanged={onChanged}
+      onDeleted={onDeleted}
+      onEdit={onEdit}
+      onOpen={onOpen}
+    />,
   );
-  return { onChanged, onDeleted, onEdit };
+  return { onChanged, onDeleted, onEdit, onOpen };
 }
 
 describe('TaskDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getSubtasks).mockResolvedValue([]);
+    vi.mocked(getTask).mockResolvedValue({ ...tarefa, title: 'Meta maior' });
   });
 
   it('altera o status e devolve a tarefa atualizada', async () => {
@@ -59,37 +74,63 @@ describe('TaskDetail', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('422: transicao invalida');
   });
 
-  it('lista as subtarefas no dialogo e so dispara o DELETE apos confirmar', async () => {
+  it('agrupa as subtarefas em bloco e abre a selecionada', async () => {
     vi.mocked(getSubtasks).mockResolvedValue([
-      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000002', title: 'Contratar empresa' },
+      filha,
       { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000003', title: 'Desligar contadores' },
     ]);
+    const { onOpen } = montar();
+
+    const bloco = await screen.findByRole('region');
+    expect(within(bloco).getByText('Subtarefas')).toBeInTheDocument();
+
+    await userEvent.click(within(bloco).getByRole('button', { name: /Desligar contadores/ }));
+
+    expect(onOpen).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '3f1d3f6e-0000-4000-8000-000000000003' }),
+    );
+  });
+
+  it('mostra o vinculo com o pai e volta para ele', async () => {
+    vi.mocked(getTask).mockResolvedValue({ ...tarefa, title: 'Mover casa' });
+    const { onOpen } = montar({ id: filha.id, title: 'Contratar empresa', parentId: tarefa.id });
+
+    const vinculo = await screen.findByRole('button', { name: 'Subtarefa de Mover casa' });
+    await userEvent.click(vinculo);
+
+    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ title: 'Mover casa' }));
+  });
+
+  it('lista as subtarefas no dialogo sem refazer a busca', async () => {
+    vi.mocked(getSubtasks).mockResolvedValue([filha]);
     vi.mocked(deleteTask).mockResolvedValue(undefined);
     const { onDeleted } = montar();
+
+    await screen.findByRole('region');
 
     await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
 
     const dialogo = await screen.findByRole('alertdialog');
     expect(within(dialogo).getByText('Contratar empresa')).toBeInTheDocument();
-    expect(within(dialogo).getByText('Desligar contadores')).toBeInTheDocument();
     expect(deleteTask).not.toHaveBeenCalled();
 
     await userEvent.click(within(dialogo).getByRole('button', { name: 'Excluir' }));
 
     expect(deleteTask).toHaveBeenCalledWith(tarefa.id);
     expect(onDeleted).toHaveBeenCalledOnce();
+    expect(getSubtasks).toHaveBeenCalledTimes(1);
   });
 
   it('confirma direto a exclusao quando nao ha subtarefas', async () => {
-    vi.mocked(getSubtasks).mockResolvedValue([]);
     vi.mocked(deleteTask).mockResolvedValue(undefined);
     const { onDeleted } = montar();
+
+    await screen.findByRole('region');
 
     await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
 
     const dialogo = await screen.findByRole('alertdialog');
     expect(dialogo).not.toHaveTextContent('junto com as subtarefas');
-    expect(deleteTask).not.toHaveBeenCalled();
 
     await userEvent.click(within(dialogo).getByRole('button', { name: 'Excluir' }));
 
@@ -98,10 +139,10 @@ describe('TaskDetail', () => {
   });
 
   it('cancela a exclusao sem chamar a API', async () => {
-    vi.mocked(getSubtasks).mockResolvedValue([
-      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000002', title: 'Contratar empresa' },
-    ]);
+    vi.mocked(getSubtasks).mockResolvedValue([filha]);
     const { onDeleted } = montar();
+
+    await screen.findByRole('region');
 
     await userEvent.click(screen.getByRole('button', { name: 'Excluir' }));
     const dialogo = await screen.findByRole('alertdialog');

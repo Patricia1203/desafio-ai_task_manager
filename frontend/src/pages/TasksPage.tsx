@@ -22,6 +22,7 @@ export default function TasksPage() {
   const [selecionada, setSelecionada] = useState<Task | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [detalheVersao, setDetalheVersao] = useState(0);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -151,16 +152,21 @@ export default function TasksPage() {
             Voltar para a lista
           </button>
           <TaskDetail
+            key={`${selecionada.id}-${detalheVersao}`}
             task={selecionada}
             onChanged={aposTrocaStatus}
             onDeleted={aposExclusao}
             onEdit={() => setModo('editar')}
+            onOpen={abrirDetalhe}
           />
           <AiPanel
             key={`ia-${selecionada.id}`}
             task={selecionada}
             onChanged={aposTrocaStatus}
-            onSubtasksCreated={carregar}
+            onSubtasksCreated={() => {
+              void carregar();
+              setDetalheVersao((versao) => versao + 1);
+            }}
           />
         </>
       )}
