@@ -16,8 +16,25 @@
 # STATE.md
 
 ## Task atual
-Projeto concluído — todas as features (F01..F05) e todas as tasks (T-F01-01..T-F05-04) `done`.
-Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done (commits `c61bdfb` + docs do hash).
+Revisão pós-entrega (2026-10-07): as pendências apontadas pelo usuário foram analisadas pelo agente e viraram a feature **F06-review-hardening** com 15 tasks `pending`. **Nenhuma task da F06 pode ser implementada antes do OK do usuário às tasks criadas.** Detalhes do veredicto na seção "Decisões — F06 (abertura da revisão)".
+Anterior: F05 concluída (F01..F05 todas `done`) — T-F05-04.
+
+## Decisões — F06 (abertura da revisão)
+- 2026-10-07: **Veredicto da análise das pendências (todas as 11 confirmadas verdadeiras; 2 com correção de número).** Checado contra código, specs e `git log`:
+  - **Contrato PT-BR:** T-F02-05e trocou o contrato para português **com aprovação do usuário** (1ª vez, tasks.md:133); a **documentação do desafio exige inglês** → decisão do usuário na revisão: reverter (T-F06-02..05) com migration nova **V4** no lugar de editar a V2. RF-24 segue sem texto em `.specs` (depende da T-F06-01). Obs.: a inconsistência "prioridade PT / complexidade EN" é real (`TaskPriority` BAIXA/MEDIA/ALTA vs `TaskComplexity` LOW/MEDIUM/HIGH).
+  - **`AssistantToolCallbacks:57`** descreve "BAIXA, MEDIA, ALTA ou CRITICA"; `CRITICA` não existe no enum — verdadeiro (fix no T-F06-04).
+  - **`AssistantService` `@Transactional` na classe** segura conexão durante o LLM — verdadeiro (T-F06-06).
+  - **Ferramentas cortam em 10 sem total e "pendentes" por criação, não urgência** — verdadeiro (`TaskQueryTools` limita sem informar total; pendente por `createdAt DESC`) (T-F06-07).
+  - **Timeout 60s, `LocalDate.now()` em UTC, sem GET de mensagens e `conversationId` só em estado React, prompts sem delimitadores, compose não repassa `ASSISTANT_*`, `.env.example` com `VITE_BACKEND_URL` rotulada "não usado" (mas é o target do proxy), `ollama:latest` sem tag** — todos verdadeiros (T-F06-08..12).
+  - **Validador `@Value` + `AiProperties` (duas fontes) e `catch (RuntimeException)` no retry** — verdadeiros (T-F06-14). **Janela de 20 carrega a conversa toda** — verdadeiro (T-F06-06).
+  - **"done (parcial)": 7 linhas, não 8** (RNF-02, RF-04, RF-05, RF-07, RF-08, RF-09, TST-01); as 6 de RF/RNF são parciais por "endpoint na outra task", a RNF-02 é a que tem texto ausente (T-F06-15).
+  - **oxlint: exatamente 2 warnings `set-state-in-effect`** (DashboardPage:36 e TasksPage:42) — verdadeiro (fix junto da T-F06-03).
+  - **Commits: 10 `docs:` + 1 `feat:` fora do padrão; "docs: Registra o hash" = 7 (não ~10).** Reescrever histórico não constava das regras locais (commit-convention.md lista só os verbos); decisão do usuário: **reescrever histórico só com pedido explícito**, **`docs` passa a ser verbo permitido** (`feat` não; usar `add`) (T-F06-13 atualiza a convenção). Bootstrap `8e6c157` com Boot 4.0.0-M3/Spring AI 1.0.0-M4 confirmado; corrigido em `da297ee` para 4.1.1/2.0.1.
+  - **"Sem Docker" exige Docker**, **"Prompts utilizados" só lista arquivos** (DOC-01 pede descrição), **typo "Ia valida sempre"** (README:177), **`docs/desafio.pdf` ausente**, **RNF-02/12/13/15 e TST-03 preenchidos sem o texto do requisito** (STATE admite) — todos verdadeiros (T-F06-01, T-F06-13).
+- 2026-10-07: **Decisão do usuário na revisão: contrato em inglês, português só nos rótulos da UI.** Substitui T-F02-05e. Valores: status `TODO/IN_PROGRESS/DONE`, prioridade `LOW/MEDIUM/HIGH`; campos de tasks/IA/assistente em inglês (design.md F06 seção 1). Migration nova **V4**; `V2` não é mais editada.
+- 2026-10-07: **Fusos/tempo: default `AI_TIMEOUT` 180s (faixa 120–180 sugerida) e fuso `America/Sao_Paulo` configurável via `app.timezone`** (assumptions aprovadas nas tasks; ver spec.md F06).
+- 2026-10-07: **`docs/desafio.pdf` não está no repositório; necessidade: colar a tabela de requisitos do prompt em PROJECT.md (T-F06-01).** Enquanto isso RF-24, RNF-02/12/13/15, TST-03 e DOC-01 ficam com o texto [NEEDS CLARIFICATION].
+- 2026-10-07: **Estratégia Maven (decisão do usuário):** os Gates tentam `MAVEN_HOME`/PATH; ausente, o binário é descoberto automaticamente na máquina. **Nenhum caminho de máquina vai para a documentação** (T-F06-13).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -233,7 +250,7 @@ Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done (c
 - Adicionado bloco `app.*` com CORS, timeout/retry de IA e limites de subtarefas, para que a F03 não precise mexer em contrato de config depois.
 
 ## Melhorias propostas (aguardam o usuário)
-- [Proposta] Adicionar Maven Wrapper (`mvnw`) ao repositório para que os Gates funcionem em qualquer máquina sem depender do caminho local do Maven. Impacto: adicionar arquivos ao repo (baixo risco), mas muda o comando de todos os Gates de backend. Aguardando aprovação.
+- ~~[Proposta] Adicionar Maven Wrapper (`mvnw`) ao repositório para que os Gates funcionem em qualquer máquina sem depender do caminho local do Maven.~~ **Resolvido (decisão do usuário, 2026-10-07): sem wrapper.** Gates tentam `MAVEN_HOME`/PATH e, ausente, descobrem o binário automaticamente na máquina; **nenhum caminho de máquina entra na documentação**.
 - [Proposta] `context-path: /api` vs. prefixo `/api` em cada controller. Mantido `context-path` (menos repetição), mas isso torna os testes `@WebMvcTest` ligeiramente diferentes. Se preferir o padrão mais explícito, é uma mudança de contrato público — requer sua decisão.
 
 - **Lista fixa de tabelas dentro do teste volta a quebrar quando o schema cresce.** Trocar `containsExactly` por `contains` no smoke test não resolve o teste vizinho, que comparava as tabelas do banco com `flyway_schema_history` + `tasks` escritos à mão. A lista esperada tem que vir da fonte de verdade — aqui, um `CREATE TABLE` lido dos scripts de migration — e vir acompanhada de uma âncora (`contains("tasks")`) que prove que a leitura funcionou, senão o `isSubsetOf` passa vazio.

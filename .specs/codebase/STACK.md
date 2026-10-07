@@ -7,7 +7,7 @@ Verificado em 2026-10-05 consultando Maven Central (`repo1.maven.org/maven2`) e 
 | Java | 21 (toolchain local: JDK 25.0.2 LTS) | `java -version` |
 | Spring Boot | **4.1.1** | `spring-boot-starter-parent/4.1.1` existe no Maven Central (GA) |
 | Spring AI | **2.0.1** | `spring-ai-bom/2.0.1` existe; `spring-ai-starter-model-ollama:2.0.1` declara dependências em Spring Boot 4.1.1 |
-| Maven | 3.9.15 | binário local em `~/.m2/wrapper/dists/apache-maven-3.9.15-bin` |
+| Maven | 3.9.15 | acessado via env var `MAVEN_HOME`/PATH ou descoberta automática na máquina; caminho local não é documentado |
 | Testcontainers | **2.0.5** | `org.testcontainers:testcontainers:2.0.5`; artifacts renomeados na 2.x → `testcontainers-junit-jupiter`, `testcontainers-postgresql` |
 | Flyway | 12.4.0 (gerenciado pelo Boot 4.1.1) | `spring-boot-flyway:4.1.1` declara `flyway-core:12.4.0`; `flyway-database-postgresql` em runtime |
 | PostgreSQL driver | gerenciado pelo Boot 4.1.1 | `org.postgresql:postgresql` (runtime) |
