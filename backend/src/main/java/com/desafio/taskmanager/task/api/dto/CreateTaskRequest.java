@@ -11,21 +11,22 @@ import jakarta.validation.constraints.Size;
  * Corpo do POST /api/tasks.
  *
  * <p>As mensagens das constraints vao para o ProblemDetail (propriedade
- * {@code errors}) e sao lidas pelo usuario, entao vao em portugues. Os nomes dos
- * componentes tambem: sao os campos do JSON (decisao do usuario).
+ * {@code errors}) e sao lidas pelo usuario, entao vao em portugues. Os nomes
+ * dos componentes sao os campos do JSON (contrato em ingles desde a revisao
+ * F06).
  */
 public record CreateTaskRequest(
 
         @NotBlank(message = "titulo e obrigatorio")
         @Size(max = 200, message = "titulo deve ter no maximo 200 caracteres")
-        String titulo,
+        String title,
 
         @Size(max = 5000, message = "descricao deve ter no maximo 5000 caracteres")
-        String descricao,
+        String description,
 
-        /** Opcional: sem valor a tarefa nasce MEDIA. */
-        TaskPriority prioridade,
+        /** Opcional: sem valor a tarefa nasce MEDIUM. */
+        TaskPriority priority,
 
         /** Prazo em data (sem hora). Opcional. */
-        LocalDate prazo) {
+        LocalDate dueDate) {
 }

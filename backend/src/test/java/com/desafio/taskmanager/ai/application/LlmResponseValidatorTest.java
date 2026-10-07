@@ -81,7 +81,7 @@ class LlmResponseValidatorTest {
                     {
                       "title": "titulo valido",
                       "description": "descricao valida",
-                      "priority": "ALTA"
+                      "priority": "HIGH"
                     }
                     """;
 
@@ -100,7 +100,7 @@ class LlmResponseValidatorTest {
         void analiseValidaEhAceita() {
             String json = """
                     {
-                      "priority": "ALTA",
+                      "priority": "HIGH",
                       "complexity": "MEDIUM",
                       "estimatedHours": 8.5,
                       "reason": "Prazo curto e depende de dados de tres times"
@@ -109,7 +109,7 @@ class LlmResponseValidatorTest {
 
             TaskAnalysis result = validator.validateAnalysis(json);
 
-            assertThat(result.priority()).isEqualTo(TaskPriority.ALTA);
+            assertThat(result.priority()).isEqualTo(TaskPriority.HIGH);
             assertThat(result.complexity()).isEqualTo(TaskComplexity.MEDIUM);
             assertThat(result.estimatedHours()).isEqualTo(8.5);
             assertThat(result.reason()).contains("tres times");
@@ -120,7 +120,7 @@ class LlmResponseValidatorTest {
         void complexidadeInvalidaEhRejeitada() {
             String json = """
                     {
-                      "priority": "ALTA",
+                      "priority": "HIGH",
                       "complexity": "EXTREME",
                       "estimatedHours": 8,
                       "reason": "motivo"
@@ -154,7 +154,7 @@ class LlmResponseValidatorTest {
         void horasAcimaDoMaximoSaoRejeitadas() {
             String json = """
                     {
-                      "priority": "MEDIA",
+                      "priority": "MEDIUM",
                       "complexity": "LOW",
                       "estimatedHours": 500,
                       "reason": "motivo"
@@ -171,7 +171,7 @@ class LlmResponseValidatorTest {
         void horasZeradasSaoRejeitadas() {
             String json = """
                     {
-                      "priority": "MEDIA",
+                      "priority": "MEDIUM",
                       "complexity": "LOW",
                       "estimatedHours": 0,
                       "reason": "motivo"
@@ -188,7 +188,7 @@ class LlmResponseValidatorTest {
         void horasAusentesSaoRejeitadas() {
             String json = """
                     {
-                      "priority": "MEDIA",
+                      "priority": "MEDIUM",
                       "complexity": "LOW",
                       "reason": "motivo"
                     }
@@ -204,7 +204,7 @@ class LlmResponseValidatorTest {
         void motivoEmBrancoEhRejeitado() {
             String json = """
                     {
-                      "priority": "MEDIA",
+                      "priority": "MEDIUM",
                       "complexity": "LOW",
                       "estimatedHours": 5,
                       "reason": "  "
@@ -221,7 +221,7 @@ class LlmResponseValidatorTest {
         void motivoAcimaDoLimiteEhRejeitado() {
             String json = """
                     {
-                      "priority": "MEDIA",
+                      "priority": "MEDIUM",
                       "complexity": "LOW",
                       "estimatedHours": 5,
                       "reason": "%s"
@@ -342,7 +342,7 @@ class LlmResponseValidatorTest {
         @DisplayName("sem o campo subtasks a resposta e rejeitada")
         void listaDeSubtarefasAusenteEhRejeitada() {
             String json = """
-                    {"priority": "MEDIA"}
+                    {"priority": "MEDIUM"}
                     """;
 
             assertThatThrownBy(() -> validator.validateDecomposition(json))

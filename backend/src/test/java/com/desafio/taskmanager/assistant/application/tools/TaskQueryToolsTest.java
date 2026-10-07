@@ -51,32 +51,32 @@ class TaskQueryToolsTest {
     @Test
     void getPendingTasksConsultasStatusEmAberto() {
         when(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO)))
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
                 .thenReturn(List.of(
-                        tarefa("T1", TaskStatus.EM_ANDAMENTO, TaskPriority.ALTA),
-                        tarefa("T2", TaskStatus.A_FAZER, TaskPriority.MEDIA)));
+                        tarefa("T1", TaskStatus.IN_PROGRESS, TaskPriority.HIGH),
+                        tarefa("T2", TaskStatus.TODO, TaskPriority.MEDIUM)));
 
         List<TaskToolResult> resultados = tools.getPendingTasks();
 
         assertThat(resultados).extracting(TaskToolResult::titulo)
                 .containsExactly("T1", "T2");
         assertThat(resultados).extracting(TaskToolResult::status)
-                .containsExactly(TaskStatus.EM_ANDAMENTO, TaskStatus.A_FAZER);
+                .containsExactly(TaskStatus.IN_PROGRESS, TaskStatus.TODO);
         verify(repository).findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO));
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS));
     }
 
     @Test
     void resultadoRespeitaOLimiteConfigurado() {
         tools = new TaskQueryTools(repository, new AssistantLimitsProperties(3, true));
         List<Task> tarefas = List.of(
-                tarefa("1", TaskStatus.A_FAZER, TaskPriority.MEDIA),
-                tarefa("2", TaskStatus.A_FAZER, TaskPriority.MEDIA),
-                tarefa("3", TaskStatus.A_FAZER, TaskPriority.MEDIA),
-                tarefa("4", TaskStatus.EM_ANDAMENTO, TaskPriority.MEDIA),
-                tarefa("5", TaskStatus.EM_ANDAMENTO, TaskPriority.MEDIA));
+                tarefa("1", TaskStatus.TODO, TaskPriority.MEDIUM),
+                tarefa("2", TaskStatus.TODO, TaskPriority.MEDIUM),
+                tarefa("3", TaskStatus.TODO, TaskPriority.MEDIUM),
+                tarefa("4", TaskStatus.IN_PROGRESS, TaskPriority.MEDIUM),
+                tarefa("5", TaskStatus.IN_PROGRESS, TaskPriority.MEDIUM));
         when(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO)))
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
                 .thenReturn(tarefas);
 
         assertThat(tools.getPendingTasks()).hasSize(3);
@@ -85,13 +85,13 @@ class TaskQueryToolsTest {
     @Test
     void getOverdueTasksUsaPrazoDeHojeComoFronteira() {
         LocalDate hoje = LocalDate.now();
-        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.CONCLUIDA))
-                .thenReturn(List.of(tarefa("Vencida", TaskStatus.A_FAZER, TaskPriority.ALTA)));
+        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.DONE))
+                .thenReturn(List.of(tarefa("Vencida", TaskStatus.TODO, TaskPriority.HIGH)));
 
         assertThat(tools.getOverdueTasks()).extracting(TaskToolResult::titulo)
                 .containsExactly("Vencida");
         verify(repository).findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
-                eq(hoje), eq(TaskStatus.CONCLUIDA));
+                eq(hoje), eq(TaskStatus.DONE));
     }
 
     @Test
@@ -103,38 +103,38 @@ class TaskQueryToolsTest {
 
     @Test
     void getTaskByIdMapeiaAEntidadeParaODto() {
-        Task tarefa = tarefa("Recurso", TaskStatus.EM_ANDAMENTO, TaskPriority.ALTA);
+        Task tarefa = tarefa("Recurso", TaskStatus.IN_PROGRESS, TaskPriority.HIGH);
         when(repository.findById(any())).thenReturn(Optional.of(tarefa));
 
         TaskToolResult resultado = tools.getTaskById(tarefa.getId()).orElseThrow();
 
         assertThat(resultado.id()).isEqualTo(tarefa.getId());
         assertThat(resultado.titulo()).isEqualTo("Recurso");
-        assertThat(resultado.status()).isEqualTo(TaskStatus.EM_ANDAMENTO);
-        assertThat(resultado.prioridade()).isEqualTo(TaskPriority.ALTA);
+        assertThat(resultado.status()).isEqualTo(TaskStatus.IN_PROGRESS);
+        assertThat(resultado.prioridade()).isEqualTo(TaskPriority.HIGH);
         assertThat(resultado.prazo()).isNull();
     }
 
     @Test
     void getTasksByPriorityFiltraPelaPrioridadeInformada() {
         when(repository.findByPriorityAndStatusInOrderByCreatedAtDesc(
-                eq(TaskPriority.ALTA),
-                eq(List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO, TaskStatus.CONCLUIDA))))
-                .thenReturn(List.of(tarefa("Critica", TaskStatus.A_FAZER, TaskPriority.ALTA)));
+                eq(TaskPriority.HIGH),
+                eq(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE))))
+                .thenReturn(List.of(tarefa("Critica", TaskStatus.TODO, TaskPriority.HIGH)));
 
-        assertThat(tools.getTasksByPriority(TaskPriority.ALTA))
+        assertThat(tools.getTasksByPriority(TaskPriority.HIGH))
                 .extracting(TaskToolResult::titulo)
                 .containsExactly("Critica");
         verify(repository).findByPriorityAndStatusInOrderByCreatedAtDesc(
-                eq(TaskPriority.ALTA),
-                eq(List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO, TaskStatus.CONCLUIDA)));
+                eq(TaskPriority.HIGH),
+                eq(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE)));
     }
 
     @Test
     void getTasksDueSoonUsaJanelaDeHojeAteHojeMaisDias() {
         LocalDate hoje = LocalDate.now();
         when(repository.findByDueDateBetweenOrderByDueDateAsc(hoje, hoje.plusDays(7)))
-                .thenReturn(List.of(tarefa("Quase", TaskStatus.A_FAZER, TaskPriority.MEDIA)));
+                .thenReturn(List.of(tarefa("Quase", TaskStatus.TODO, TaskPriority.MEDIUM)));
 
         assertThat(tools.getTasksDueSoon(7)).extracting(TaskToolResult::titulo)
                 .containsExactly("Quase");
@@ -153,10 +153,10 @@ class TaskQueryToolsTest {
     @Test
     void getTaskSummaryMontaAsContagens() {
         when(repository.countAll()).thenReturn(4L);
-        when(repository.countByStatusValue(TaskStatus.A_FAZER)).thenReturn(2L);
-        when(repository.countByStatusValue(TaskStatus.EM_ANDAMENTO)).thenReturn(1L);
-        when(repository.countByStatusValue(TaskStatus.CONCLUIDA)).thenReturn(1L);
-        when(repository.countByPriorityValue(TaskPriority.ALTA)).thenReturn(2L);
+        when(repository.countByStatusValue(TaskStatus.TODO)).thenReturn(2L);
+        when(repository.countByStatusValue(TaskStatus.IN_PROGRESS)).thenReturn(1L);
+        when(repository.countByStatusValue(TaskStatus.DONE)).thenReturn(1L);
+        when(repository.countByPriorityValue(TaskPriority.HIGH)).thenReturn(2L);
 
         assertThat(tools.getTaskSummary()).isEqualTo(
                 new TaskSummary(4L, 2L, 1L, 1L, 2L));
@@ -165,10 +165,10 @@ class TaskQueryToolsTest {
     @Test
     void nenhumMetodoDeEscritaDoRepositorioEhChamado() {
         when(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO)))
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
                 .thenReturn(List.of());
         when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
-                LocalDate.now(), TaskStatus.CONCLUIDA))
+                LocalDate.now(), TaskStatus.DONE))
                 .thenReturn(List.of());
         when(repository.findByDueDateBetweenOrderByDueDateAsc(LocalDate.now(), LocalDate.now().plusDays(1)))
                 .thenReturn(List.of());
@@ -177,15 +177,15 @@ class TaskQueryToolsTest {
                 .thenReturn(List.of());
         when(repository.findById(any())).thenReturn(Optional.empty());
         when(repository.countAll()).thenReturn(0L);
-        when(repository.countByStatusValue(eq(TaskStatus.A_FAZER))).thenReturn(0L);
-        when(repository.countByStatusValue(eq(TaskStatus.EM_ANDAMENTO))).thenReturn(0L);
-        when(repository.countByStatusValue(eq(TaskStatus.CONCLUIDA))).thenReturn(0L);
-        when(repository.countByPriorityValue(eq(TaskPriority.ALTA))).thenReturn(0L);
+        when(repository.countByStatusValue(eq(TaskStatus.TODO))).thenReturn(0L);
+        when(repository.countByStatusValue(eq(TaskStatus.IN_PROGRESS))).thenReturn(0L);
+        when(repository.countByStatusValue(eq(TaskStatus.DONE))).thenReturn(0L);
+        when(repository.countByPriorityValue(eq(TaskPriority.HIGH))).thenReturn(0L);
 
         tools.getPendingTasks();
         tools.getOverdueTasks();
         tools.getTasksDueSoon(1);
-        tools.getTasksByPriority(TaskPriority.ALTA);
+        tools.getTasksByPriority(TaskPriority.HIGH);
         tools.getTaskById(UUID.randomUUID());
         tools.getTaskSummary();
 
@@ -200,10 +200,10 @@ class TaskQueryToolsTest {
 
     private static Task tarefa(String titulo, TaskStatus status, TaskPriority prioridade) {
         Task tarefa = new Task(titulo, null, prioridade, null, null);
-        if (status == TaskStatus.EM_ANDAMENTO) {
-            tarefa.changeStatus(TaskStatus.EM_ANDAMENTO);
-        } else if (status == TaskStatus.CONCLUIDA) {
-            tarefa.changeStatus(TaskStatus.CONCLUIDA);
+        if (status == TaskStatus.IN_PROGRESS) {
+            tarefa.changeStatus(TaskStatus.IN_PROGRESS);
+        } else if (status == TaskStatus.DONE) {
+            tarefa.changeStatus(TaskStatus.DONE);
         }
         return tarefa;
     }

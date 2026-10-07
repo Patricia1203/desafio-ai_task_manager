@@ -17,12 +17,12 @@ public record UpdateTaskRequest(
 
         @NotBlank(message = "titulo e obrigatorio")
         @Size(max = 200, message = "titulo deve ter no maximo 200 caracteres")
-        String titulo,
+        String title,
 
         @Size(max = 5000, message = "descricao deve ter no maximo 5000 caracteres")
-        String descricao,
+        String description,
 
-        TaskPriority prioridade,
+        TaskPriority priority,
 
-        LocalDate prazo) {
+        LocalDate dueDate) {
 }

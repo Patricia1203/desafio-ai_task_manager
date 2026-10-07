@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * campo — um {@code MapStruct} traria um requisito de build a mais e esconderia
  * o contrato, entao fica escrito a mao.
  *
- * <p>A entidade tem regra de transicao de status (CONCLUIDA e terminal); o mapper
+ * <p>A entidade tem regra de transicao de status (DONE e terminal); o mapper
  * nao contorna isso. Status so muda por {@link Task#changeStatus}, chamado pelo
  * service.
  */

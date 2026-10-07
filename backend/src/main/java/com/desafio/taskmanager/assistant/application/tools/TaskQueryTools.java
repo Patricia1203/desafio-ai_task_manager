@@ -41,16 +41,16 @@ public class TaskQueryTools {
         this.maxToolResults = properties.maxToolResults();
     }
 
-    /** Tarefas em aberto (A_FAZER ou EM_ANDAMENTO), das mais recentes para as antigas. */
+    /** Tarefas em aberto (TODO ou IN_PROGRESS), das mais recentes para as antigas. */
     public List<TaskToolResult> getPendingTasks() {
         return limitar(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO)));
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)));
     }
 
     /** Tarefas com prazo vencido e ainda nao concluidas, do prazo mais antigo para o mais proximo. */
     public List<TaskToolResult> getOverdueTasks() {
         return limitar(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
-                LocalDate.now(), TaskStatus.CONCLUIDA));
+                LocalDate.now(), TaskStatus.DONE));
     }
 
     /** Tarefa por id; id inexistente devolve vazio em vez de erro. */
@@ -62,7 +62,7 @@ public class TaskQueryTools {
     public List<TaskToolResult> getTasksByPriority(TaskPriority priority) {
         Objects.requireNonNull(priority, "priority nao pode ser nula");
         return limitar(repository.findByPriorityAndStatusInOrderByCreatedAtDesc(priority,
-                List.of(TaskStatus.A_FAZER, TaskStatus.EM_ANDAMENTO, TaskStatus.CONCLUIDA)));
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE)));
     }
 
     /** Tarefas com prazo entre hoje e hoje+days, do prazo mais proximo para o mais distante. */
@@ -78,10 +78,10 @@ public class TaskQueryTools {
     public TaskSummary getTaskSummary() {
         return new TaskSummary(
                 repository.countAll(),
-                repository.countByStatusValue(TaskStatus.A_FAZER),
-                repository.countByStatusValue(TaskStatus.EM_ANDAMENTO),
-                repository.countByStatusValue(TaskStatus.CONCLUIDA),
-                repository.countByPriorityValue(TaskPriority.ALTA));
+                repository.countByStatusValue(TaskStatus.TODO),
+                repository.countByStatusValue(TaskStatus.IN_PROGRESS),
+                repository.countByStatusValue(TaskStatus.DONE),
+                repository.countByPriorityValue(TaskPriority.HIGH));
     }
 
     private List<TaskToolResult> limitar(List<Task> tarefas) {

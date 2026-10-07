@@ -47,7 +47,7 @@ class SpringAiTaskAiAdapterTest {
     private final AiProperties properties = new AiProperties(Duration.ofSeconds(60), 1, 2, 10, 200, 200, 5000);
     private final FakeChatModelSupport fake = new FakeChatModelSupport();
     private final TaskAiContext contexto =
-            new TaskAiContext("Preparar relatorio", "Relatorio trimestral para a diretoria", TaskPriority.MEDIA);
+            new TaskAiContext("Preparar relatorio", "Relatorio trimestral para a diretoria", TaskPriority.MEDIUM);
     private final SpringAiTaskAiAdapter adapter = adaptador();
 
     private SpringAiTaskAiAdapter adaptador() {
@@ -83,17 +83,17 @@ class SpringAiTaskAiAdapterTest {
         @DisplayName("analise devolve os enums do schema e leva a prioridade atual no prompt")
         void analiseDevolveRecord() {
             fake.respond("""
-                    {"priority": "ALTA", "complexity": "MEDIUM", "estimatedHours": 12, "reason": "Prazo curto"}
+                    {"priority": "HIGH", "complexity": "MEDIUM", "estimatedHours": 12, "reason": "Prazo curto"}
                     """);
 
             TaskAnalysis resultado = adapter.analyze(contexto);
 
-            assertThat(resultado.priority()).isEqualTo(TaskPriority.ALTA);
+            assertThat(resultado.priority()).isEqualTo(TaskPriority.HIGH);
             assertThat(resultado.complexity()).isEqualTo(TaskComplexity.MEDIUM);
             assertThat(resultado.estimatedHours()).isEqualTo(12.0);
             assertThat(fake.prompts()).hasSize(1);
             assertThat(textoDoPrompt(fake.prompts().get(0)))
-                    .contains("Prioridade atual: MEDIA")
+                    .contains("Prioridade atual: MEDIUM")
                     .contains("Your response should be in JSON format");
         }
 
@@ -124,7 +124,7 @@ class SpringAiTaskAiAdapterTest {
         @DisplayName("melhoria nao leva prioridade nem nenhum campo alem de titulo e descricao")
         void somenteCamposDoContexto() {
             TaskAiContext comPrioridadeAlta =
-                    new TaskAiContext("Preparar relatorio", "Relatorio trimestral", TaskPriority.ALTA);
+                    new TaskAiContext("Preparar relatorio", "Relatorio trimestral", TaskPriority.HIGH);
             fake.respond("""
                     {"title": "ok", "description": "ok"}
                     """);
@@ -132,14 +132,14 @@ class SpringAiTaskAiAdapterTest {
             adapter.improve(comPrioridadeAlta);
 
             assertThat(textoDoPrompt(fake.prompts().get(0)))
-                    .doesNotContain("ALTA")
+                    .doesNotContain("HIGH")
                     .doesNotContain("Prioridade");
         }
 
         @Test
         @DisplayName("titulo e descricao longos sao truncados nos limites de app.ai")
         void truncamentoNosLimites() {
-            TaskAiContext longo = new TaskAiContext("a".repeat(250), "b".repeat(5100), TaskPriority.BAIXA);
+            TaskAiContext longo = new TaskAiContext("a".repeat(250), "b".repeat(5100), TaskPriority.LOW);
             fake.respond("""
                     {"title": "curto", "description": "curta"}
                     """);
@@ -188,7 +188,7 @@ class SpringAiTaskAiAdapterTest {
         @DisplayName("enum fora do schema vira retry e depois InvalidLlmResponseException")
         void enumInvalidoDisparaRetry() {
             String comEnumInvalido = """
-                    {"priority": "ALTA", "complexity": "EXTREME", "estimatedHours": 8, "reason": "prazo curto"}
+                    {"priority": "HIGH", "complexity": "EXTREME", "estimatedHours": 8, "reason": "prazo curto"}
                     """;
             fake.respond(comEnumInvalido, comEnumInvalido);
 
@@ -202,7 +202,7 @@ class SpringAiTaskAiAdapterTest {
         @DisplayName("campo faltando passa pelo validador, dispara retry e depois lanca")
         void campoFaltandoDisparaRetry() {
             String semHoras = """
-                    {"priority": "MEDIA", "complexity": "LOW", "reason": "sem base para estimar"}
+                    {"priority": "MEDIUM", "complexity": "LOW", "reason": "sem base para estimar"}
                     """;
             fake.respond(semHoras, semHoras);
 

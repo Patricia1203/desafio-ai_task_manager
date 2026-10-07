@@ -45,19 +45,19 @@ class TaskMapperTest {
 
     @Test
     void toResponseCobreTodosOsCamposDaEntidade() {
-        Task task = new Task("Titulo", "Descricao", TaskPriority.BAIXA, LocalDate.of(2026, 1, 1), null);
+        Task task = new Task("Titulo", "Descricao", TaskPriority.LOW, LocalDate.of(2026, 1, 1), null);
 
         TaskResponse response = mapper.toResponse(task);
 
         assertThat(response.id()).isEqualTo(task.getId());
-        assertThat(response.titulo()).isEqualTo("Titulo");
-        assertThat(response.descricao()).isEqualTo("Descricao");
-        assertThat(response.status()).isEqualTo(TaskStatus.A_FAZER);
-        assertThat(response.prioridade()).isEqualTo(TaskPriority.BAIXA);
-        assertThat(response.prazo()).isEqualTo(LocalDate.of(2026, 1, 1));
-        assertThat(response.idTarefaPai()).isNull();
-        assertThat(response.criadoEm()).isEqualTo(task.getCreatedAt());
-        assertThat(response.atualizadoEm()).isEqualTo(task.getUpdatedAt());
+        assertThat(response.title()).isEqualTo("Titulo");
+        assertThat(response.description()).isEqualTo("Descricao");
+        assertThat(response.status()).isEqualTo(TaskStatus.TODO);
+        assertThat(response.priority()).isEqualTo(TaskPriority.LOW);
+        assertThat(response.dueDate()).isEqualTo(LocalDate.of(2026, 1, 1));
+        assertThat(response.parentId()).isNull();
+        assertThat(response.createdAt()).isEqualTo(task.getCreatedAt());
+        assertThat(response.updatedAt()).isEqualTo(task.getUpdatedAt());
     }
 
     @Test
@@ -67,21 +67,21 @@ class TaskMapperTest {
 
         TaskResponse response = mapper.toResponse(sub);
 
-        assertThat(response.idTarefaPai()).isEqualTo(parent.getId());
-        assertThat(response.titulo()).isEqualTo("Filha");
+        assertThat(response.parentId()).isEqualTo(parent.getId());
+        assertThat(response.title()).isEqualTo("Filha");
     }
 
     @Test
     void toResponseExpoeTituloJaAparadoPeloDominio() {
         Task task = new Task("  Espacado  ", null, null, null, null);
 
-        assertThat(mapper.toResponse(task).titulo()).isEqualTo("Espacado");
+        assertThat(mapper.toResponse(task).title()).isEqualTo("Espacado");
     }
 
     @Test
     void createRequestValidoNaoTemViolacao() {
         assertThat(VALIDATOR.validate(new CreateTaskRequest(
-                "Valida", "descricao", TaskPriority.BAIXA, LocalDate.of(2026, 9, 9)))).isEmpty();
+                "Valida", "descricao", TaskPriority.LOW, LocalDate.of(2026, 9, 9)))).isEmpty();
     }
 
     @Test
@@ -89,7 +89,7 @@ class TaskMapperTest {
         ConstraintViolation<CreateTaskRequest> violacao =
                 unica(VALIDATOR.validate(new CreateTaskRequest("   ", null, null, null)));
 
-        assertThat(violacao.getPropertyPath().toString()).isEqualTo("titulo");
+        assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
         assertThat(violacao.getMessage()).isEqualTo("titulo e obrigatorio");
     }
 
@@ -98,7 +98,7 @@ class TaskMapperTest {
         ConstraintViolation<CreateTaskRequest> violacao =
                 unica(VALIDATOR.validate(new CreateTaskRequest("a".repeat(201), null, null, null)));
 
-        assertThat(violacao.getPropertyPath().toString()).isEqualTo("titulo");
+        assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
         assertThat(violacao.getMessage()).isEqualTo("titulo deve ter no maximo 200 caracteres");
     }
 
@@ -107,7 +107,7 @@ class TaskMapperTest {
         ConstraintViolation<CreateTaskRequest> violacao =
                 unica(VALIDATOR.validate(new CreateTaskRequest("ok", "d".repeat(5001), null, null)));
 
-        assertThat(violacao.getPropertyPath().toString()).isEqualTo("descricao");
+        assertThat(violacao.getPropertyPath().toString()).isEqualTo("description");
         assertThat(violacao.getMessage()).isEqualTo("descricao deve ter no maximo 5000 caracteres");
     }
 
@@ -116,7 +116,7 @@ class TaskMapperTest {
         ConstraintViolation<UpdateTaskRequest> violacao =
                 unica(VALIDATOR.validate(new UpdateTaskRequest("", null, null, null)));
 
-        assertThat(violacao.getPropertyPath().toString()).isEqualTo("titulo");
+        assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
     }
 
     @Test
@@ -143,13 +143,13 @@ class TaskMapperTest {
         PageResponse<TaskResponse> response = PageResponse.of(new PageImpl<>(
                 List.of(a, b), PageRequest.of(1, 2), 5));
 
-        assertThat(response.conteudo()).containsExactly(a, b);
-        assertThat(response.pagina()).isEqualTo(1);
-        assertThat(response.tamanho()).isEqualTo(2);
-        assertThat(response.totalItens()).isEqualTo(5);
-        assertThat(response.totalPaginas()).isEqualTo(3);
-        assertThat(response.primeira()).isFalse();
-        assertThat(response.ultima()).isFalse();
+        assertThat(response.content()).containsExactly(a, b);
+        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(2);
+        assertThat(response.totalItems()).isEqualTo(5);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.first()).isFalse();
+        assertThat(response.last()).isFalse();
     }
 
     @Test
@@ -159,8 +159,8 @@ class TaskMapperTest {
         PageResponse<TaskResponse> response = PageResponse.of(new PageImpl<>(
                 List.of(a), PageRequest.of(0, 10), 1));
 
-        assertThat(response.primeira()).isTrue();
-        assertThat(response.ultima()).isTrue();
-        assertThat(response.totalPaginas()).isEqualTo(1);
+        assertThat(response.first()).isTrue();
+        assertThat(response.last()).isTrue();
+        assertThat(response.totalPages()).isEqualTo(1);
     }
 }

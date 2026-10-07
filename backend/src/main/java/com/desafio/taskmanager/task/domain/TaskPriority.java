@@ -8,10 +8,10 @@ package com.desafio.taskmanager.task.domain;
  */
 public enum TaskPriority {
 
-    BAIXA,
-    MEDIA,
-    ALTA;
+    LOW,
+    MEDIUM,
+    HIGH;
 
     /** Prioridade usada quando o chamador nao informa. */
-    public static final TaskPriority DEFAULT = MEDIA;
+    public static final TaskPriority DEFAULT = MEDIUM;
 }

@@ -10,9 +10,9 @@ import com.desafio.taskmanager.task.domain.TaskStatus;
 /**
  * Resultado enxuto de uma ferramenta somente-leitura do assistente (F04).
  *
- * <p>Mesmos nomes de campos do {@code TaskResponse} (contrato em portugues),
- * sem os campos que o modelo nao precisa para responder: o que vai ao contexto
- * e a identidade, o estado e o prazo. A conversao e campo a campo para a
+ * <p>Os nomes usam portugues por enquanto; o contrato desse DTO volta para
+ * ingles na F06 junto do contrato de IA/assistente. O que vai ao contexto do
+ * modelo e a identidade, o estado e o prazo. A conversao e campo a campo para a
  * entidade nao vazar do nucleo.
  */
 public record TaskToolResult(

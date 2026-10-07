@@ -12,10 +12,10 @@ package com.desafio.taskmanager.task.domain;
  */
 public enum TaskStatus {
 
-    A_FAZER,
-    EM_ANDAMENTO,
-    CONCLUIDA;
+    TODO,
+    IN_PROGRESS,
+    DONE;
 
     /** Estado inicial de toda tarefa recem-criada. */
-    public static final TaskStatus INITIAL = A_FAZER;
+    public static final TaskStatus INITIAL = TODO;
 }

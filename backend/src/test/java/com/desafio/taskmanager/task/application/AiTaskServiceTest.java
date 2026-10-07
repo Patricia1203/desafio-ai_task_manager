@@ -52,7 +52,7 @@ class AiTaskServiceTest {
     }
 
     private static Task tarefa() {
-        return new Task("Titulo", "Descricao", TaskPriority.BAIXA, null, null);
+        return new Task("Titulo", "Descricao", TaskPriority.LOW, null, null);
     }
 
     // --- improve ---
@@ -84,10 +84,10 @@ class AiTaskServiceTest {
 
         TaskAnalysis analise = service.analyze(tarefa.getId());
 
-        assertThat(analise.priority()).isEqualTo(TaskPriority.ALTA);
-        assertThat(tarefa.getPriority()).isEqualTo(TaskPriority.BAIXA);
+        assertThat(analise.priority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(tarefa.getPriority()).isEqualTo(TaskPriority.LOW);
         assertThat(ia.contextos.get(0))
-                .isEqualTo(new TaskAiContext("Titulo", "Descricao", TaskPriority.BAIXA));
+                .isEqualTo(new TaskAiContext("Titulo", "Descricao", TaskPriority.LOW));
         verify(repository, never()).save(any(Task.class));
     }
 
@@ -122,14 +122,14 @@ class AiTaskServiceTest {
         when(repository.findById(pai.getId())).thenReturn(Optional.of(pai));
         List<TaskCommand> comandos = List.of(
                 new TaskCommand("Sub 1", "Descricao 1", null, null),
-                new TaskCommand("Sub 2", null, TaskPriority.ALTA, null));
+                new TaskCommand("Sub 2", null, TaskPriority.HIGH, null));
 
         List<Task> criadas = service.apply(pai.getId(), comandos);
 
         assertThat(criadas).hasSize(2);
         assertThat(criadas).allSatisfy(criada -> assertThat(criada.getParent()).isSameAs(pai));
         assertThat(criadas.get(0).getTitle()).isEqualTo("Sub 1");
-        assertThat(criadas.get(1).getPriority()).isEqualTo(TaskPriority.ALTA);
+        assertThat(criadas.get(1).getPriority()).isEqualTo(TaskPriority.HIGH);
         verify(repository, times(2)).save(any(Task.class));
     }
 
@@ -176,7 +176,7 @@ class AiTaskServiceTest {
         @Override
         public TaskAnalysis analyze(TaskAiContext context) {
             contextos.add(context);
-            return new TaskAnalysis(TaskPriority.ALTA, TaskComplexity.MEDIUM, 12.0, "justificativa");
+            return new TaskAnalysis(TaskPriority.HIGH, TaskComplexity.MEDIUM, 12.0, "justificativa");
         }
 
         @Override

@@ -45,14 +45,14 @@ class PromptsTest {
         String out = render("task-analyze.st", Map.of(
                 "title", "Preparar relatorio",
                 "description", "Relatorio trimestral",
-                "priority", "MEDIA",
+                "priority", "MEDIUM",
                 "maxEstimatedHours", 200,
                 "maxTextLength", 5000));
 
         assertThat(out)
-                .contains("BAIXA, MEDIA, ALTA")
                 .contains("LOW, MEDIUM, HIGH")
-                .contains("Prioridade atual: MEDIA")
+                .contains("LOW, MEDIUM, HIGH")
+                .contains("Prioridade atual: MEDIUM")
                 .contains("{\"priority\": \"...\", \"complexity\": \"...\"")
                 .doesNotContain("\\{");
     }
@@ -82,7 +82,7 @@ class PromptsTest {
                 "description", "Descricao",
                 "maxTitleLength", 200,
                 "maxTextLength", 5000,
-                "priority", "MEDIA"));
+                "priority", "MEDIUM"));
 
         assertThat(out).contains("Título: Titulo");
     }

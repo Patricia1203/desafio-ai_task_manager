@@ -6,6 +6,6 @@ Formato:
  - <Descrição importante>
  - Task: T-<ID> | Reqs: RF-XX,...
 
-Verbos: add, fix, update, remove, refactor, test, document, configure, chore.
+Verbos: add, fix, update, remove, refactor, test, docs, configure, chore.
 
 Regras: um commit por task, coeso, multilinha real, cita task e requisitos, não genérico.

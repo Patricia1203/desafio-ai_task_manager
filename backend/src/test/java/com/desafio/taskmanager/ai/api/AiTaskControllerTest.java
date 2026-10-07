@@ -61,7 +61,7 @@ class AiTaskControllerTest {
     private AiTaskService service;
 
     private static Task tarefa() {
-        return new Task("Titulo", "Descricao", TaskPriority.MEDIA, null, null);
+        return new Task("Titulo", "Descricao", TaskPriority.MEDIUM, null, null);
     }
 
     // --- POST /ai/tasks/improve ---
@@ -100,11 +100,11 @@ class AiTaskControllerTest {
     @Test
     void analyzeRetorna200ComAAnaliseTraduzida() throws Exception {
         when(service.analyze(ID)).thenReturn(
-                new TaskAnalysis(TaskPriority.ALTA, TaskComplexity.MEDIUM, 12.5, "justificativa"));
+                new TaskAnalysis(TaskPriority.HIGH, TaskComplexity.MEDIUM, 12.5, "justificativa"));
 
         mockMvc.perform(post("/ai/tasks/{id}/analyze", ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.prioridade").value("ALTA"))
+                .andExpect(jsonPath("$.prioridade").value("HIGH"))
                 .andExpect(jsonPath("$.complexidade").value("MEDIUM"))
                 .andExpect(jsonPath("$.horasEstimadas").value(12.5))
                 .andExpect(jsonPath("$.justificativa").value("justificativa"));
@@ -142,7 +142,7 @@ class AiTaskControllerTest {
     void applyRetorna201ComAsCriadasEOLocationParaAsSubtarefas() throws Exception {
         Task pai = tarefa();
         when(service.apply(eq(ID), any())).thenReturn(List.of(
-                new Task("Sub 1", "Descricao 1", TaskPriority.BAIXA, null, pai),
+                new Task("Sub 1", "Descricao 1", TaskPriority.LOW, null, pai),
                 new Task("Sub 2", null, null, null, pai)));
         String corpo = """
                 {"subtarefas":[
@@ -157,9 +157,9 @@ class AiTaskControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/tasks/" + ID + "/subtasks")))
                 .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].titulo").value("Sub 1"))
-                .andExpect(jsonPath("$[0].idTarefaPai").value(pai.getId().toString()))
-                .andExpect(jsonPath("$[1].titulo").value("Sub 2"));
+                .andExpect(jsonPath("$[0].title").value("Sub 1"))
+                .andExpect(jsonPath("$[0].parentId").value(pai.getId().toString()))
+                .andExpect(jsonPath("$[1].title").value("Sub 2"));
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<TaskCommand>> captor = ArgumentCaptor.forClass(List.class);

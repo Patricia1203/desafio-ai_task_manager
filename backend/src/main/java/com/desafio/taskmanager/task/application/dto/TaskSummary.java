@@ -7,16 +7,19 @@ package com.desafio.taskmanager.task.application.dto;
  * dashboard fica explicito no codigo e no JSON, e o teste quebra em vez de
  * devolver null silencioso se um campo for renomeado.
  *
- * @param total          tarefas de topo e subtarefas
- * @param pendentes      status A_FAZER
- * @param emAndamento    status EM_ANDAMENTO
- * @param concluidas     status CONCLUIDA
- * @param altaPrioridade tarefas com prioridade ALTA
+ * <p>Campos em ingles desde a revisao F06 (documentacao do desafio exige
+ * ingles); os rotulos em portugues ficam so na UI.
+ *
+ * @param total        tarefas de topo e subtarefas
+ * @param pending      status TODO
+ * @param inProgress   status IN_PROGRESS
+ * @param done         status DONE
+ * @param highPriority tarefas com prioridade HIGH
  */
 public record TaskSummary(
         long total,
-        long pendentes,
-        long emAndamento,
-        long concluidas,
-        long altaPrioridade) {
+        long pending,
+        long inProgress,
+        long done,
+        long highPriority) {
 }

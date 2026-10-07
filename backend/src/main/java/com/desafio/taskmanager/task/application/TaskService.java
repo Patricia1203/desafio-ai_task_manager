@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Regras de negocio de tarefas (F02).
  *
- * <p>O service orquestra; as invariantes (titulo obrigatorio, CONCLUIDA terminal)
+ * <p>O service orquestra; as invariantes (titulo obrigatorio, DONE terminal)
  * ficam em {@link Task}. Aqui ficam so as regras que dependem de outras linhas
  * ou do filtro pedido.
  *
@@ -39,7 +39,7 @@ public class TaskService {
         this.repository = repository;
     }
 
-    /** RF-01. A tarefa nasce A_FAZER; quem decide o status inicial e a entidade. */
+    /** RF-01. A tarefa nasce TODO; quem decide o status inicial e a entidade. */
     @Transactional
     public Task create(TaskCommand command) {
         return repository.save(toTask(command, null));
@@ -105,10 +105,10 @@ public class TaskService {
     public TaskSummary summary() {
         return new TaskSummary(
                 repository.countAll(),
-                repository.countByStatusValue(TaskStatus.A_FAZER),
-                repository.countByStatusValue(TaskStatus.EM_ANDAMENTO),
-                repository.countByStatusValue(TaskStatus.CONCLUIDA),
-                repository.countByPriorityValue(TaskPriority.ALTA));
+                repository.countByStatusValue(TaskStatus.TODO),
+                repository.countByStatusValue(TaskStatus.IN_PROGRESS),
+                repository.countByStatusValue(TaskStatus.DONE),
+                repository.countByPriorityValue(TaskPriority.HIGH));
     }
 
     /** O status inicial e da entidade; o pai so existe na variante de subtarefa. */

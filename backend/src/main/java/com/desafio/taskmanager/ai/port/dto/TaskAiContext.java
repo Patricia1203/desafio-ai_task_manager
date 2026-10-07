@@ -8,7 +8,7 @@ import com.desafio.taskmanager.task.domain.TaskPriority;
  * mais aqui seria dado trafegando para o modelo sem necessidade.
  *
  * <p>Os três são obrigatórios: título e descrição são a matéria-prima de todo
- * prompt, e toda {@code Task} nasce com prioridade ({@code DEFAULT = MEDIA});
+ * prompt, e toda {@code Task} nasce com prioridade ({@code DEFAULT = MEDIUM});
  * null aqui indicaria erro de mapeamento em quem monta o contexto, não caso
  * de borda.
  */

@@ -84,12 +84,12 @@ public class Task {
         }
     }
 
-    /**
+/**
      * Altera o status respeitando o ciclo de vida.
      *
-     * <p>Regra: CONCLUIDA e terminal. Reabrir uma tarefa concluida exige voltar
-     * explicitamente a A_FAZER; ir direto para EM_ANDAMENTO a partir de
-     * CONCLUIDA e recusado porque perderia a informacao de que o trabalho ja foi
+     * <p>Regra: DONE e terminal. Reabrir uma tarefa concluida exige voltar
+     * explicitamente a TODO; ir direto para IN_PROGRESS a partir de
+     * DONE e recusado porque perderia a informacao de que o trabalho ja foi
      * entregue.
      */
     public void changeStatus(TaskStatus newStatus) {
@@ -97,9 +97,9 @@ public class Task {
         if (this.status == newStatus) {
             return;
         }
-        if (this.status == TaskStatus.CONCLUIDA && newStatus != TaskStatus.A_FAZER) {
-            throw new BusinessRuleException("status nao pode ir de CONCLUIDA para " + newStatus
-                    + "; use A_FAZER para reabrir");
+        if (this.status == TaskStatus.DONE && newStatus != TaskStatus.TODO) {
+            throw new BusinessRuleException("status nao pode ir de DONE para " + newStatus
+                    + "; use TODO para reabrir");
         }
         this.status = newStatus;
         touch();
