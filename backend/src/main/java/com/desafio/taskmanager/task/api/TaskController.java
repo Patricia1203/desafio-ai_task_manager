@@ -2,6 +2,7 @@ package com.desafio.taskmanager.task.api;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.desafio.taskmanager.task.api.dto.CreateTaskRequest;
@@ -20,6 +21,7 @@ import com.desafio.taskmanager.task.domain.TaskStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -93,10 +95,12 @@ public class TaskController {
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "page nao pode ser negativo") int page,
             @RequestParam(defaultValue = "20") @Min(value = 1, message = "size deve ser no minimo 1")
             @Max(value = MAX_PAGE_SIZE, message = "size deve ser no maximo " + MAX_PAGE_SIZE) int size) {
-        return PageResponse.of(service.list(
-                        new TaskFilter(status, priority),
-                        PageRequest.of(page, size, ORDENACAO_PADRAO))
-                .map(mapper::toResponse));
+        Page<Task> pagina = service.list(
+                new TaskFilter(status, priority),
+                PageRequest.of(page, size, ORDENACAO_PADRAO));
+        Map<UUID, Long> subtaskCounts = service.subtaskCounts(
+                pagina.getContent().stream().map(Task::getId).toList());
+        return PageResponse.of(pagina.map(task -> mapper.toResponse(task, subtaskCounts)));
     }
 
     /** RF-20. Fica antes de /tasks/{id} por causa do casamento de rota. */

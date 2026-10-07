@@ -16,6 +16,10 @@ import com.desafio.taskmanager.task.domain.TaskStatus;
  * no JSON. Nao ha {@code @JsonProperty} nem camada de traducao: o contrato e o
  * codigo. Decisao da revisao F06: contrato em ingles (documentacao do desafio
  * exige ingles), rotulos em portugues ficam so na UI.
+ *
+ * <p>{@code subtaskCount} (T-F07-02) e o numero de subtarefas quando a tarefa e
+ * raiz; vem preenchido so na listagem publica (contagem agrupada no banco, sem
+ * N+1), e 0 nos demais usos.
  */
 public record TaskResponse(
         UUID id,
@@ -26,5 +30,6 @@ public record TaskResponse(
         LocalDate dueDate,
         UUID parentId,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        long subtaskCount) {
 }

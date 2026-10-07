@@ -394,6 +394,20 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(service.findSubtasks(raiz.getId())).extracting(Task::getTitle).containsExactly("Filha");
     }
 
+    @Test
+    void subtaskCountsContaPorRaizNumaQuerySo() {
+        Task raiz = criar("Raiz");
+        Task outraRaiz = criar("Outra");
+        criarSubtask(raiz.getId(), "Filha 1");
+        criarSubtask(raiz.getId(), "Filha 2");
+
+        assertThat(service.subtaskCounts(List.of(raiz.getId(), outraRaiz.getId())))
+                .hasSize(1)
+                .containsEntry(raiz.getId(), 2L)
+                .doesNotContainKey(outraRaiz.getId());
+        assertThat(service.subtaskCounts(List.of())).isEmpty();
+    }
+
     // --- helpers ---
 
     private static TaskCommand pedido(String title, String description, TaskPriority priority,

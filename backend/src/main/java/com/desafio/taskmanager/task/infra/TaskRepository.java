@@ -1,6 +1,7 @@
 package com.desafio.taskmanager.task.infra;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -105,4 +106,16 @@ public interface TaskRepository
 
     @Query("select count(t) from Task t where t.parent is not null")
     long countSubtasks();
+
+    /**
+     * Subtarefas por raiz, numa query so (T-F07-02): evita o N+1 da listagem.
+     * Linha por rai z — {pai id, contagem}.
+     */
+    @Query("""
+            select t.parent.id, count(t)
+            from Task t
+            where t.parent.id in :parentIds
+            group by t.parent.id
+            """)
+    List<Object[]> subtaskCountsByRoot(@Param("parentIds") Collection<UUID> parentIds);
 }

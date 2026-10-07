@@ -1,7 +1,10 @@
 package com.desafio.taskmanager.task.application;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
@@ -60,6 +63,19 @@ public class TaskService {
     /** Leitura sem paginacao. Assim como {@link #list}, so raizes (T-F07-01). */
     public List<Task> findAll(TaskFilter filter) {
         return repository.findAll(toSpecification(filter));
+    }
+
+    /**
+     * T-F07-02. Quantas subtarefas cada raiz tem, numa query agrupada so — a
+     * listagem injeta isso na resposta sem disparar N+1.
+     */
+    public Map<UUID, Long> subtaskCounts(Collection<UUID> rootIds) {
+        if (rootIds.isEmpty()) {
+            return Map.of();
+        }
+        return repository.subtaskCountsByRoot(rootIds).stream().collect(Collectors.toMap(
+                linha -> (UUID) linha[0],
+                linha -> (Long) linha[1]));
     }
 
     /** RF-02. Id inexistente vira 404 pelo GlobalExceptionHandler. */

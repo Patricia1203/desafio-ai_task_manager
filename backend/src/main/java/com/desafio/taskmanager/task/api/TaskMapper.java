@@ -1,5 +1,6 @@
 package com.desafio.taskmanager.task.api;
 
+import java.util.Map;
 import java.util.UUID;
 
 import com.desafio.taskmanager.task.api.dto.TaskResponse;
@@ -24,6 +25,15 @@ public class TaskMapper {
 
     /** Entidade para DTO. A referencia ao pai sai so como id. */
     public TaskResponse toResponse(Task task) {
+        return toResponse(task, null);
+    }
+
+    /**
+     * Variante usada na listagem (T-F07-02): {@code counts} traz as subtarefas de
+     * cada raiz, calculadas numa unica query agrupada — e 0 quando a tarefa nao
+     * tem vinculo ou o mapa nao foi informado.
+     */
+    public TaskResponse toResponse(Task task, Map<UUID, Long> counts) {
         return new TaskResponse(
                 task.getId(),
                 task.getTitle(),
@@ -33,7 +43,8 @@ public class TaskMapper {
                 task.getDueDate(),
                 idTarefaPaiDe(task),
                 task.getCreatedAt(),
-                task.getUpdatedAt());
+                task.getUpdatedAt(),
+                counts == null ? 0L : counts.getOrDefault(task.getId(), 0L));
     }
 
     /**

@@ -2,6 +2,7 @@ package com.desafio.taskmanager.task.api;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.desafio.taskmanager.task.api.dto.CreateTaskRequest;
@@ -58,6 +59,15 @@ class TaskMapperTest {
         assertThat(response.parentId()).isNull();
         assertThat(response.createdAt()).isEqualTo(task.getCreatedAt());
         assertThat(response.updatedAt()).isEqualTo(task.getUpdatedAt());
+    }
+
+    @Test
+    void toResponseComCountsPreencheSubtaskCount() {
+        Task raiz = new Task("Raiz", null, null, null, null);
+
+        assertThat(mapper.toResponse(raiz, Map.of(raiz.getId(), 3L)).subtaskCount()).isEqualTo(3L);
+        assertThat(mapper.toResponse(raiz, null).subtaskCount()).isZero();
+        assertThat(mapper.toResponse(raiz).subtaskCount()).isZero();
     }
 
     @Test
