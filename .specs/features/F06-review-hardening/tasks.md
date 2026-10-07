@@ -3,7 +3,7 @@
 > Feature de revisão pós-entrega. **Nenhuma task deve ser iniciada antes do OK do usuário** às tasks criadas (2026-10-07). Ver `spec.md` e `design.md` da F06 para decisões e pendências em aberto.
 
 ### T-F06-01 — Requisitos no PROJECT.md e reavaliação da matriz
-- **Status:** pending
+- **Status:** done (commit `b13e88b`, 2026-10-07)
 - **Verificado em 2026-10-07:** fonte encontrada — `Desafio de Programação — AI Task Manager.pdf` na **raiz** do projeto (fora do git por decisão do usuário; o `docs/desafio.pdf` citado no rascunho nunca existiu). O enunciado tem 21 seções numeradas e **nenhum ID `RF-`/`RNF-`**: os IDs da matriz são do projeto, então a task virou mapear cada ID na seção que o origina, não transcrever uma tabela. Mapeamento em `.specs/project/PROJECT.md`. **Correção de premissa:** a task manda reavaliar RNF-02, RNF-12, RNF-13, RNF-15 e TST-03; a RNF-13 já estava `done` sem a nota de texto ausente.
 - **Reqs:** RF-01..RF-24, RNF-01..RNF-21, ERR-01..ERR-06, TST-01..TST-04, DOC-01, DEL-01, DEL-02 (rastreabilidade geral)
 - **Depende de:** usuário colar a tabela de requisitos do prompt do desafio (nenhum texto de requisito existe em `.specs`; `docs/desafio.pdf` não está no repositório)
@@ -154,7 +154,7 @@
 - **Commit (rascunho):** `refactor: Fonte unica de limites no validador e retry sem mascarar bug`
 
 ### T-F06-15 — Linhas "done (parcial)" da TRACEABILITY fechadas ou explicadas
-- **Status:** pending
+- **Status:** done (2026-10-07)
 - **Reqs:** rastreabilidade geral (TST-04, DOC-01)
 - **Depende de:** T-F06-01
 - **Arquivos (criar/alterar):** .specs/project/TRACEABILITY.md
