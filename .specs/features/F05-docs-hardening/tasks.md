@@ -1,7 +1,7 @@
 # tasks.md — F05-docs-hardening
 
 ### T-F05-01 — Compose com Ollama e pull automático do modelo
-- **Status:** done
+- **Status:** done (commit `9a04224`, 2026-10-07)
 - **Reqs:** RNF-04, RNF-05
 - **Depende de:** T-F01-03, T-F03-02
 - **Arquivos (criar/alterar):** docker-compose.yml, scripts/ollama-pull.sh, .env.example

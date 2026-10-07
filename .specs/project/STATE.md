@@ -17,7 +17,7 @@
 
 ## Task atual
 T-F05-02 - Revisão dos erros ERR-01 a ERR-06 ponta a ponta - **pending**
-Anterior: T-F05-01 - Compose com Ollama e pull automático do modelo - done.
+Anterior: T-F05-01 - Compose com Ollama e pull automático do modelo - done (commit `9a04224`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
