@@ -13,7 +13,7 @@
 - **Evidências:** o compose (serviços `ollama` + one-shot `ollama-pull` + backend apontando para `http://ollama:11434`) já existia desde T-F01-03 (`b83deef`); esta task criou `scripts/ollama-pull.sh` (pull do `AI_MODEL` contra `OLLAMA_HOST`, para o backend fora do Docker) e executou o pull de verdade pela primeira vez: `docker compose config` válido e `docker compose run --rm ollama-pull` termina com `qwen2.5:7b` (4.7 GB) no volume `ollama-data`, serviço healthy. Premissa de T-F04-03 resolvida: smoke em `/api/chat` com a tool `criar_tarefa` devolveu `message.tool_calls` com argumentos válidos (`titulo` "Preparar pauta", `prioridade` "alta") — `qwen2.5:7b` suporta tool calling de verdade; o toggle `app.assistant.tool-calling` permanece ligado e nenhum fallback (Grok/contexto) é necessário. `.env.example` já documentava o Ollama externo via `host.docker.internal` desde T-F01-03 — sem alteração. Container de teste parado após o gate (`docker compose stop ollama`).
 
 ### T-F05-02 — Revisão dos erros ERR-01 a ERR-06 ponta a ponta
-- **Status:** pending
+- **Status:** done
 - **Reqs:** ERR-01, ERR-02, ERR-03, ERR-04, ERR-05, ERR-06
 - **Depende de:** T-F02-04, T-F03-03, T-F04-03
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/common/error/GlobalExceptionHandler.java, backend/src/test/java/.../common/error/*, .specs/project/TRACEABILITY.md
@@ -22,6 +22,7 @@
 - **Testes:** suíte de testes de erro cobrindo ERR-01 a ERR-06 ponta a ponta (slice web para 400/404/500, integração com porta de IA fake para 502/503).
 - **Gate:** mvn -q test
 - **Commit (rascunho):** `fix: Revisar tratamento de erros ERR-01 a ERR-06`
+- **Evidências:** revisão confirmou que o `GlobalExceptionHandler` já cobre ERR-01 a ERR-06 (404, 400 com `errors[].field`, 502 de comunicação, 502 `code: LLM_INVALID_RESPONSE`, 503 de indisponibilidade, 500 genérico/persistência) sem vazar stack trace, herdando `traceId`/`timestamp` desde T-F02-05k. Lacunas encontradas e corrigidas — mudanças só em teste: o slice não tinha probe para ERR-04 (criado `/__test/llm-invalida` no `ErrorProbeController`); os testes 502/503 não afirmavam `traceId` (16 hex), `timestamp` ISO-8601 e ausência de stack trace no corpo (asserts adicionados em `GlobalExceptionHandlerTest`, `AssistantControllerTest` e `AiTaskControllerTest`, com `@Import(TraceIdFilter.class)`); `AssistantServiceTest` substituiu o RuntimeException genérico por 3 testes de propagação tipada (`LlmCommunicationException`, `LlmUnavailableException`, `InvalidLlmResponseException`) com `.isSameAs(erro)` + `verify(mensagens, never()).save` — o teste antigo passava por acaso (a exceção lançada era `ResourceNotFoundException`, também `RuntimeException`, pois o stub usava `UUID.randomUUID()` diferente do id da chamada). Gate `mvn -q test`: **227 testes / 0 falhas**.
 
 ### T-F05-03 — README completo com 7 seções e diagrama
 - **Status:** pending

@@ -12,6 +12,9 @@ import com.desafio.taskmanager.assistant.domain.ChatRole;
 import com.desafio.taskmanager.assistant.infra.ChatConversationRepository;
 import com.desafio.taskmanager.assistant.infra.ChatMessageRepository;
 import com.desafio.taskmanager.assistant.port.AssistantPort;
+import com.desafio.taskmanager.common.error.InvalidLlmResponseException;
+import com.desafio.taskmanager.common.error.LlmCommunicationException;
+import com.desafio.taskmanager.common.error.LlmUnavailableException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -142,14 +145,47 @@ class AssistantServiceTest {
     }
 
     @Test
-    void falhaDaIaNaoPersisteMensagemAlguma() {
+    void falhaDeComunicacaoComAIAPropagaSemPersistir() {
+        UUID id = UUID.randomUUID();
         ChatConversation conversa = ChatConversation.nova();
-        when(conversas.findById(UUID.randomUUID())).thenReturn(Optional.of(conversa));
+        when(conversas.findById(id)).thenReturn(Optional.of(conversa));
         when(mensagens.findByConversationIdOrderByCreatedAtAscIdAsc(any())).thenReturn(List.of());
-        ia.falhar = true;
+        LlmCommunicationException erro = new LlmCommunicationException("timeout no LLM");
+        ia.falha = erro;
 
-        assertThatThrownBy(() -> service.chat(conversa.getId(), "pergunta"))
-                .isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> service.chat(id, "pergunta"))
+                .isSameAs(erro);
+
+        verify(mensagens, never()).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void iaIndisponivelPropagaSemPersistir() {
+        UUID id = UUID.randomUUID();
+        ChatConversation conversa = ChatConversation.nova();
+        when(conversas.findById(id)).thenReturn(Optional.of(conversa));
+        when(mensagens.findByConversationIdOrderByCreatedAtAscIdAsc(any())).thenReturn(List.of());
+        LlmUnavailableException erro = new LlmUnavailableException("Connection refused");
+        ia.falha = erro;
+
+        assertThatThrownBy(() -> service.chat(id, "pergunta"))
+                .isSameAs(erro);
+
+        verify(mensagens, never()).save(any(ChatMessage.class));
+    }
+
+    @Test
+    void respostaInvalidaDaIaPropagaSemPersistir() {
+        UUID id = UUID.randomUUID();
+        ChatConversation conversa = ChatConversation.nova();
+        when(conversas.findById(id)).thenReturn(Optional.of(conversa));
+        when(mensagens.findByConversationIdOrderByCreatedAtAscIdAsc(any())).thenReturn(List.of());
+        InvalidLlmResponseException erro =
+                new InvalidLlmResponseException("resposta da IA fora do contrato");
+        ia.falha = erro;
+
+        assertThatThrownBy(() -> service.chat(id, "pergunta"))
+                .isSameAs(erro);
 
         verify(mensagens, never()).save(any(ChatMessage.class));
     }
@@ -160,14 +196,14 @@ class AssistantServiceTest {
         private final List<List<Mensagem>> historicos = new ArrayList<>();
         private final List<String> mensagens = new ArrayList<>();
         private String resposta = "Nenhuma tarefa encontrada.";
-        private boolean falhar;
+        private RuntimeException falha;
 
         @Override
         public String chat(List<Mensagem> historico, String mensagem) {
             historicos.add(historico);
             mensagens.add(mensagem);
-            if (falhar) {
-                throw new RuntimeException("provedor fora do contrato");
+            if (falha != null) {
+                throw falha;
             }
             return resposta;
         }

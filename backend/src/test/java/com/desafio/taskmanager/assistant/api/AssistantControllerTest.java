@@ -8,6 +8,7 @@ import com.desafio.taskmanager.common.error.InvalidLlmResponseException;
 import com.desafio.taskmanager.common.error.LlmCommunicationException;
 import com.desafio.taskmanager.common.error.LlmUnavailableException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
+import com.desafio.taskmanager.common.web.TraceIdFilter;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -32,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 400 usa a convencao de FieldErrorItem do resto da api.
  */
 @WebMvcTest(AssistantController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, TraceIdFilter.class})
 class AssistantControllerTest {
 
     private static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -134,7 +136,11 @@ class AssistantControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.type", containsString("resposta-llm-invalida")))
                 .andExpect(jsonPath("$.title").value("Resposta invalida da IA"))
-                .andExpect(jsonPath("$.code").value("LLM_INVALID_RESPONSE"));
+                .andExpect(jsonPath("$.code").value("LLM_INVALID_RESPONSE"))
+                // erro de IA herda o envelope de erro comum (T-F02-05k)
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")));
     }
 
     @Test
@@ -150,7 +156,10 @@ class AssistantControllerTest {
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.type", containsString("erro-de-comunicacao-com-llm")))
                 .andExpect(jsonPath("$.title").value("Falha na comunicacao com a IA"))
-                .andExpect(jsonPath("$.code").doesNotExist());
+                .andExpect(jsonPath("$.code").doesNotExist())
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")));
     }
 
     @Test
@@ -165,6 +174,9 @@ class AssistantControllerTest {
                                 """))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.type", containsString("llm-indisponivel")))
-                .andExpect(jsonPath("$.title").value("IA indisponivel"));
+                .andExpect(jsonPath("$.title").value("IA indisponivel"))
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")));
     }
 }

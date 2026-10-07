@@ -169,7 +169,13 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.status").value(502))
                 .andExpect(jsonPath("$.title").value("Falha na comunicacao com a IA"))
                 .andExpect(jsonPath("$.type").value(containsString("erro-de-comunicacao-com-llm")))
-                .andExpect(jsonPath("$.code").doesNotExist());
+                .andExpect(jsonPath("$.code").doesNotExist())
+                // herda traceId e timestamp como qualquer outra resposta de erro
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")))
+                .andExpect(content().string(not(containsString("at com.desafio"))))
+                .andExpect(content().string(not(containsString("\\tat "))));
     }
 
     @Test
@@ -180,7 +186,28 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.status").value(503))
                 .andExpect(jsonPath("$.title").value("IA indisponivel"))
                 .andExpect(jsonPath("$.type").value(containsString("llm-indisponivel")))
-                .andExpect(jsonPath("$.detail").value("O servico de IA esta indisponivel no momento"));
+                .andExpect(jsonPath("$.detail").value("O servico de IA esta indisponivel no momento"))
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")))
+                .andExpect(content().string(not(containsString("at com.desafio"))))
+                .andExpect(content().string(not(containsString("\\tat "))));
+    }
+
+    @Test
+    void respostaInvalidaDaIaDevolve502ComOCodigoLlmInvalidResponse() throws Exception {
+        mockMvc.perform(get("/__test/llm-invalida"))
+                .andExpect(status().isBadGateway())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(502))
+                .andExpect(jsonPath("$.type").value(containsString("resposta-llm-invalida")))
+                .andExpect(jsonPath("$.title").value("Resposta invalida da IA"))
+                .andExpect(jsonPath("$.code").value("LLM_INVALID_RESPONSE"))
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")))
+                .andExpect(content().string(not(containsString("at com.desafio"))))
+                .andExpect(content().string(not(containsString("\\tat "))));
     }
 
     @Test

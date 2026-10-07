@@ -79,4 +79,11 @@ class ErrorProbeController {
     void llmIndisponivel() {
         throw new LlmUnavailableException("LLM indisponivel: Connection refused");
     }
+
+    /** ERR-04: resposta do LLM fora do contrato vira 502 com code LLM_INVALID_RESPONSE. */
+    @GetMapping("/llm-invalida")
+    void llmInvalida() {
+        throw new InvalidLlmResponseException(
+                "resposta da IA invalida apos 2 tentativas: json fora do contrato");
+    }
 }

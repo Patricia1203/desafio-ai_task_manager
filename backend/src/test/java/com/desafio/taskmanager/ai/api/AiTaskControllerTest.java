@@ -13,6 +13,7 @@ import com.desafio.taskmanager.ai.port.dto.TaskImprovement;
 import com.desafio.taskmanager.common.error.GlobalExceptionHandler;
 import com.desafio.taskmanager.common.error.InvalidLlmResponseException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
+import com.desafio.taskmanager.common.web.TraceIdFilter;
 import com.desafio.taskmanager.task.api.TaskMapper;
 import com.desafio.taskmanager.task.application.AiTaskService;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -47,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * As regras de negocio ficam no {@code AiTaskServiceTest}.
  */
 @WebMvcTest(AiTaskController.class)
-@Import({GlobalExceptionHandler.class, TaskMapper.class})
+@Import({GlobalExceptionHandler.class, TaskMapper.class, TraceIdFilter.class})
 class AiTaskControllerTest {
 
     private static final UUID ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
@@ -256,6 +258,10 @@ class AiTaskControllerTest {
                 .andExpect(jsonPath("$.type", containsString("resposta-llm-invalida")))
                 .andExpect(jsonPath("$.title").value("Resposta invalida da IA"))
                 .andExpect(jsonPath("$.code").value("LLM_INVALID_RESPONSE"))
-                .andExpect(jsonPath("$.stackTrace").doesNotExist());
+                .andExpect(jsonPath("$.stackTrace").doesNotExist())
+                // erro de IA herda o envelope de erro comum (T-F02-05k)
+                .andExpect(jsonPath("$.traceId").value(matchesPattern("[0-9a-f]{16}")))
+                .andExpect(jsonPath("$.timestamp").value(
+                        matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")));
     }
 }
