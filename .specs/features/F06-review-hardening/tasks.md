@@ -4,7 +4,7 @@
 
 ### T-F06-01 — Requisitos no PROJECT.md e reavaliação da matriz
 - **Status:** pending
-- **Verificado em 2026-10-07:** não feita. O `PROJECT.md` existe (visão, objetivo, público, restrições, critérios) mas **não tem a tabela de requisitos** — zero linhas de tabela markdown no arquivo, que é o entregável principal da task. Seguem pendentes as 7 linhas `done (parcial)` (RNF-02, RF-04, RF-05, RF-07, RF-08, RF-09, TST-01) e a nota de "texto do req. não consta nas specs" em 4 linhas (RNF-02, RNF-12, RNF-15, TST-03). Não há fonte do enunciado no repositório: `docs/desafio.pdf` não existe. **Correção de premissa:** a task manda reavaliar também a RNF-13, mas ela já está `done` sem a nota de texto ausente — só RNF-02, RNF-12, RNF-15 e TST-03 precisam de reavaliação.
+- **Verificado em 2026-10-07:** fonte encontrada — `Desafio de Programação — AI Task Manager.pdf` na **raiz** do projeto (fora do git por decisão do usuário; o `docs/desafio.pdf` citado no rascunho nunca existiu). O enunciado tem 21 seções numeradas e **nenhum ID `RF-`/`RNF-`**: os IDs da matriz são do projeto, então a task virou mapear cada ID na seção que o origina, não transcrever uma tabela. Mapeamento em `.specs/project/PROJECT.md`. **Correção de premissa:** a task manda reavaliar RNF-02, RNF-12, RNF-13, RNF-15 e TST-03; a RNF-13 já estava `done` sem a nota de texto ausente.
 - **Reqs:** RF-01..RF-24, RNF-01..RNF-21, ERR-01..ERR-06, TST-01..TST-04, DOC-01, DEL-01, DEL-02 (rastreabilidade geral)
 - **Depende de:** usuário colar a tabela de requisitos do prompt do desafio (nenhum texto de requisito existe em `.specs`; `docs/desafio.pdf` não está no repositório)
 - **Arquivos (criar/alterar):** .specs/project/PROJECT.md, .specs/project/TRACEABILITY.md, .specs/project/STATE.md

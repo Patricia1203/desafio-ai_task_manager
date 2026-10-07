@@ -12,13 +12,13 @@ Pendências de quatro frentes, na prioridade reportada:
 4. **Docs/processo** — README (`Sem Docker` exige Docker, falta descrever conteúdo dos prompts, typo), estratégia Maven (env var + auto-descoberta, sem caminho de máquina na doc), `docs/desafio.pdf` fora do repositório, verbos de commit fora do padrão (10 `docs:` + 1 `feat:`; decisão do usuário: `docs` passa a ser permitido, `feat` não), regra de reescrita de histórico (só com pedido explícito do usuário), requisitos do prompt ausentes de `.specs` (RNF-02/12/13/15 e TST-03 preenchidos sem o texto).
 
 ## Requisitos cobertos
-Reused de features existentes (sem texto individual disponível no repo; ver [NEEDS CLARIFICATION] no STATE.md):
+Reused de features existentes (a origem de cada ID no enunciado está mapeada em `.specs/project/PROJECT.md`):
 RF-01, RF-02, RF-04, RF-05, RF-06, RF-07, RF-08, RF-09, RF-10, RF-11, RF-12, RF-15..RF-19, RF-20, RF-22, RF-23, RF-24, RNF-02, RNF-03, RNF-10, RNF-12, RNF-13, RNF-14, RNF-15, RNF-21, ERR-01..ERR-06, TST-01..TST-04, DOC-01.
 
 Itens de manutenção sem ID de requisito próprio (decisões do usuário na revisão) são rastreados como "review" nas tasks.
 
 ## Perguntas em aberto
-- [NEEDS CLARIFICATION] **Texto do RF-24 e demais requisitos.** Nenhum arquivo de `.specs` contém o texto dos requisitos; os IDs só aparecem atribuídos em `spec.md`/`tasks.md`/matriz. O usuário deve colar a tabela de requisitos do prompt (T-F06-01) para reavaliar RNF-02/12/13/15 e TST-03.
+- ~~[NEEDS CLARIFICATION] **Texto do RF-24 e demais requisitos.**~~ **Resolvido em 2026-10-07 (T-F06-01):** o enunciado existe como `Desafio de Programação — AI Task Manager.pdf` na raiz do projeto (fora do git por decisão do usuário). Ele não usa IDs `RF-`/`RNF-` — traz 21 seções numeradas — então cada ID da matriz foi mapeado na seção que o origina, em `PROJECT.md`. RNF-02 → §10, RNF-12 → §10/§13, RNF-15 → §10, TST-03 → §16; RNF-13 dispensa texto individual. Nenhuma divergência encontrada.
 - [CLARIFICADO] **Contrato em português foi aprovado pelo usuário na 1ª vez** (T-F02-05e, tasks.md:133); a **documentação do desafio exige inglês**, então foi decidido reverter para inglês (campos e valores), mantendo português apenas nos rótulos da UI (T-F06-02..05).
 - [DECIDED by user] Timeout padrão: **180s** (aprovado), configurável via `AI_TIMEOUT`.
 - [DECIDED by user] Fuso padrão: **America/Sao_Paulo** (aprovado), configurável via nova propriedade `app.timezone`.
