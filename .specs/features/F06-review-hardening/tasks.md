@@ -57,7 +57,7 @@
 - **Commit (rascunho):** `update: Frontend de IA e assistente no contrato ingles`
 
 ### T-F06-06 — Assistente: transação só na gravação e janela sem carregar tudo
-- **Status:** pending
+- **Status:** done (commit `61c0d3f`, 2026-10-07)
 - **Reqs:** RF-17, RF-18, RNF-13, RNF-21
 - **Depende de:** —
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/assistant/application/AssistantService.java, backend/src/main/java/com/desafio/taskmanager/assistant/infra/ChatMessageRepository.java, backend/src/test/java/.../assistant/application/AssistantServiceTest.java, .../assistant/infra/ChatRepositoryTest.java
