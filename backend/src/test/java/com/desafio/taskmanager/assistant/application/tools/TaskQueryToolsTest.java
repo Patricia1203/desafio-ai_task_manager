@@ -62,9 +62,9 @@ class TaskQueryToolsTest {
 
         ToolResultPage pagina = tools.getPendingTasks();
 
-        assertThat(pagina.itens()).extracting(TaskToolResult::title)
+        assertThat(pagina.items()).extracting(TaskToolResult::title)
                 .containsExactly("T1", "T2");
-        assertThat(pagina.itens()).extracting(TaskToolResult::status)
+        assertThat(pagina.items()).extracting(TaskToolResult::status)
                 .containsExactly(TaskStatus.IN_PROGRESS, TaskStatus.TODO);
         verify(repository).findEmAbertoPorUrgencia(
                 eq(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)),
@@ -86,7 +86,7 @@ class TaskQueryToolsTest {
 
         // O total e do filtro inteiro: e o que faltava para a resposta nao mentir.
         assertThat(pagina.total()).isEqualTo(40L);
-        assertThat(pagina.itens()).hasSize(5);
+        assertThat(pagina.items()).hasSize(5);
     }
 
     @Test
@@ -112,7 +112,7 @@ class TaskQueryToolsTest {
         ToolResultPage pagina = tools.getOverdueTasks();
 
         assertThat(pagina.total()).isEqualTo(1L);
-        assertThat(pagina.itens()).extracting(TaskToolResult::title).containsExactly("Vencida");
+        assertThat(pagina.items()).extracting(TaskToolResult::title).containsExactly("Vencida");
         verify(repository).findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
                 eq(hoje), eq(TaskStatus.DONE), any(Pageable.class));
     }
@@ -141,14 +141,15 @@ class TaskQueryToolsTest {
     @Test
     void getTasksByPriorityFiltraPelaPrioridadeInformadaComTotal() {
         when(repository.countByPriorityValue(TaskPriority.HIGH)).thenReturn(7L);
-        when(repository.findPorPrioridadePorUrgencia(eq(TaskPriority.HIGH), any()))
+        when(repository.findPorPrioridadePorUrgencia(any(), any(), any(), any()))
                 .thenReturn(List.of(tarefa("Urgente", TaskStatus.TODO, TaskPriority.HIGH)));
 
         ToolResultPage pagina = tools.getTasksByPriority(TaskPriority.HIGH);
 
         assertThat(pagina.total()).isEqualTo(7L);
-        assertThat(pagina.itens()).extracting(TaskToolResult::title).containsExactly("Urgente");
-        verify(repository).findPorPrioridadePorUrgencia(eq(TaskPriority.HIGH), any(Pageable.class));
+        assertThat(pagina.items()).extracting(TaskToolResult::title).containsExactly("Urgente");
+        verify(repository).findPorPrioridadePorUrgencia(eq(TaskPriority.HIGH), eq(TaskPriority.HIGH),
+                eq(TaskPriority.MEDIUM), any(Pageable.class));
     }
 
     @Test
@@ -161,7 +162,7 @@ class TaskQueryToolsTest {
         ToolResultPage pagina = tools.getTasksDueSoon(7);
 
         assertThat(pagina.total()).isEqualTo(2L);
-        assertThat(pagina.itens()).extracting(TaskToolResult::title).containsExactly("Quase");
+        assertThat(pagina.items()).extracting(TaskToolResult::title).containsExactly("Quase");
         verify(repository).findByDueDateBetweenOrderByDueDateAsc(
                 eq(hoje), eq(hoje.plusDays(7)), any(Pageable.class));
     }
@@ -197,7 +198,7 @@ class TaskQueryToolsTest {
         when(repository.countByDueDateBetween(any(), any())).thenReturn(0L);
         when(repository.findByDueDateBetweenOrderByDueDateAsc(any(), any(), any())).thenReturn(List.of());
         when(repository.countByPriorityValue(any())).thenReturn(0L);
-        when(repository.findPorPrioridadePorUrgencia(any(), any())).thenReturn(List.of());
+        when(repository.findPorPrioridadePorUrgencia(any(), any(), any(), any())).thenReturn(List.of());
         when(repository.findById(any())).thenReturn(Optional.empty());
         when(repository.countAll()).thenReturn(0L);
         when(repository.countByStatusValue(eq(TaskStatus.TODO))).thenReturn(0L);

@@ -56,17 +56,26 @@ public interface TaskRepository
             Pageable pageable);
 
     /**
-     * Tarefas de uma prioridade por urgencia. Aqui o criterio de prioridade e
-     * constante (a query filtra por ele), entao sobra prazo e recencia como
-     * ordem — o case de prioridade seria no-op.
+     * Tarefas de uma prioridade por urgencia (T-F06-07). Mesmo criterio do
+     * {@code findEmAbertoPorUrgencia} — prazo, prioridade e recencia — porque o
+     * design da F06 manda as duas ferramentas ordenarem pelas tres chaves.
+     * Aqui o criterio de prioridade fica constante (a query filtra por ele), o
+     * que e inofensivo e mantem as duas queries com a mesma forma.
      */
     @Query("""
             select t from Task t
             where t.priority = :priority
-            order by t.dueDate asc nulls last, t.createdAt desc
+            order by t.dueDate asc nulls last,
+                     case when t.priority = :high then 0
+                          when t.priority = :media then 1
+                          else 2 end,
+                     t.createdAt desc
             """)
     List<Task> findPorPrioridadePorUrgencia(
-            @Param("priority") TaskPriority priority, Pageable pageable);
+            @Param("priority") TaskPriority priority,
+            @Param("high") TaskPriority high,
+            @Param("media") TaskPriority media,
+            Pageable pageable);
 
     long countByStatusIn(List<TaskStatus> statuses);
 

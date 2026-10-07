@@ -23,7 +23,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
  *
  * <p>Os nomes em snake_case e as descricoes em portugues sao o contrato que o
  * modelo enxerga. As ferramentas de lista devolvem {@link ToolResultPage}
- * ({@code total} + {@code itens}, T-F06-07): a descricao diz que o total e do
+ * ({@code total} + {@code items}, T-F06-07): a descricao diz que o total e do
  * filtro inteiro para o modelo responder "3 de 40" em vez de truncar sem avisar.
  */
 final class AssistantToolCallbacks {

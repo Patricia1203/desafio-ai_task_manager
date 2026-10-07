@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class TaskRepositoryTest extends PostgresIntegrationTest {
 
-    /** "Todos os itens": as queries de urgency nao limitam aqui. */
+    /** "Todos os itens": as queries de urgencia nao limitam aqui. */
     private static final Pageable TODOS = PageRequest.of(0, 100);
 
     @Autowired
@@ -126,7 +126,8 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
                 new Task("A", null, TaskPriority.LOW, null, null),
                 new Task("B", null, TaskPriority.HIGH, null, null)));
 
-        assertThat(repository.findPorPrioridadePorUrgencia(TaskPriority.HIGH, TODOS))
+        assertThat(repository.findPorPrioridadePorUrgencia(
+                TaskPriority.HIGH, TaskPriority.HIGH, TaskPriority.MEDIUM, TODOS))
                 .extracting(Task::getTitle)
                 .containsExactly("B");
     }

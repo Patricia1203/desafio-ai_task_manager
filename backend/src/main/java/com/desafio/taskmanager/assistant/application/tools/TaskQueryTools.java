@@ -76,7 +76,7 @@ public class TaskQueryTools {
         Objects.requireNonNull(priority, "priority nao pode ser nula");
         return pagina(
                 repository.countByPriorityValue(priority),
-                repository.findPorPrioridadePorUrgencia(priority, limite()));
+                repository.findPorPrioridadePorUrgencia(priority, TaskPriority.HIGH, TaskPriority.MEDIUM, limite()));
     }
 
     /** Tarefas com prazo entre hoje e hoje+days, do prazo mais proximo para o mais distante. */
