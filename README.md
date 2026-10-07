@@ -175,10 +175,12 @@ com `message.tool_calls` reais; se o modelo não suportar tool calling, o toggle
 
 **Decisões de arquitetura e contrato** (detalhe completo no `.specs/`):
 
-- JSON público em português (RF-24) com envelope de erro em inglês (RFC 7807 —
-  `type/status/title/detail` + `traceId`/`timestamp`), sem stack trace no corpo.
+- JSON público em inglês (RF-24 — revertido da decisão de português em T-F06-02;
+  rótulos da interface continuam em português) com envelope de erro em inglês
+  (RFC 7807 — `type/status/title/detail` + `traceId`/`timestamp`), sem stack trace
+  no corpo.
 - `context-path: /api` no servidor; CORS fechado por lista explícita de origens.
-- Regras de domínio: `CONCLUIDA` é terminal (reabrir passa por `A_FAZER`); excluir
+- Regras de domínio: `DONE` é terminal (reabrir passa por `TODO`); excluir
   um pai remove as subtarefas em cascata (a UI confirma listando as filhas).
 - `TraceIdFilter` gera 16 hex na primeira fronteira (header `X-Trace-Id` + MDC); o
   `ProblemDetail` de toda resposta de erro — inclusive os 502/503 de IA — herda
