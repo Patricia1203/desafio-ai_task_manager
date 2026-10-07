@@ -25,7 +25,7 @@
 - **Evidências:** revisão confirmou que o `GlobalExceptionHandler` já cobre ERR-01 a ERR-06 (404, 400 com `errors[].field`, 502 de comunicação, 502 `code: LLM_INVALID_RESPONSE`, 503 de indisponibilidade, 500 genérico/persistência) sem vazar stack trace, herdando `traceId`/`timestamp` desde T-F02-05k. Lacunas encontradas e corrigidas — mudanças só em teste: o slice não tinha probe para ERR-04 (criado `/__test/llm-invalida` no `ErrorProbeController`); os testes 502/503 não afirmavam `traceId` (16 hex), `timestamp` ISO-8601 e ausência de stack trace no corpo (asserts adicionados em `GlobalExceptionHandlerTest`, `AssistantControllerTest` e `AiTaskControllerTest`, com `@Import(TraceIdFilter.class)`); `AssistantServiceTest` substituiu o RuntimeException genérico por 3 testes de propagação tipada (`LlmCommunicationException`, `LlmUnavailableException`, `InvalidLlmResponseException`) com `.isSameAs(erro)` + `verify(mensagens, never()).save` — o teste antigo passava por acaso (a exceção lançada era `ResourceNotFoundException`, também `RuntimeException`, pois o stub usava `UUID.randomUUID()` diferente do id da chamada). Gate `mvn -q test`: **227 testes / 0 falhas**.
 
 ### T-F05-03 — README completo com 7 seções e diagrama
-- **Status:** pending
+- **Status:** done
 - **Reqs:** DOC-01, RNF-05, RNF-10, DEL-02
 - **Depende de:** T-F05-01, T-F05-02
 - **Arquivos (criar/alterar):** README.md, docs/architecture.md
@@ -34,6 +34,7 @@
 - **Testes:** nenhum teste automatizado; Gate é a checagem de que as 7 seções existem e que nenhum marcador de preenchimento restou.
 - **Gate:** rg -c "^## " README.md e ausência de "TODO" no README
 - **Commit (rascunho):** `document: Completar README com 7 seções, diagrama e decisões técnicas`
+- **Evidências:** README.md reescrito com as 7 seções de `^## ` (Descrição, Tecnologias, Arquitetura, Configuração do LLM, Execução, Recursos de IA, Decisões técnicas) — `grep -c "^## "` = 7 e nenhum marcador `TODO` restou (a palavra "todo" em português foi evitada numa frase para não falso-positivar um check case-insensitive). `docs/architecture.md` traz o diagrama renderizável (mermaid) de componentes + o fluxo de uma chamada de IA (`analyze`, com retry/validação) + o fluxo do assistente com tool calling, e as camadas protegidas (RNF-14). Decisões técnicas justificam cada biblioteca extra: `spring-ai-starter-model-ollama` (única dep de IA, atrás das portas), `react-router-dom` (rotas RF-20/21/22), `vitest` + Testing Library + jsdom (TST-02), `oxlint`, `spring-boot-flyway` + `flyway-database-postgresql` (Boot 4 modular), `spring-boot-webmvc-test` (`@WebMvcTest` no Boot 4) e Testcontainers (Postgres real). Configuração do LLM documenta `OLLAMA_BASE_URL`/`AI_MODEL`/`AI_TIMEOUT`/`AI_MAX_RETRIES`/`ASSISTANT_TOOL_CALLING`, o one-shot `ollama-pull` e o `scripts/ollama-pull.sh`; Execução cobre compose, sem Docker e testes.
 
 ### T-F05-04 — Rastreabilidade final e roteiro de demonstração
 - **Status:** pending

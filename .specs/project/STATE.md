@@ -16,8 +16,8 @@
 # STATE.md
 
 ## Task atual
-T-F05-03 - README completo com 7 seções e diagrama - **pending**
-Anterior: T-F05-02 - Revisão dos erros ERR-01 a ERR-06 ponta a ponta - done (commit `297a884`).
+T-F05-04 - Rastreabilidade final e roteiro de demonstração - **pending**
+Anterior: T-F05-03 - README completo com 7 seções e diagrama - done.
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -58,6 +58,13 @@ Anterior: T-F05-02 - Revisão dos erros ERR-01 a ERR-06 ponta a ponta - done (co
 - 2026-10-07: **O teste antigo do serviço de IA passava por acaso.** `AssistantServiceTest.falhaDaIaNaoPersisteMensagemAlguma` stubbava `conversas.findById(UUID.randomUUID())` e chamava `service.chat(conversa.getId(), ...)` — UUIDs diferentes, então o stub não casava e o serviço lançava `ResourceNotFoundException` (404), que também é `RuntimeException` e satisfazia a asserção. O teste foi substituído por 3 testes que stubbam o mesmo `id` e afirmam propagação tipada (`.isSameAs(erro)`) de `LlmCommunicationException`, `LlmUnavailableException` e `InvalidLlmResponseException` + `verify(mensagens, never()).save(...)` — agora o 404 e as 3 falhas de IA têm cenários distintos.
 - 2026-10-07: **O slice web cobriu ERR-04 e 502/503 com traceId/timestamp.** O `ErrorProbeController` ganhou o probe `/__test/llm-invalida` (faltava um alvo HTTP para `InvalidLlmResponseException`); `GlobalExceptionHandlerTest` ganhou o caso ERR-04 e asserções `matchesPattern("[0-9a-f]{16}")`/ISO-8601 + `not(containsString("at com.desafio"))`/`not(containsString("\\tat "))` nos 502 (comunicação e resposta inválida) e 503; `AssistantControllerTest` e `AiTaskControllerTest` registram `TraceIdFilter` via `@Import` (padrão existente do `GlobalExceptionHandlerTest`) e afirmam os dois campos nos cenários de IA.
 - 2026-10-07: **Suíte backend: 227 testes / 0 falhas / 0 erros / 0 skipped** (224 + 3: +1 `GlobalExceptionHandlerTest` ERR-04, +2 líquidos em `AssistantServiceTest` — 1 removido, 3 criados). Gate `mvn -q test` na íntegra.
+
+## Decisões — T-F05-03
+- 2026-10-07: **README em português, mesmas escolhas de idioma do resto do projeto.** O JSON da API e os erros já são PT-BR (RF-24); só o envelope de erro e URLs seguem em inglês (RFC 7807). O README repete as 7 seções do DOC-01 como títulos `##` exatos, e o gate é `grep -c "^## "` = 7 sem marcador `TODO`.
+- 2026-10-07: **Diagrama em mermaid (renderizável no GitHub), não ASCII.** A task exige "diagrama renderizável"; mermaid é renderizado pelo GitHub em `.md` sem dependência nova. O `docs/architecture.md` traz um diagrama de componentes + 2 fluxos `sequenceDiagram` (chamada de IA com retry/validação e assistente com tool calling) + a descrição das camadas protegidas (RNF-14).
+- 2026-10-07: **O README documenta o caminho real de execução, incluindo o Ollama fora do Docker** (`host.docker.internal`, `scripts/ollama-pull.sh`) e o modelo com suporte a tool calling verificado em T-F05-01 (`qwen2.5:7b`, alternativa `llama3.1:8b`), além de `AI_TIMEOUT`/`AI_MAX_RETRIES`/`ASSISTANT_TOOL_CALLING`.
+- 2026-10-07: **Toda biblioteca extra lista sua justificativa (RNF-05), inclusive as fragmentações do Boot 4** (`spring-boot-flyway`, `spring-boot-webmvc-test`) que quebraram silenciosamente no passado — registrar o motivo evita reverter a dependência por parecer desnecessária.
+- 2026-10-07: **A palavra "todo" (pt-br) foi evitada no README** porque o gate de ausência de `TODO` pode ser implementado com `grep -i` e daria falso positivo no texto.
 
 ## Premissas [ASSUMPTION]
 - 2026-10-05 (T-F01-02): Frontend scaffoldado com `npm create vite@latest -- --template react-ts` (create-vite 9.2.1).
