@@ -34,7 +34,9 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   ai:
-    timeout: ${AI_TIMEOUT:60s}
+    # 180s: qwen2.5:7b em CPU e a primeira chamada passam de um minuto, o que
+    # virava 502 na demonstracao (T-F06-08). O nginx do frontend aceita 300s.
+    timeout: ${AI_TIMEOUT:180s}
     max-retries: ${AI_MAX_RETRIES:1}
     max-subtasks: 10
     min-subtasks: 2

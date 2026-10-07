@@ -70,7 +70,8 @@ tool calling) está em [`docs/architecture.md`](docs/architecture.md).
   troque `OLLAMA_BASE_URL` para `http://host.docker.internal:11434` no `.env`.
 - **Modelo:** `qwen2.5:7b` (padrão, verificado com tool calling real). Alternativa
   com suporte a tool calling: `llama3.1:8b`. Definido por `AI_MODEL`.
-- **Configuração:** `AI_TIMEOUT` (timeout de conexão/leitura), `AI_MAX_RETRIES`
+- **Configuração:** `AI_TIMEOUT` (timeout de conexão/leitura, padrão `180s`: um
+  modelo de 7b em CPU passa de um minuto na primeira chamada), `AI_MAX_RETRIES`
   (tentativas extras quando a resposta é inválida), `ASSISTANT_TOOL_CALLING`
   (liga/desliga o registro das ferramentas do assistente; desligado, injeta um
   contexto pré-montado no prompt como fallback).
