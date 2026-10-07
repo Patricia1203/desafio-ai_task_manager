@@ -13,7 +13,7 @@
 - **Evidências:** o compose (serviços `ollama` + one-shot `ollama-pull` + backend apontando para `http://ollama:11434`) já existia desde T-F01-03 (`b83deef`); esta task criou `scripts/ollama-pull.sh` (pull do `AI_MODEL` contra `OLLAMA_HOST`, para o backend fora do Docker) e executou o pull de verdade pela primeira vez: `docker compose config` válido e `docker compose run --rm ollama-pull` termina com `qwen2.5:7b` (4.7 GB) no volume `ollama-data`, serviço healthy. Premissa de T-F04-03 resolvida: smoke em `/api/chat` com a tool `criar_tarefa` devolveu `message.tool_calls` com argumentos válidos (`titulo` "Preparar pauta", `prioridade` "alta") — `qwen2.5:7b` suporta tool calling de verdade; o toggle `app.assistant.tool-calling` permanece ligado e nenhum fallback (Grok/contexto) é necessário. `.env.example` já documentava o Ollama externo via `host.docker.internal` desde T-F01-03 — sem alteração. Container de teste parado após o gate (`docker compose stop ollama`).
 
 ### T-F05-02 — Revisão dos erros ERR-01 a ERR-06 ponta a ponta
-- **Status:** done
+- **Status:** done (commit `297a884`, 2026-10-07)
 - **Reqs:** ERR-01, ERR-02, ERR-03, ERR-04, ERR-05, ERR-06
 - **Depende de:** T-F02-04, T-F03-03, T-F04-03
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/common/error/GlobalExceptionHandler.java, backend/src/test/java/.../common/error/*, .specs/project/TRACEABILITY.md

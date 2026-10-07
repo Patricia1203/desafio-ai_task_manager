@@ -17,7 +17,7 @@
 
 ## Task atual
 T-F05-03 - README completo com 7 seções e diagrama - **pending**
-Anterior: T-F05-02 - Revisão dos erros ERR-01 a ERR-06 ponta a ponta - done.
+Anterior: T-F05-02 - Revisão dos erros ERR-01 a ERR-06 ponta a ponta - done (commit `297a884`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
