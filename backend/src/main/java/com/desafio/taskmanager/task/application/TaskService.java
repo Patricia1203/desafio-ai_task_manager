@@ -57,7 +57,7 @@ public class TaskService {
         return repository.findAll(toSpecification(filter), pageable);
     }
 
-    /** Leitura sem paginacao, usada pelas ferramentas somente-leitura (F04). */
+    /** Leitura sem paginacao. Assim como {@link #list}, so raizes (T-F07-01). */
     public List<Task> findAll(TaskFilter filter) {
         return repository.findAll(toSpecification(filter));
     }
@@ -126,21 +126,25 @@ public class TaskService {
     }
 
     /**
-     * Monta a Specification a partir do filtro. Compondo com {@code and}, um
-     * criterio nulo e simplesmente omitido, o que faz {@link TaskFilter#all()}
-     * virar "todos".
+     * Monta a Specification a partir do filtro. A lista publica e a de
+     * tarefas-raiz (T-F07-01): a subtarefa nao aparece solta, vive no detalhe
+     * do pai ({@code GET /tasks/{id}/subtasks}). Compondo com {@code and}, um
+     * criterio nulo e simplesmente omitido — o que faz {@link TaskFilter#all()}
+     * virar "toda raiz".
      */
     private static Specification<Task> toSpecification(TaskFilter filter) {
-        if (filter == null || filter.isEmpty()) {
-            return Specification.unrestricted();
-        }
-        Specification<Task> spec = Specification.unrestricted();
-        if (filter.hasStatus()) {
+        Specification<Task> spec = raizSomente();
+        if (filter != null && filter.hasStatus()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), filter.status()));
         }
-        if (filter.hasPriority()) {
+        if (filter != null && filter.hasPriority()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("priority"), filter.priority()));
         }
         return spec;
+    }
+
+    /** Raiz: {@code parent} nulo. Subtarefa so e alcancada pelo id ou pelo pai. */
+    private static Specification<Task> raizSomente() {
+        return (root, query, cb) -> cb.isNull(root.get("parent"));
     }
 }

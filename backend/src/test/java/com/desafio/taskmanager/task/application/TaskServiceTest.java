@@ -358,6 +358,42 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(summary.highPriority()).isLessThanOrEqualTo(summary.total());
     }
 
+    // --- lista so com tarefas-raiz (T-F07-01) ---
+
+    @Test
+    void listaPublicaNaoDevolveSubtarefas() {
+        Task raiz = criar("Raiz");
+        criarSubtask(raiz.getId(), "Filha");
+        criar("Outra raiz");
+
+        assertThat(service.list(TaskFilter.all(), PageRequest.of(0, 10)).getTotalElements()).isEqualTo(2);
+        assertThat(service.list(TaskFilter.all(), PageRequest.of(0, 10)).getContent())
+                .extracting(Task::getTitle)
+                .doesNotContain("Filha");
+    }
+
+    @Test
+    void listaComFiltroTambemSoTrazRaizes() {
+        Task raiz = criar("Raiz pendente");
+        criarSubtask(raiz.getId(), "Filha pendente");
+
+        assertThat(service.findAll(TaskFilter.byStatus(TaskStatus.TODO)))
+                .extracting(Task::getTitle)
+                .containsExactly("Raiz pendente");
+        assertThat(service.findAll(null))
+                .extracting(Task::getTitle)
+                .doesNotContain("Filha pendente");
+    }
+
+    @Test
+    void subtarefaContinuaAcessiveisPeloId() {
+        Task raiz = criar("Raiz");
+        Task filha = criarSubtask(raiz.getId(), "Filha");
+
+        assertThat(service.findById(filha.getId()).getTitle()).isEqualTo("Filha");
+        assertThat(service.findSubtasks(raiz.getId())).extracting(Task::getTitle).containsExactly("Filha");
+    }
+
     // --- helpers ---
 
     private static TaskCommand pedido(String title, String description, TaskPriority priority,
