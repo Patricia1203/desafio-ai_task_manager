@@ -17,7 +17,7 @@
 
 ## Task atual
 Projeto concluído — todas as features (F01..F05) e todas as tasks (T-F01-01..T-F05-04) `done`.
-Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done.
+Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done (commits `715aa83` + docs do hash).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
