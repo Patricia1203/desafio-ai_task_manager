@@ -36,7 +36,7 @@
 - **Evidências:** `AssistantPort` (contrato `List<Mensagem> + String` sem Spring AI) com `AssistantService` que cria/retoma a conversa (404 se o id não existe), monta o histórico na janela `JANELA_HISTORICO=20`, chama a IA e só persiste o turno após a resposta; `SpringAiAssistantAdapter` com `assistant-system.st` (grounding estrito, `{currentDate}` do backend, usuário como dado, recusa fora de tarefas), tool calling via toggle `app.assistant.tool-calling` (default `true`) com fallback de contexto em `{contextoOpcoes}`; `AssistantController` POST `/assistant/chat` (200 é `ChatResponse` em português; 400 com campo `mensagem`; 400 uuid inválido; 404; 502/503 via handlers no `GlobalExceptionHandler` — `SpringAiTransportErrors` compartilhado entre adaptadores). Decisões detalhadas em STATE.md. Gate `mvn -q test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest`: 50 verdes; suíte completa 224/0/0/0.
 
 ### T-F04-04 — Tela do assistente
-- **Status:** done (2026-10-06)
+- **Status:** done (commit `8962ae7`, 2026-10-06)
 - **Reqs:** RF-22, RNF-03, RF-15
 - **Depende de:** T-F04-03
 - **Arquivos (criar/alterar):** frontend/src/api/assistant.ts, frontend/src/types/assistant.ts, frontend/src/pages/AssistantPage.tsx, frontend/src/components/assistant/ChatWindow.tsx, MessageBubble.tsx, frontend/src/router.tsx, frontend/src/components/layout/AppLayout.tsx, frontend/src/test/AssistantPage.test.tsx

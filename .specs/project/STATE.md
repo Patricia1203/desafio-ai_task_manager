@@ -16,7 +16,7 @@
 # STATE.md
 
 ## Task atual
-T-F04-04 - Tela do assistente - **done** (gate: npm run lint && npm run test && npm run build — 31 testes / 0 falhas)
+T-F04-04 - Tela do assistente - **done** (commit `8962ae7`; gate: npm run lint && npm run test && npm run build — 31 testes / 0 falhas)
 Anterior: T-F04-03 - Serviço de chat com grounding e memória - done (commit `c132ba3`; gate: mvn test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest — 50 verdes; suíte completa 224 testes).
 
 ## Decisões
