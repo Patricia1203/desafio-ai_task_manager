@@ -56,6 +56,8 @@ public class GlobalExceptionHandler {
     private static final URI RULE_TYPE = URI.create(BASE_TYPE + "regra-de-negocio");
     private static final URI DATABASE_TYPE = URI.create(BASE_TYPE + "banco-indisponivel");
     private static final URI LLM_INVALID_TYPE = URI.create(BASE_TYPE + "resposta-llm-invalida");
+    private static final URI LLM_UNAVAILABLE_TYPE = URI.create(BASE_TYPE + "llm-indisponivel");
+    private static final URI LLM_COMMUNICATION_TYPE = URI.create(BASE_TYPE + "erro-de-comunicacao-com-llm");
     private static final URI INTERNAL_TYPE = URI.create(BASE_TYPE + "erro-interno");
 
     private static final String GENERIC_500_MESSAGE =
@@ -170,6 +172,30 @@ public class GlobalExceptionHandler {
                 "Resposta invalida da IA", "O servico de IA devolveu uma resposta fora do contrato");
         problem.setProperty("code", "LLM_INVALID_RESPONSE");
         return problem;
+    }
+
+    /**
+     * ERR-05: o provedor de IA esta fora do ar (conexao recusada, host nao
+     * resolvido, Ollama parado). 503 pede repetir depois; o detalhe e fixo e a
+     * causa vai so para o log, como em todo 5xx daqui.
+     */
+    @ExceptionHandler(LlmUnavailableException.class)
+    public ProblemDetail handleLlmUnavailable(LlmUnavailableException ex) {
+        log.error("Provedor de IA indisponivel", ex);
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, LLM_UNAVAILABLE_TYPE,
+                "IA indisponivel", "O servico de IA esta indisponivel no momento");
+    }
+
+    /**
+     * ERR-03: falha de comunicacao com o provedor (timeout, erro de I/O,
+     * resposta HTTP inesperada). 502 como o ERR-04, mas o type e outro - o
+     * provedor respondeu, so que a conversa falhou no caminho.
+     */
+    @ExceptionHandler(LlmCommunicationException.class)
+    public ProblemDetail handleLlmCommunication(LlmCommunicationException ex) {
+        log.error("Falha de comunicacao com o provedor de IA", ex);
+        return problem(HttpStatus.BAD_GATEWAY, LLM_COMMUNICATION_TYPE,
+                "Falha na comunicacao com a IA", "Falha de comunicacao com o servico de IA");
     }
 
     /** Qualquer erro nao mapeado. A causa vai para o log; a resposta e fixa. */

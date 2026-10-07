@@ -67,4 +67,16 @@ class ErrorProbeController {
         throw new DataAccessResourceFailureException(
                 "conexao recusada em jdbc:postgresql://host:5432/taskmanager");
     }
+
+    /** ERR-03: falha de comunicacao com o LLM vira 502 com type proprio. */
+    @GetMapping("/llm-comunicacao")
+    void llmComunicacao() {
+        throw new LlmCommunicationException("falha de comunicacao com o LLM: broken pipe");
+    }
+
+    /** ERR-05: LLM indisponivel vira 503. */
+    @GetMapping("/llm-indisponivel")
+    void llmIndisponivel() {
+        throw new LlmUnavailableException("LLM indisponivel: Connection refused");
+    }
 }

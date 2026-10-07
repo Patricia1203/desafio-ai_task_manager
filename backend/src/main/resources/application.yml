@@ -46,6 +46,9 @@ app:
   assistant:
     # Limite de resultados das ferramentas somente-leitura do assistente (F04).
     max-tool-results: ${ASSISTANT_MAX_TOOL_RESULTS:10}
+    # true registra as ferramentas como tool calling no provedor; false injeta
+    # um contexto pre-montado no prompt (fallback para modelo que nao suporta).
+    tool-calling: ${ASSISTANT_TOOL_CALLING:true}
 
 # O default e INFO. DEBUG fica no profile dev (application-dev.yml): log verboso
 # em todo ambiente polui a saida e mascara problema real.

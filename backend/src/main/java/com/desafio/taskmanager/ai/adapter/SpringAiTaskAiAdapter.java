@@ -1,8 +1,5 @@
 package com.desafio.taskmanager.ai.adapter;
 
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,8 +13,6 @@ import com.desafio.taskmanager.ai.port.dto.TaskAnalysis;
 import com.desafio.taskmanager.ai.port.dto.TaskDecomposition;
 import com.desafio.taskmanager.ai.port.dto.TaskImprovement;
 import com.desafio.taskmanager.common.error.InvalidLlmResponseException;
-import com.desafio.taskmanager.common.error.LlmCommunicationException;
-import com.desafio.taskmanager.common.error.LlmUnavailableException;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ResponseEntity;
@@ -25,7 +20,6 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.web.client.RestClientException;
 
 /**
  * Implementacao da {@link TaskAiPort} em cima do ChatClient do Spring AI — a
@@ -112,7 +106,7 @@ public class SpringAiTaskAiAdapter implements TaskAiPort {
             } catch (InvalidLlmResponseException e) {
                 ultimaFalha = e;
             } catch (RuntimeException e) {
-                RuntimeException transporte = traduzirTransporte(e);
+                RuntimeException transporte = SpringAiTransportErrors.traduzir(e);
                 if (transporte != null) {
                     throw transporte;
                 }
@@ -125,36 +119,6 @@ public class SpringAiTaskAiAdapter implements TaskAiPort {
         throw new InvalidLlmResponseException(
                 "resposta da IA invalida apos " + tentativas + " tentativas: " + ultimaFalha.getMessage(),
                 ultimaFalha);
-    }
-
-    /** Conexao recusada ou host nao resolvido; o resto da cadeia I/O/HTTP vira falha de comunicacao. */
-    private static RuntimeException traduzirTransporte(RuntimeException e) {
-        if (causaTem(e, ConnectException.class) || causaTem(e, UnknownHostException.class)) {
-            return new LlmUnavailableException("LLM indisponivel: " + causaRaiz(e), e);
-        }
-        if (causaTem(e, IOException.class) || causaTem(e, RestClientException.class)) {
-            return new LlmCommunicationException("falha de comunicacao com o LLM: " + causaRaiz(e), e);
-        }
-        return null;
-    }
-
-    private static boolean causaTem(Throwable e, Class<? extends Throwable> tipo) {
-        Throwable atual = e;
-        while (atual != null) {
-            if (tipo.isInstance(atual)) {
-                return true;
-            }
-            atual = atual.getCause() == atual ? null : atual.getCause();
-        }
-        return false;
-    }
-
-    private static String causaRaiz(Throwable e) {
-        Throwable atual = e;
-        while (atual.getCause() != null && atual.getCause() != atual) {
-            atual = atual.getCause();
-        }
-        return atual.getMessage() == null ? atual.getClass().getSimpleName() : atual.getMessage();
     }
 
     /** JSON cru entregue ao validador; null se o provedor devolveu resposta sem conteudo. */

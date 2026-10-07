@@ -162,6 +162,28 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void falhaDeComunicacaoComOLLmDevolve502SemVazarDetalhe() throws Exception {
+        mockMvc.perform(get("/__test/llm-comunicacao"))
+                .andExpect(status().isBadGateway())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(502))
+                .andExpect(jsonPath("$.title").value("Falha na comunicacao com a IA"))
+                .andExpect(jsonPath("$.type").value(containsString("erro-de-comunicacao-com-llm")))
+                .andExpect(jsonPath("$.code").doesNotExist());
+    }
+
+    @Test
+    void llmIndisponivelDevolve503ComDetailFixa() throws Exception {
+        mockMvc.perform(get("/__test/llm-indisponivel"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.title").value("IA indisponivel"))
+                .andExpect(jsonPath("$.type").value(containsString("llm-indisponivel")))
+                .andExpect(jsonPath("$.detail").value("O servico de IA esta indisponivel no momento"));
+    }
+
+    @Test
     void todaRespostaDeErroLevaOTraceIdDoMdc() throws Exception {
         mockMvc.perform(get("/__test/inexistente"))
                 .andExpect(status().isNotFound())

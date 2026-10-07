@@ -1,8 +1,11 @@
 package com.desafio.taskmanager.ai.adapter.config;
 
+import com.desafio.taskmanager.ai.adapter.SpringAiAssistantAdapter;
 import com.desafio.taskmanager.ai.adapter.SpringAiTaskAiAdapter;
 import com.desafio.taskmanager.ai.application.LlmResponseValidator;
 import com.desafio.taskmanager.ai.port.TaskAiPort;
+import com.desafio.taskmanager.assistant.application.tools.TaskQueryTools;
+import com.desafio.taskmanager.assistant.port.AssistantPort;
 import com.desafio.taskmanager.common.config.AssistantLimitsProperties;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -49,6 +52,11 @@ public class AiAdapterConfig {
     @Bean
     TaskAiPort taskAiPort(ChatClient chatClient, LlmResponseValidator validator, AiProperties properties) {
         return new SpringAiTaskAiAdapter(chatClient, validator, properties);
+    }
+
+    @Bean
+    AssistantPort assistantPort(ChatClient chatClient, TaskQueryTools tools, AssistantLimitsProperties properties) {
+        return new SpringAiAssistantAdapter(chatClient, tools, properties);
     }
 
     @Bean

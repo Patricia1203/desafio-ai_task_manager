@@ -11,7 +11,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * por beans do container, nao por propriedades, quebrando o binding.
  *
  * @param maxToolResults limite de resultados de cada ferramenta somente-leitura
+ * @param toolCalling true registra as ferramentas como tool calling; false injeta
+ *     um contexto pre-montado no prompt (fallback para modelo que nao suporta)
  */
 @ConfigurationProperties(prefix = "app.assistant")
-public record AssistantLimitsProperties(int maxToolResults) {
+public record AssistantLimitsProperties(int maxToolResults, boolean toolCalling) {
 }

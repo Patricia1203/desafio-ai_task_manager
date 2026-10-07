@@ -45,7 +45,7 @@ class TaskQueryToolsTest {
 
     @BeforeEach
     void montaFerramentas() {
-        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(10));
+        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(10, true));
     }
 
     @Test
@@ -68,7 +68,7 @@ class TaskQueryToolsTest {
 
     @Test
     void resultadoRespeitaOLimiteConfigurado() {
-        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(3));
+        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(3, true));
         List<Task> tarefas = List.of(
                 tarefa("1", TaskStatus.A_FAZER, TaskPriority.MEDIA),
                 tarefa("2", TaskStatus.A_FAZER, TaskPriority.MEDIA),

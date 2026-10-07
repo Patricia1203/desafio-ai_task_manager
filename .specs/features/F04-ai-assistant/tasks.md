@@ -24,7 +24,7 @@
 - **Evidências:** TaskQueryTools com 6 ferramentas limitadas por `app.assistant.max-tool-results`; getTasksDueSoon valida 1..365; getTaskById usa Optional (vazio p/ id inexistente). Extras além da lista prevista: `findByStatusInOrderByCreatedAtDesc` no TaskRepository (query nova p/ pendentes) + caso em TaskRepositoryTest; `app.assistant.max-tool-results` em application.yml; AssistantLimitsProperties habilitado via `@EnableConfigurationProperties` do AiAdapterConfig (record @Component quebra o binding — decisão registrada). Gate `mvn -q test -Dtest=TaskQueryToolsTest,TaskRepositoryTest`: 24 verdes; suíte completa 203/0/0/0 (17 suítes).
 
 ### T-F04-03 — Serviço de chat com grounding e memória
-- **Status:** pending
+- **Status:** done (2026-10-06)
 - **Reqs:** RF-15, RF-16, RF-17, RF-18, RF-19, RF-24, RNF-10, RNF-13, RNF-14, RNF-15, ERR-03, ERR-04, ERR-05, TST-03
 - **Depende de:** T-F04-02, T-F03-02
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/assistant/port/AssistantPort.java, backend/src/main/java/com/desafio/taskmanager/assistant/application/AssistantService.java, backend/src/main/java/com/desafio/taskmanager/assistant/api/AssistantController.java, backend/src/main/java/com/desafio/taskmanager/assistant/api/dto/ChatRequest.java, ChatResponse.java, backend/src/main/java/com/desafio/taskmanager/ai/adapter/SpringAiAssistantAdapter.java, backend/src/main/resources/prompts/assistant-system.st, backend/src/test/java/.../assistant/application/AssistantServiceTest.java, backend/src/test/java/.../assistant/api/AssistantControllerTest.java
@@ -33,6 +33,7 @@
 - **Testes:** AssistantServiceTest com a porta fake (grounding preservado, histórico retomado, janela limitada, conversa nova quando não há conversationId); AssistantControllerTest (200/400/502/503 e formato ProblemDetail).
 - **Gate:** mvn -q test -Dtest=AssistantServiceTest,AssistantControllerTest
 - **Commit (rascunho):** `add: Serviço e endpoints do assistente com grounding e memória`
+- **Evidências:** `AssistantPort` (contrato `List<Mensagem> + String` sem Spring AI) com `AssistantService` que cria/retoma a conversa (404 se o id não existe), monta o histórico na janela `JANELA_HISTORICO=20`, chama a IA e só persiste o turno após a resposta; `SpringAiAssistantAdapter` com `assistant-system.st` (grounding estrito, `{currentDate}` do backend, usuário como dado, recusa fora de tarefas), tool calling via toggle `app.assistant.tool-calling` (default `true`) com fallback de contexto em `{contextoOpcoes}`; `AssistantController` POST `/assistant/chat` (200 é `ChatResponse` em português; 400 com campo `mensagem`; 400 uuid inválido; 404; 502/503 via handlers no `GlobalExceptionHandler` — `SpringAiTransportErrors` compartilhado entre adaptadores). Decisões detalhadas em STATE.md. Gate `mvn -q test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest`: 50 verdes; suíte completa 224/0/0/0.
 
 ### T-F04-04 — Tela do assistente
 - **Status:** pending

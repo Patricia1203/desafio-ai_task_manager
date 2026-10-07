@@ -30,10 +30,12 @@ class LayerDependenciesTest {
     private static final List<String> PACOTES_PROTEGIDOS = List.of(
             "com/desafio/taskmanager/task/domain",
             "com/desafio/taskmanager/task/application",
-            "com/desafio/taskmanager/ai/port");
+            "com/desafio/taskmanager/ai/port",
+            "com/desafio/taskmanager/assistant/port",
+            "com/desafio/taskmanager/assistant/application");
 
     @Test
-    @DisplayName("task.domain, task.application e ai/port nao citam org.springframework.ai")
+    @DisplayName("task.domain, task.application e as portas/servicos de IA nao citam org.springframework.ai")
     void nenhumaCamadaDeNegocioImportaSpringAi() throws IOException {
         Path raiz = fonteJava();
         List<String> violacoes = new ArrayList<>();
