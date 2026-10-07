@@ -1,7 +1,7 @@
 # tasks.md — F05-docs-hardening
 
 ### T-F05-01 — Compose com Ollama e pull automático do modelo
-- **Status:** pending
+- **Status:** done
 - **Reqs:** RNF-04, RNF-05
 - **Depende de:** T-F01-03, T-F03-02
 - **Arquivos (criar/alterar):** docker-compose.yml, scripts/ollama-pull.sh, .env.example
@@ -10,6 +10,7 @@
 - **Testes:** nenhum teste unitário; Gate é a validação do compose e a execução do serviço de pull.
 - **Gate:** docker compose config && docker compose run --rm ollama-pull
 - **Commit (rascunho):** `configure: Adicionar Ollama ao compose com pull automático do modelo`
+- **Evidências:** o compose (serviços `ollama` + one-shot `ollama-pull` + backend apontando para `http://ollama:11434`) já existia desde T-F01-03 (`b83deef`); esta task criou `scripts/ollama-pull.sh` (pull do `AI_MODEL` contra `OLLAMA_HOST`, para o backend fora do Docker) e executou o pull de verdade pela primeira vez: `docker compose config` válido e `docker compose run --rm ollama-pull` termina com `qwen2.5:7b` (4.7 GB) no volume `ollama-data`, serviço healthy. Premissa de T-F04-03 resolvida: smoke em `/api/chat` com a tool `criar_tarefa` devolveu `message.tool_calls` com argumentos válidos (`titulo` "Preparar pauta", `prioridade` "alta") — `qwen2.5:7b` suporta tool calling de verdade; o toggle `app.assistant.tool-calling` permanece ligado e nenhum fallback (Grok/contexto) é necessário. `.env.example` já documentava o Ollama externo via `host.docker.internal` desde T-F01-03 — sem alteração. Container de teste parado após o gate (`docker compose stop ollama`).
 
 ### T-F05-02 — Revisão dos erros ERR-01 a ERR-06 ponta a ponta
 - **Status:** pending

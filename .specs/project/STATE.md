@@ -16,8 +16,8 @@
 # STATE.md
 
 ## Task atual
-T-F04-04 - Tela do assistente - **done** (commit `8962ae7`; gate: npm run lint && npm run test && npm run build — 31 testes / 0 falhas)
-Anterior: T-F04-03 - Serviço de chat com grounding e memória - done (commit `c132ba3`; gate: mvn test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest — 50 verdes; suíte completa 224 testes).
+T-F05-02 - Revisão dos erros ERR-01 a ERR-06 ponta a ponta - **pending**
+Anterior: T-F05-01 - Compose com Ollama e pull automático do modelo - done.
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -48,6 +48,11 @@ Anterior: T-F04-03 - Serviço de chat com grounding e memória - done (commit `c
 - 2026-10-06: **"Nova conversa" fica desabilitada sem mensagens e durante a chamada** para não orfanar uma resposta em voo. O texto do usuário é enviado já com `trim()`; mensagem em branco/só espaços não dispara a chamada; `maxLength=5000` alinha o campo ao limite do `ChatRequest` (T-F04-03) e evita 400 desnecessário.
 - 2026-10-06: **Enter envia, Shift+Enter quebra linha** (pattern comum de chat); limpar o texto após o envio desabilita o botão Enviar até o usuário digitar de novo — teste affirma o estado de recuperação pós-erro.
 
+## Decisões — T-F05-01
+- 2026-10-07: **Pull real do Ollama executado pela primeira vez; gate de T-F05-01 concluído.** `docker compose config` válido; `docker compose run --rm ollama-pull` baixou o `qwen2.5:7b` (4.7 GB, sha `845dbda0ea48`) no volume `ollama-data` para o serviço `ollama` (healthy) e o one-shot saiu com sucesso. O compose já existia desde T-F01-03 (`b83deef`); o único arquivo novo desta task é `scripts/ollama-pull.sh`, para puxar o `AI_MODEL` no host quando o backend roda fora do Docker (o one-shot `ollama-pull` do compose continua sendo a fonte de verdade dentro do Docker). `.env.example` não precisou de mudança — o caminho `host.docker.internal` já estava documentado.
+- 2026-10-07: **Premissa de T-F04-03 confirmada: `qwen2.5:7b` suporta tool calling de verdade.** Smoke direto em `/api/chat` (porta 11434 do container) com a ferramenta `criar_tarefa` devolveu `message.tool_calls` com argumentos válidos (`titulo: "Preparar pauta"`, `prioridade: "alta"`). O toggle `app.assistant.tool-calling` permanece ligado por padrão; nenhum fallback de contexto é necessário e nenhuma troca de provider (Grok/`llama3.1:8b`) precisa ser feita. O container foi parado após o gate (`docker compose stop ollama`).
+- 2026-10-07: **O serviço `ollama` não publica porta no host** (só 11434 interna na rede do compose) — não há conflito com um daemon Ollama local caso o backend rode fora do Docker apontando para `localhost:11434`.
+
 ## Premissas [ASSUMPTION]
 - 2026-10-05 (T-F01-02): Frontend scaffoldado com `npm create vite@latest -- --template react-ts` (create-vite 9.2.1).
   Versões resultantes: **React 19.2.8**, **Vite 8.3.x** (rolldown), **TypeScript 6.0.x**, **Vitest 4.1.x**, React Router 7.9.x, jsdom 27.
@@ -58,7 +63,7 @@ Anterior: T-F04-03 - Serviço de chat com grounding e memória - done (commit `c
   - `vitest` + `@testing-library/react` + `@testing-library/jest-dom` + `@testing-library/user-event` + `jsdom` — base de testes exigida por TST-02 na parte de frontend.
   - `oxlint` (já vindo do template) — lint rápido sem configuração pesada.
   Nenhum UI kit, nenhuma lib de estado global, nenhuma lib de forms.
-- [ASSUMPTION] O modelo padrão `qwen2.5:7b` suporta tool calling no Ollama. **Registrado em T-F04-03**: o toggle `app.assistant.tool-calling` (default ligado) e o fallback de contexto injetado já existem, mas a verificação com Ollama de verdade continua pendente — o daemon não estava disponível nesta máquina (curl `/api/version` → HTTP 000). Confirmar em T-F05-01 (ou subir o Ollama e rodar um smoke manual); se não suportar tool calling, desligar o toggle no compose/`.env`. Se o desafio exigir F05 e o modelo não cooperar, trocar para `llama3.1:8b`.
+- ~~[ASSUMPTION] O modelo padrão `qwen2.5:7b` suporta tool calling no Ollama. **Registrado em T-F04-03**: o toggle `app.assistant.tool-calling` (default ligado) e o fallback de contexto injetado já existem, mas a verificação com Ollama de verdade continua pendente — o daemon não estava disponível nesta máquina (curl `/api/version` → HTTP 000). Confirmar em T-F05-01 (ou subir o Ollama e rodar um smoke manual); se não suportar tool calling, desligar o toggle no compose/`.env`. Se o desafio exigir F05 e o modelo não cooperar, trocar para `llama3.1:8b`.~~ **Resolvido em T-F05-01: o `qwen2.5:7b` devolveu `tool_calls` válidos no smoke do gate — ver "Decisões — T-F05-01".** O toggle permanece ligado e nenhum fallback é necessário.
 - [ASSUMPTION] `prazo` (coluna `due_date`, atributo `dueDate`) será `LocalDate` (data sem hora) com formato ISO-8601 `yyyy-MM-dd`. Se o desafio exigir data-hora, ajustar em F02.
 - [ASSUMPTION] `BusinessRuleException` responde **422** e não 400. O `design.md` da F02 lista "ERR-02 400" sem distinguir; se o desafio exigir 400 para regra de negócio, o handler muda em um único ponto.
 - [ASSUMPTION] **CONCLUIDA é terminal** — reabrir uma tarefa concluída exige passar por A_FAZER, e ir direto para EM_ANDAMENTO é recusado com 422. O `spec.md` da F02 só diz "altera entre A_FAZER, EM_ANDAMENTO, CONCLUIDA", sem definir transições inválidas. Se o desafio exigir transição livre, remover o bloco em `Task#changeStatus`.
