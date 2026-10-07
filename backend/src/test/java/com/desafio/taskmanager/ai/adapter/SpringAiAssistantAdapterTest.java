@@ -50,8 +50,11 @@ class SpringAiAssistantAdapterTest {
     @BeforeEach
     void setStubs() {
         repository = mock(TaskRepository.class);
-        when(repository.findByStatusInOrderByCreatedAtDesc(any())).thenReturn(List.of());
-        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(any(), any())).thenReturn(List.of());
+        when(repository.findEmAbertoPorUrgencia(any(), any(), any(), any())).thenReturn(List.of());
+        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(any(), any(), any()))
+                .thenReturn(List.of());
+        when(repository.countByStatusIn(any())).thenReturn(0L);
+        when(repository.countByDueDateLessThanAndStatusNot(any(), any())).thenReturn(0L);
         when(repository.countAll()).thenReturn(0L);
         when(repository.countByStatusValue(any())).thenReturn(0L);
         when(repository.countByPriorityValue(any())).thenReturn(0L);

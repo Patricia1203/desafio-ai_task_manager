@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.desafio.taskmanager.assistant.application.tools.dto.TaskToolResult;
+import com.desafio.taskmanager.assistant.application.tools.dto.ToolResultPage;
 import com.desafio.taskmanager.common.config.AssistantLimitsProperties;
 import com.desafio.taskmanager.common.error.BusinessRuleException;
 import com.desafio.taskmanager.task.application.dto.TaskSummary;
@@ -18,8 +19,10 @@ import com.desafio.taskmanager.task.infra.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,8 +35,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * Ferramentas somente-leitura do assistente (RF-19, RNF-13) com o repositorio
- * mockado: filtros certos, limites aplicados, id inexistente sem erro e nenhuma
- * chamada a metodo de escrita.
+ * mockado: filtros certos, limites aplicados com o total real, ordem de
+ * urgencia repassada ao banco, id inexistente sem erro e nenhuma chamada a
+ * metodo de escrita.
  */
 @ExtendWith(MockitoExtension.class)
 class TaskQueryToolsTest {
@@ -49,49 +53,68 @@ class TaskQueryToolsTest {
     }
 
     @Test
-    void getPendingTasksConsultasStatusEmAberto() {
-        when(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
-                .thenReturn(List.of(
-                        tarefa("T1", TaskStatus.IN_PROGRESS, TaskPriority.HIGH),
-                        tarefa("T2", TaskStatus.TODO, TaskPriority.MEDIUM)));
+    void getPendingTasksConsultaStatusEmAbertoPorUrgencia() {
+        when(repository.countByStatusIn(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
+                .thenReturn(2L);
+        when(repository.findEmAbertoPorUrgencia(any(), any(), any(), any())).thenReturn(List.of(
+                tarefa("T1", TaskStatus.IN_PROGRESS, TaskPriority.HIGH),
+                tarefa("T2", TaskStatus.TODO, TaskPriority.MEDIUM)));
 
-        List<TaskToolResult> resultados = tools.getPendingTasks();
+        ToolResultPage pagina = tools.getPendingTasks();
 
-        assertThat(resultados).extracting(TaskToolResult::title)
+        assertThat(pagina.itens()).extracting(TaskToolResult::title)
                 .containsExactly("T1", "T2");
-        assertThat(resultados).extracting(TaskToolResult::status)
+        assertThat(pagina.itens()).extracting(TaskToolResult::status)
                 .containsExactly(TaskStatus.IN_PROGRESS, TaskStatus.TODO);
-        verify(repository).findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS));
+        verify(repository).findEmAbertoPorUrgencia(
+                eq(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)),
+                eq(TaskPriority.HIGH), eq(TaskPriority.MEDIUM), any(Pageable.class));
     }
 
     @Test
-    void resultadoRespeitaOLimiteConfigurado() {
+    void oTotalVemDoFiltroInteiroEOsItensRespeitamOLimite() {
         tools = new TaskQueryTools(repository, new AssistantLimitsProperties(3, true));
-        List<Task> tarefas = List.of(
+        when(repository.countByStatusIn(any())).thenReturn(40L);
+        when(repository.findEmAbertoPorUrgencia(any(), any(), any(), any())).thenReturn(List.of(
                 tarefa("1", TaskStatus.TODO, TaskPriority.MEDIUM),
                 tarefa("2", TaskStatus.TODO, TaskPriority.MEDIUM),
                 tarefa("3", TaskStatus.TODO, TaskPriority.MEDIUM),
                 tarefa("4", TaskStatus.IN_PROGRESS, TaskPriority.MEDIUM),
-                tarefa("5", TaskStatus.IN_PROGRESS, TaskPriority.MEDIUM));
-        when(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
-                .thenReturn(tarefas);
+                tarefa("5", TaskStatus.IN_PROGRESS, TaskPriority.MEDIUM)));
 
-        assertThat(tools.getPendingTasks()).hasSize(3);
+        ToolResultPage pagina = tools.getPendingTasks();
+
+        // O total e do filtro inteiro: e o que faltava para a resposta nao mentir.
+        assertThat(pagina.total()).isEqualTo(40L);
+        assertThat(pagina.itens()).hasSize(5);
+    }
+
+    @Test
+    void oLimiteVaiParaOBancoComOPageable() {
+        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(7, true));
+        when(repository.countByStatusIn(any())).thenReturn(0L);
+        when(repository.findEmAbertoPorUrgencia(any(), any(), any(), any())).thenReturn(List.of());
+
+        tools.getPendingTasks();
+
+        ArgumentCaptor<Pageable> pagina = ArgumentCaptor.forClass(Pageable.class);
+        verify(repository).findEmAbertoPorUrgencia(any(), any(), any(), pagina.capture());
+        assertThat(pagina.getValue().getPageSize()).isEqualTo(7);
     }
 
     @Test
     void getOverdueTasksUsaPrazoDeHojeComoFronteira() {
         LocalDate hoje = LocalDate.now();
-        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.DONE))
+        when(repository.countByDueDateLessThanAndStatusNot(hoje, TaskStatus.DONE)).thenReturn(1L);
+        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(any(), any(), any()))
                 .thenReturn(List.of(tarefa("Vencida", TaskStatus.TODO, TaskPriority.HIGH)));
 
-        assertThat(tools.getOverdueTasks()).extracting(TaskToolResult::title)
-                .containsExactly("Vencida");
+        ToolResultPage pagina = tools.getOverdueTasks();
+
+        assertThat(pagina.total()).isEqualTo(1L);
+        assertThat(pagina.itens()).extracting(TaskToolResult::title).containsExactly("Vencida");
         verify(repository).findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
-                eq(hoje), eq(TaskStatus.DONE));
+                eq(hoje), eq(TaskStatus.DONE), any(Pageable.class));
     }
 
     @Test
@@ -116,29 +139,31 @@ class TaskQueryToolsTest {
     }
 
     @Test
-    void getTasksByPriorityFiltraPelaPrioridadeInformada() {
-        when(repository.findByPriorityAndStatusInOrderByCreatedAtDesc(
-                eq(TaskPriority.HIGH),
-                eq(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE))))
-                .thenReturn(List.of(tarefa("Critica", TaskStatus.TODO, TaskPriority.HIGH)));
+    void getTasksByPriorityFiltraPelaPrioridadeInformadaComTotal() {
+        when(repository.countByPriorityValue(TaskPriority.HIGH)).thenReturn(7L);
+        when(repository.findPorPrioridadePorUrgencia(eq(TaskPriority.HIGH), any()))
+                .thenReturn(List.of(tarefa("Urgente", TaskStatus.TODO, TaskPriority.HIGH)));
 
-        assertThat(tools.getTasksByPriority(TaskPriority.HIGH))
-                .extracting(TaskToolResult::title)
-                .containsExactly("Critica");
-        verify(repository).findByPriorityAndStatusInOrderByCreatedAtDesc(
-                eq(TaskPriority.HIGH),
-                eq(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE)));
+        ToolResultPage pagina = tools.getTasksByPriority(TaskPriority.HIGH);
+
+        assertThat(pagina.total()).isEqualTo(7L);
+        assertThat(pagina.itens()).extracting(TaskToolResult::title).containsExactly("Urgente");
+        verify(repository).findPorPrioridadePorUrgencia(eq(TaskPriority.HIGH), any(Pageable.class));
     }
 
     @Test
     void getTasksDueSoonUsaJanelaDeHojeAteHojeMaisDias() {
         LocalDate hoje = LocalDate.now();
-        when(repository.findByDueDateBetweenOrderByDueDateAsc(hoje, hoje.plusDays(7)))
+        when(repository.countByDueDateBetween(hoje, hoje.plusDays(7))).thenReturn(2L);
+        when(repository.findByDueDateBetweenOrderByDueDateAsc(any(), any(), any()))
                 .thenReturn(List.of(tarefa("Quase", TaskStatus.TODO, TaskPriority.MEDIUM)));
 
-        assertThat(tools.getTasksDueSoon(7)).extracting(TaskToolResult::title)
-                .containsExactly("Quase");
-        verify(repository).findByDueDateBetweenOrderByDueDateAsc(eq(hoje), eq(hoje.plusDays(7)));
+        ToolResultPage pagina = tools.getTasksDueSoon(7);
+
+        assertThat(pagina.total()).isEqualTo(2L);
+        assertThat(pagina.itens()).extracting(TaskToolResult::title).containsExactly("Quase");
+        verify(repository).findByDueDateBetweenOrderByDueDateAsc(
+                eq(hoje), eq(hoje.plusDays(7)), any(Pageable.class));
     }
 
     @Test
@@ -164,17 +189,15 @@ class TaskQueryToolsTest {
 
     @Test
     void nenhumMetodoDeEscritaDoRepositorioEhChamado() {
-        when(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
+        when(repository.countByStatusIn(any())).thenReturn(0L);
+        when(repository.findEmAbertoPorUrgencia(any(), any(), any(), any())).thenReturn(List.of());
+        when(repository.countByDueDateLessThanAndStatusNot(any(), any())).thenReturn(0L);
+        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(any(), any(), any()))
                 .thenReturn(List.of());
-        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
-                LocalDate.now(), TaskStatus.DONE))
-                .thenReturn(List.of());
-        when(repository.findByDueDateBetweenOrderByDueDateAsc(LocalDate.now(), LocalDate.now().plusDays(1)))
-                .thenReturn(List.of());
-        when(repository.findByPriorityAndStatusInOrderByCreatedAtDesc(
-                any(), any()))
-                .thenReturn(List.of());
+        when(repository.countByDueDateBetween(any(), any())).thenReturn(0L);
+        when(repository.findByDueDateBetweenOrderByDueDateAsc(any(), any(), any())).thenReturn(List.of());
+        when(repository.countByPriorityValue(any())).thenReturn(0L);
+        when(repository.findPorPrioridadePorUrgencia(any(), any())).thenReturn(List.of());
         when(repository.findById(any())).thenReturn(Optional.empty());
         when(repository.countAll()).thenReturn(0L);
         when(repository.countByStatusValue(eq(TaskStatus.TODO))).thenReturn(0L);

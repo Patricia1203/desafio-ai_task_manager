@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
@@ -35,6 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class TaskRepositoryTest extends PostgresIntegrationTest {
+
+    /** "Todos os itens": as queries de urgency nao limitam aqui. */
+    private static final Pageable TODOS = PageRequest.of(0, 100);
 
     @Autowired
     private TaskRepository repository;
@@ -109,8 +113,9 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
                 nova("B", TaskStatus.IN_PROGRESS),
                 nova("C", TaskStatus.DONE)));
 
-        assertThat(repository.findByStatusInOrderByCreatedAtDesc(
-                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
+        assertThat(repository.findEmAbertoPorUrgencia(
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS),
+                TaskPriority.HIGH, TaskPriority.MEDIUM, TODOS))
                 .extracting(Task::getTitle)
                 .containsExactlyInAnyOrder("A", "B");
     }
@@ -121,10 +126,40 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
                 new Task("A", null, TaskPriority.LOW, null, null),
                 new Task("B", null, TaskPriority.HIGH, null, null)));
 
-        assertThat(repository.findByPriorityAndStatusInOrderByCreatedAtDesc(
-                TaskPriority.HIGH, List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE)))
+        assertThat(repository.findPorPrioridadePorUrgencia(TaskPriority.HIGH, TODOS))
                 .extracting(Task::getTitle)
                 .containsExactly("B");
+    }
+
+    @Test
+    void ordenaEmAbertoPorUrgenciaPrazoPrioridadeERecencia() {
+        LocalDate hoje = LocalDate.now();
+        repository.saveAllAndFlush(List.of(
+                comVencimento("Sem prazo", null, TaskPriority.HIGH),
+                comVencimento("Prazo distante", hoje.plusDays(30), TaskPriority.HIGH),
+                comVencimento("Prazo proximo LOW", hoje.plusDays(1), TaskPriority.LOW),
+                comVencimento("Prazo proximo HIGH", hoje.plusDays(1), TaskPriority.HIGH),
+                comVencimento("Prazo medio", hoje.plusDays(10), TaskPriority.MEDIUM)));
+
+        List<Task> emAberto = repository.findEmAbertoPorUrgencia(
+                List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS),
+                TaskPriority.HIGH, TaskPriority.MEDIUM, TODOS);
+
+        // Sem prazo por ultimo; no mesmo prazo, HIGH antes de LOW; prazo antes de prioridade.
+        assertThat(emAberto).extracting(Task::getTitle).containsExactly(
+                "Prazo proximo HIGH", "Prazo proximo LOW", "Prazo medio",
+                "Prazo distante", "Sem prazo");
+    }
+
+    @Test
+    void contaOFilterInteiroParaOEnvelopeDaFerramenta() {
+        repository.saveAllAndFlush(List.of(
+                nova("A", TaskStatus.TODO),
+                nova("B", TaskStatus.IN_PROGRESS),
+                nova("C", TaskStatus.DONE)));
+
+        assertThat(repository.countByStatusIn(List.of(TaskStatus.TODO, TaskStatus.IN_PROGRESS)))
+                .isEqualTo(2L);
     }
 
     @Test
@@ -222,11 +257,11 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
                 new Task("Vence hoje", null, null, hoje, null),
                 new Task("Futura", null, null, hoje.plusDays(10), null)));
 
-        assertThat(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.DONE))
+        assertThat(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.DONE, TODOS))
                 .extracting(Task::getTitle)
                 .containsExactly("Vencida");
 
-        assertThat(repository.findByDueDateBetweenOrderByDueDateAsc(hoje, hoje.plusDays(7)))
+        assertThat(repository.findByDueDateBetweenOrderByDueDateAsc(hoje, hoje.plusDays(7), TODOS))
                 .extracting(Task::getTitle)
                 .containsExactly("Vence hoje");
     }
@@ -238,6 +273,10 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
 
         assertThat(repository.findByIdAndParentIsNull(subId)).isEmpty();
         assertThat(repository.findByIdAndParentIsNull(parent.getId())).isPresent();
+    }
+
+    private static Task comVencimento(String title, LocalDate dueDate, TaskPriority prioridade) {
+        return new Task(title, null, prioridade, dueDate, null);
     }
 
     private Task nova(String title, TaskStatus status) {
