@@ -247,6 +247,10 @@ Anterior: F05 concluída (F01..F05 todas `done`) — T-F05-04.
 ## Bloqueios
 - Nenhum. Docker daemon em execução (verificado em T-F01-02).
 
+## Verificação de pendências (2026-10-07)
+- **T-F06-01 conferida e continua não feita.** O `PROJECT.md` tem visão/objetivo/critérios, mas **nenhuma tabela de requisitos** (`grep -c "^|" PROJECT.md` = 0) — que é o entregável central da task. Continuam as 7 linhas `done (parcial)` (RNF-02, RF-04, RF-05, RF-07, RF-08, RF-09, TST-01) e a nota de "texto do req. não consta nas specs" em 4 linhas da matriz (RNF-02, RNF-12, RNF-15, TST-03). Não existe fonte do enunciado no repositório (`docs/desafio.pdf` ausente; `docs/` tem só `architecture.md` e `demo.md`). **Bloqueio real:** sem o texto do desafio não dá para fechar a T-F06-01 nem a T-F06-15, que dependem dela.
+- **Premissa corrigida da T-F06-01:** a task lista RNF-13 entre as linhas a reavaliar, mas a matriz mostra a RNF-13 como `done` **sem** a nota de texto ausente. As linhas que precisam de reavaliação com o texto do requisito são RNF-02, RNF-12, RNF-15 e TST-03 (4, não 5).
+
 ## Melhorias aplicadas automaticamente
 - F06: devolvidos ao português os javadocs que a T-F06-04 tinha escrito em inglês (inclusive o bloco de classe do `AssistantController`, removido por engano). O projeto documenta em PT; só o contrato JSON virou inglês.
 - F06: `TasksContractMigrationTest` cobre o requisito de teste que faltava na T-F06-02 — a V4 convertendo dado de português gravado na V2 e o `CHECK` novo recusando valor em português. A base compartilhada já nasce migrada, então o teste migra um schema isolado até a V2, insere as linhas em PT e roda a V4 (`support/MigrationSchemas` faz o `DROP SCHEMA ... CASCADE`). As asserções confirmam o valor PT **antes** da V4, senão o teste passaria sem provar conversão.
