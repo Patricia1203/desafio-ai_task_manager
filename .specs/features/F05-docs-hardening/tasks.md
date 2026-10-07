@@ -37,7 +37,7 @@
 - **Evidências:** README.md reescrito com as 7 seções de `^## ` (Descrição, Tecnologias, Arquitetura, Configuração do LLM, Execução, Recursos de IA, Decisões técnicas) — `grep -c "^## "` = 7 e nenhum marcador `TODO` restou (a palavra "todo" em português foi evitada numa frase para não falso-positivar um check case-insensitive). `docs/architecture.md` traz o diagrama renderizável (mermaid) de componentes + o fluxo de uma chamada de IA (`analyze`, com retry/validação) + o fluxo do assistente com tool calling, e as camadas protegidas (RNF-14). Decisões técnicas justificam cada biblioteca extra: `spring-ai-starter-model-ollama` (única dep de IA, atrás das portas), `react-router-dom` (rotas RF-20/21/22), `vitest` + Testing Library + jsdom (TST-02), `oxlint`, `spring-boot-flyway` + `flyway-database-postgresql` (Boot 4 modular), `spring-boot-webmvc-test` (`@WebMvcTest` no Boot 4) e Testcontainers (Postgres real). Configuração do LLM documenta `OLLAMA_BASE_URL`/`AI_MODEL`/`AI_TIMEOUT`/`AI_MAX_RETRIES`/`ASSISTANT_TOOL_CALLING`, o one-shot `ollama-pull` e o `scripts/ollama-pull.sh`; Execução cobre compose, sem Docker e testes.
 
 ### T-F05-04 — Rastreabilidade final e roteiro de demonstração
-- **Status:** pending
+- **Status:** done
 - **Reqs:** DEL-01, DEL-02
 - **Depende de:** T-F05-03
 - **Arquivos (criar/alterar):** .specs/project/TRACEABILITY.md, .specs/project/STATE.md, docs/demo.md
@@ -46,3 +46,4 @@
 - **Testes:** nenhum teste automatizado; Gate é a checagem de que nenhuma linha da matriz está com status diferente de `done` para REQ [OBR].
 - **Gate:** verificação da matriz de rastreabilidade
 - **Commit (rascunho):** `document: Finalizar rastreabilidade e roteiro de demonstração`
+- **Evidências:** matriz rastreável fechada — **0 linhas `pending`**; cada REQ [OBR] (RF-01..RF-24, RNF-01..RNF-21, ERR-01..ERR-06, TST-01..TST-04, DOC-01, DEL-01, DEL-02) tem task, código, testes e hash de commit; os placeholders `(T-...)` foram substituídos pelos hashes reais extraídos do `git log` (a trailer ` - Task: T-...` de cada commit é a âncora do mapeamento). DEL-01 (estrutura `backend/`, `frontend/`, `README.md`, `docker-compose.yml`, `docs/`) e DEL-02 (roteiro `docs/demo.md` passo a passo cobrindo stack, CRUD, IA melhorar/analisar/decompor, assistente com tool calling, erros 400/404/422/500/502/503 e pontos técnicos de apresentação) preenchidos. Linha `TST-02` duplicada na matriz corrigida (uma edit corrompeu a linha `TST-03` vizinha e foi reparada no diff). Lições registradas no STATE.md.

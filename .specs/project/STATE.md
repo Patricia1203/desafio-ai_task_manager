@@ -16,8 +16,8 @@
 # STATE.md
 
 ## Task atual
-T-F05-04 - Rastreabilidade final e roteiro de demonstração - **pending**
-Anterior: T-F05-03 - README completo com 7 seções e diagrama - done (commit `d83a2b9`).
+Projeto concluído — todas as features (F01..F05) e todas as tasks (T-F01-01..T-F05-04) `done`.
+Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done.
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -65,6 +65,13 @@ Anterior: T-F05-03 - README completo com 7 seções e diagrama - done (commit `d
 - 2026-10-07: **O README documenta o caminho real de execução, incluindo o Ollama fora do Docker** (`host.docker.internal`, `scripts/ollama-pull.sh`) e o modelo com suporte a tool calling verificado em T-F05-01 (`qwen2.5:7b`, alternativa `llama3.1:8b`), além de `AI_TIMEOUT`/`AI_MAX_RETRIES`/`ASSISTANT_TOOL_CALLING`.
 - 2026-10-07: **Toda biblioteca extra lista sua justificativa (RNF-05), inclusive as fragmentações do Boot 4** (`spring-boot-flyway`, `spring-boot-webmvc-test`) que quebraram silenciosamente no passado — registrar o motivo evita reverter a dependência por parecer desnecessária.
 - 2026-10-07: **A palavra "todo" (pt-br) foi evitada no README** porque o gate de ausência de `TODO` pode ser implementado com `grep -i` e daria falso positivo no texto.
+
+## Decisões — T-F05-04
+- 2026-10-07: **F05 finalizada: matriz de rastreabilidade 100% `done`, com 0 linhas `pending`.** Todos os REQs [OBR] (RF-01..RF-24, RNF-01..RNF-21, ERR-01..ERR-06, TST-01..TST-04, DOC-01, DEL-01, DEL-02) têm task, artefatos, teste/evidência e hash de commit. O último passo da F05 (DEL-01/DEL-02, US-041) foi fechar essa matriz e escrever o roteiro de demonstração (`docs/demo.md`), que cobre stack, CRUD, IA melhorar/analisar/decompor, assistente com tool calling, erros 400/404/422/500/502/503 e pontos técnicos — permitindo executar o fluxo sem consultar o código.
+- 2026-10-07: **Os placeholders `(T-...)` da coluna Commit viraram hashes reais de commit.** O mapeamento foi extraído do histórico via `git rev-list main` + a trailer ` - Task: T-...` que o padrão de commit obriga desde T-F01-01 — a âncora de rastreabilidade é o corpo do commit, não o título. A substituição usou `sed` em loop com os códigos mais longos primeiro (`T-F02-05` é prefixo de `T-F02-05a..k`; trocar o curto primeiro corromperia os sufixos). Os hashes de `T-F05-04` entraram no commit `docs:` seguinte, disparando o padrão de 2 commits das demais tasks.
+- 2026-10-07: **Lição: um match de `oldString` pequeno e ambíguo quase corrompeu a matriz.** O primeiro edit para remover a linha duplicada `TST-02 pending` casou um trecho que continha o começo da linha vizinha `TST-03`, e a substituição descascou o início dela no texto (resultado: `| pending | ` \`SpringAiTaskAiAdapterTest\`... numa linha só). Detectar: adotar oldString com contexto vizinho completo (linha inteira) e conferir o `git diff` antes de commitar — o reparo reconstruiu a `TST-03` integralmente.
+- 2026-10-07: **Lição de processo: um único arquivo-documento como a matriz acumula risco.** Duplicatas (o segundo `TST-02` ficou `pending` ao lado do real `done` quando a F04 adicionou slices de IA) e texto de evidência desatualizado ("suíte completa 224" que não acompanhou o salto para 227 da T-F05-02) são difíceis de ver quando o arquivo cresce para ~55 linhas de tabela. Verificação final: `grep -c "| pending |"` = 0 e o `git diff` lido antes do commit.
+- 2026-10-07: **O rig em `docker compose run --rm ollama-pull` da T-F05-01 (qwen2.5:7b) permanece como documentado, sem mudança nesta task.** O roteiro não assume Ollama rodando fora do Docker: `docker compose up --build` sobe tudo e o serviço `ollama-pull` garante o modelo antes do backend ficar healthy.
 
 ## Premissas [ASSUMPTION]
 - 2026-10-05 (T-F01-02): Frontend scaffoldado com `npm create vite@latest -- --template react-ts` (create-vite 9.2.1).
