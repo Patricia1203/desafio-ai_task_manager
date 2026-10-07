@@ -17,7 +17,7 @@
 
 ## Task atual
 Projeto concluído — todas as features (F01..F05) e todas as tasks (T-F01-01..T-F05-04) `done`.
-Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done (commits `715aa83` + docs do hash).
+Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done (commits `c61bdfb` + docs do hash).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -49,7 +49,7 @@ Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done (c
 - 2026-10-06: **Enter envia, Shift+Enter quebra linha** (pattern comum de chat); limpar o texto após o envio desabilita o botão Enviar até o usuário digitar de novo — teste affirma o estado de recuperação pós-erro.
 
 ## Decisões — T-F05-01
-- 2026-10-07: **Pull real do Ollama executado pela primeira vez; gate de T-F05-01 concluído.** `docker compose config` válido; `docker compose run --rm ollama-pull` baixou o `qwen2.5:7b` (4.7 GB, sha `845dbda0ea48`) no volume `ollama-data` para o serviço `ollama` (healthy) e o one-shot saiu com sucesso. O compose já existia desde T-F01-03 (`b83deef`); o único arquivo novo desta task é `scripts/ollama-pull.sh`, para puxar o `AI_MODEL` no host quando o backend roda fora do Docker (o one-shot `ollama-pull` do compose continua sendo a fonte de verdade dentro do Docker). `.env.example` não precisou de mudança — o caminho `host.docker.internal` já estava documentado.
+- 2026-10-07: **Pull real do Ollama executado pela primeira vez; gate de T-F05-01 concluído.** `docker compose config` válido; `docker compose run --rm ollama-pull` baixou o `qwen2.5:7b` (4.7 GB, sha `845dbda0ea48`) no volume `ollama-data` para o serviço `ollama` (healthy) e o one-shot saiu com sucesso. O compose já existia desde T-F01-03 (`7fbbfdc`); o único arquivo novo desta task é `scripts/ollama-pull.sh`, para puxar o `AI_MODEL` no host quando o backend roda fora do Docker (o one-shot `ollama-pull` do compose continua sendo a fonte de verdade dentro do Docker). `.env.example` não precisou de mudança — o caminho `host.docker.internal` já estava documentado.
 - 2026-10-07: **Premissa de T-F04-03 confirmada: `qwen2.5:7b` suporta tool calling de verdade.** Smoke direto em `/api/chat` (porta 11434 do container) com a ferramenta `criar_tarefa` devolveu `message.tool_calls` com argumentos válidos (`titulo: "Preparar pauta"`, `prioridade: "alta"`). O toggle `app.assistant.tool-calling` permanece ligado por padrão; nenhum fallback de contexto é necessário e nenhuma troca de provider (Grok/`llama3.1:8b`) precisa ser feita. O container foi parado após o gate (`docker compose stop ollama`).
 - 2026-10-07: **O serviço `ollama` não publica porta no host** (só 11434 interna na rede do compose) — não há conflito com um daemon Ollama local caso o backend rode fora do Docker apontando para `localhost:11434`.
 
