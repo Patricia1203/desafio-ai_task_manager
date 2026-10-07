@@ -16,7 +16,14 @@
 # STATE.md
 
 ## Task atual
-Revisão pós-entrega (2026-10-07): as pendências apontadas pelo usuário foram analisadas pelo agente e viraram a feature **F06-review-hardening** com 15 tasks `pending`. **Nenhuma task da F06 pode ser implementada antes do OK do usuário às tasks criadas.** Detalhes do veredicto na seção "Decisões — F06 (abertura da revisão)".
+2026-10-07: **T-F06-02, T-F06-03 e T-F06-04 concluídas e commitadas; T-F06-05 é a próxima.** O contrato de tasks (backend + frontend) e o de IA/assistente voltaram para inglês, com rótulos de UI em português. Gates verdes: `mvn test` 227 testes / 0 falhas; `npx oxlint` sem warnings, `npx vitest run` 31 testes, `npx tsc -b && npx vite build` OK.
+
+- T-F06-02 — contrato de tasks EN no backend (commit `65abc3d`): enums `TODO/IN_PROGRESS/DONE` e `LOW/MEDIUM/HIGH`, campos JSON de tasks/summary/página em inglês, migration `V4__tasks_contract_english.sql` (dados/`CHECK`/`DEFAULT` convertidos; `V2` intocada), prompt `task-analyze.st` com os valores EN e `CRITICA` fora do domínio. **O arquivo da migration chama-se `V4__tasks_contract_english.sql`** (o rascunho da task previa `V4__tasks_enum_migrate_pt_to_en.sql`).
+- T-F06-03 — contrato de tasks EN no frontend (commit `5bc0bf3`): `types/task.ts`, `api/tasks.ts`, páginas e componentes em campos EN; rótulos preservados em PT via `STATUS_LABELS`/`PRIORITY_LABELS`; badges CSS `badge--todo/in_progress/done`. Os 2 warnings `set-state-in-effect` foram eliminados deixando o estado só em callbacks de promise (`loading` inicia `true` e quem dispara a recarga — filtro, retry, submit — liga o spinner).
+- T-F06-04 — contrato de IA e assistente EN (commit `10d0a6b`): DTOs da API de IA (`priority/complexity/estimatedHours/reason`, `title/description`, `subtasks`), `ChatRequest.message`/`ChatResponse.response`, `TaskToolResult` em inglês e a descrição de `get_tasks_by_priority` corrigida (`LOW, MEDIUM, HIGH` — `CRITICA` nunca existiu). **Mensagens de validação continuam em português** (vão para o usuário); só o contrato virou inglês. Javadocs mantidos em PT, conforme a convenção do projeto.
+
+Pendências que continuam: T-F06-05 (frontend de IA/assistente), T-F06-06..T-F06-14 e T-F06-01/T-F06-15, que continuam bloqueadas esperando o usuário colar a tabela de requisitos do desafio.
+
 Anterior: F05 concluída (F01..F05 todas `done`) — T-F05-04.
 
 ## Decisões — F06 (abertura da revisão)

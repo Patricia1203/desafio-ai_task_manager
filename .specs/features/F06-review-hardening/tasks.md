@@ -13,7 +13,7 @@
 - **Commit (rascunho):** `document: Requisitos do desafio no PROJECT.md e revisao da matriz`
 
 ### T-F06-02 — Contrato em inglês no backend de tarefas (enums, V4, JSON CRUD/dashboard)
-- **Status:** pending
+- **Status:** done (commit `65abc3d`, 2026-10-07)
 - **Reqs:** RF-01, RF-02, RF-07, RF-08, RF-09, RF-20, RF-23, RF-24, ERR-02, TST-01
 - **Depende de:** T-F06-01 (texto de RF-24 para validar o contrato)
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/task/domain/TaskStatus.java, TaskPriority.java, backend/src/main/java/com/desafio/taskmanager/task/api/dto/*, PageResponse.java, TaskResponse.java, backend/src/main/java/com/desafio/taskmanager/task/application/dto/TaskSummary.java, backend/src/main/resources/db/migration/V4__tasks_enum_migrate_pt_to_en.sql (novo), V2__create_tasks.sql (comentário), backend/src/test/java/.../task/** (testes de contrato e migração)
@@ -24,7 +24,7 @@
 - **Commit (rascunho):** `update: Contrato de tarefas em ingles (enums, JSON e migration V4)`
 
 ### T-F06-03 — Frontend de tarefas: tipos/API em inglês, rótulos em português
-- **Status:** pending
+- **Status:** done (commit `5bc0bf3`, 2026-10-07)
 - **Reqs:** RF-20, RF-21, RF-23, RF-24, TST-02
 - **Depende de:** T-F06-02
 - **Arquivos (criar/alterar):** frontend/src/types/task.ts, frontend/src/api/tasks.ts, frontend/src/pages/TasksPage.tsx, DashboardPage.tsx, frontend/src/components/task/*, frontend/src/test/*.tsx
@@ -35,7 +35,7 @@
 - **Commit (rascunho):** `update: Frontend de tarefas no contrato ingles com rotulos PT`
 
 ### T-F06-04 — Backend de IA e assistente em inglês (JSON, prompts, ferramentas)
-- **Status:** pending
+- **Status:** done (commit `10d0a6b`, 2026-10-07)
 - **Reqs:** RF-10, RF-11, RF-12, RF-24, RNF-10, RNF-11, RNF-13, RNF-15, TST-03
 - **Depende de:** T-F06-02
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/ai/api/dto/*, backend/src/main/java/com/desafio/taskmanager/assistant/api/dto/*, backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/dto/TaskToolResult.java, backend/src/main/java/com/desafio/taskmanager/ai/adapter/AssistantToolCallbacks.java, backend/src/main/resources/prompts/*.st, backend/src/test/java/.../ai/** e .../assistant/**
