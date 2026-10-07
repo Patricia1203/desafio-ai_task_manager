@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predev": "npm run stack:up",
+    "stack:up": "docker compose -f ../docker-compose.yml up -d backend",
+    "stack:stop": "docker compose -f ../docker-compose.yml stop",
+    "stack:down": "docker compose -f ../docker-compose.yml down",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",

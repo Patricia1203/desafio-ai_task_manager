@@ -99,12 +99,21 @@ docker compose up --build
 **Sem Docker** (dev):
 
 ```bash
-# backend (Java 21 + Maven): requer Postgres e Ollama acessiveis
-mvn spring-boot:run
-
-# frontend (origem http://localhost:5173 ja liberada no CORS)
+# frontend: o `npm run dev` ja levanta o stack em background (requer Docker)
 npm install
 npm run dev
+```
+
+O `npm run dev` do frontend roda um `predev` que executa
+`docker compose -f ../docker-compose.yml up -d backend` — este sobe também o
+Postgres, o Ollama e o `ollama-pull` via `depends_on` (a primeira vez baixa o
+modelo e pode demorar). O Vite abre na hora (http://localhost:5173) e a API
+fica healthy em ~30s. Para parar o stack: `npm run stack:stop`; para remover os
+containers: `npm run stack:down`.
+
+```bash
+# backend isolado (Java 21 + Maven): requer Postgres e Ollama acessiveis
+mvn spring-boot:run
 ```
 
 **Testes:**

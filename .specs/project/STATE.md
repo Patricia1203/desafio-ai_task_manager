@@ -222,6 +222,7 @@ Anterior: T-F05-04 - Rastreabilidade final e roteiro de demonstração - done (c
 - Nenhum. Docker daemon em execução (verificado em T-F01-02).
 
 ## Melhorias aplicadas automaticamente
+- Frontend: `npm run dev` agora levanta o stack inteiro em background via `predev` (`npm run stack:up` = `docker compose -f ../docker-compose.yml up -d backend`, que sobe Postgres/Ollama/ollama-pull por `depends_on`). Ajuda `npm run stack:stop`/`stack:down`. Vite abre na hora; API healthy em ~30s. Documentado no README (Execução) e no package.json.
 - O `TaskSummary`/endpoint de health não dependem de actuator, evitando mais uma dependência de runtime só para o healthcheck do compose.
 - Removido do Dockerfile do backend o `COPY` da pasta `prompts` no estágio de runtime: o `.jar` já embute `src/main/resources`, então a cópia era redundante e criava uma segunda fonte de prompts em disco.
 - `.dockerignore` em `backend/` e `frontend/` para não enviar `target/`, `node_modules/` e `dist/` no contexto de build.
