@@ -36,7 +36,7 @@
 - **Evidências:** `AssistantPort` (contrato `List<Mensagem> + String` sem Spring AI) com `AssistantService` que cria/retoma a conversa (404 se o id não existe), monta o histórico na janela `JANELA_HISTORICO=20`, chama a IA e só persiste o turno após a resposta; `SpringAiAssistantAdapter` com `assistant-system.st` (grounding estrito, `{currentDate}` do backend, usuário como dado, recusa fora de tarefas), tool calling via toggle `app.assistant.tool-calling` (default `true`) com fallback de contexto em `{contextoOpcoes}`; `AssistantController` POST `/assistant/chat` (200 é `ChatResponse` em português; 400 com campo `mensagem`; 400 uuid inválido; 404; 502/503 via handlers no `GlobalExceptionHandler` — `SpringAiTransportErrors` compartilhado entre adaptadores). Decisões detalhadas em STATE.md. Gate `mvn -q test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest`: 50 verdes; suíte completa 224/0/0/0.
 
 ### T-F04-04 — Tela do assistente
-- **Status:** pending
+- **Status:** done (2026-10-06)
 - **Reqs:** RF-22, RNF-03, RF-15
 - **Depende de:** T-F04-03
 - **Arquivos (criar/alterar):** frontend/src/api/assistant.ts, frontend/src/types/assistant.ts, frontend/src/pages/AssistantPage.tsx, frontend/src/components/assistant/ChatWindow.tsx, MessageBubble.tsx, frontend/src/router.tsx, frontend/src/components/layout/AppLayout.tsx, frontend/src/test/AssistantPage.test.tsx
@@ -45,3 +45,4 @@
 - **Testes:** AssistantPage.test.tsx (renderiza mensagens, envia mensagem e exibe resposta, mantém conversationId, nova conversa, erro do LLM) com a camada api mockada.
 - **Gate:** cd frontend && npm run lint && npm run test && npm run build
 - **Commit (rascunho):** `add: Tela do assistente com histórico de conversa`
+- **Evidências:** `api/assistant.ts` chama `POST /assistant/chat` omitindo `conversationId` quando nulo; `AssistantPage` guarda o id devolvido e o reutiliza no próximo envio, e o botão "Nova conversa" (desabilitado sem conversa ou durante a chamada) zera o histórico local e o id; `ChatWindow` mantém a janela de mensagens com vazio, indicador de digitação (`role="status"`), erro em `role="alert"` sem perder a mensagem do usuário, e envio por Enter (Shift+Enter para nova linha) com `maxLength=5000` alinhado ao backend; `MessageBubble` distingue usuário/assistente; rota `/assistente` no router + link no AppLayout. Gate `npm run lint && npm run test && npm run build`: 31 testes / 0 falhas, lint sem novo aviso, build tsc+vite OK. Estilos novos em index.css usando as variáveis existentes.

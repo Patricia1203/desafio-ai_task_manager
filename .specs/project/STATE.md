@@ -16,8 +16,8 @@
 # STATE.md
 
 ## Task atual
-T-F04-03 - Serviço de chat com grounding e memória - **done** (commit `c132ba3`; gate: mvn test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest — 50 verdes; suíte completa 224 testes)
-Anterior: T-F04-02 - Ferramentas somente-leitura do assistente - done (commits 6c7bdb3 + 46597c2; gate: mvn -q test -Dtest=TaskQueryToolsTest,TaskRepositoryTest, 24 verdes; suíte completa 203 testes / 17 suítes).
+T-F04-04 - Tela do assistente - **done** (gate: npm run lint && npm run test && npm run build — 31 testes / 0 falhas)
+Anterior: T-F04-03 - Serviço de chat com grounding e memória - done (commit `c132ba3`; gate: mvn test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest — 50 verdes; suíte completa 224 testes).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.
@@ -41,6 +41,12 @@ Anterior: T-F04-02 - Ferramentas somente-leitura do assistente - done (commits 6
 - 2026-10-06: **O `ChatRequest` replica os limites da entidade na borda** (`@NotBlank` + `@Size(max=5000)`) para mensagem vazia/longa responder **400 com o campo** (`errors[].field=mensagem`), não 422 de regra de negócio. `conversationId` opcional; UUID inválido no corpo cai em `requisicao-malformada` 400.
 - 2026-10-06: **`ToolCallbacks.from(...)` só monta `ToolCallingChatOptions` quando o modelo suporta tool calling** — com o `ChatModel` falso o `Prompt.getOptions()` sai `DefaultChatOptions` sem callbacks. Por isso o teste do invólucro afirma os 6 nomes via `ToolCallbacks.from(new AssistantToolCallbacks(...))` (o que o `DefaultChatClient` lança no prompt quando o provedor é `ToolCallingChatModel` — caso do Ollama real). Registrado para não "consertar" o teste com uma asserção ilusória.
 - 2026-10-06: **Suíte backend: 224 testes / 0 falhas / 0 erros / 0 skipped** (203 + 21: 5 `AssistantServiceTest` + 8 `AssistantControllerTest` + 6 `SpringAiAssistantAdapterTest` + 2 `GlobalExceptionHandlerTest`).
+
+## Decisões — T-F04-04
+- 2026-10-06: **O `conversationId` vive no estado da `AssistantPage`** e é reutilizado em cada envio; "nova conversa" zera o estado local (a conversa continua no banco, apenas deixa de ser retomada pela UI). Não há persistência em sessionStorage/localStorage: recarregar a página volta a criar conversa nova — o histórico persistido só é retomado se a UI souber o id, fora do escopo da task.
+- 2026-10-06: **Falha do LLM não descarta o turno exibido**: a mensagem do usuário permanece na lista e o erro aparece em `role="alert"` abaixo do histórico; a conversa continua utilizável (campo habilitado). Sem tentativa automática — o usuário reenvia.
+- 2026-10-06: **"Nova conversa" fica desabilitada sem mensagens e durante a chamada** para não orfanar uma resposta em voo. O texto do usuário é enviado já com `trim()`; mensagem em branco/só espaços não dispara a chamada; `maxLength=5000` alinha o campo ao limite do `ChatRequest` (T-F04-03) e evita 400 desnecessário.
+- 2026-10-06: **Enter envia, Shift+Enter quebra linha** (pattern comum de chat); limpar o texto após o envio desabilita o botão Enviar até o usuário digitar de novo — teste affirma o estado de recuperação pós-erro.
 
 ## Premissas [ASSUMPTION]
 - 2026-10-05 (T-F01-02): Frontend scaffoldado com `npm create vite@latest -- --template react-ts` (create-vite 9.2.1).
