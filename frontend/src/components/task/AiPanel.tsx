@@ -49,7 +49,7 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
 
   function melhorar() {
     return executar('melhorar', async () => {
-      setMelhoria(await improveTask(task.titulo, task.descricao));
+      setMelhoria(await improveTask(task.title, task.description));
     });
   }
 
@@ -75,10 +75,10 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
     const sugestao = melhoria;
     return executar('aplicar', async () => {
       const atualizada = await updateTask(task.id, {
-        titulo: sugestao.titulo,
-        descricao: sugestao.descricao,
-        prioridade: task.prioridade,
-        prazo: task.prazo,
+        title: sugestao.titulo,
+        description: sugestao.descricao,
+        priority: task.priority,
+        dueDate: task.dueDate,
       });
       setMelhoria(null);
       onChanged(atualizada);

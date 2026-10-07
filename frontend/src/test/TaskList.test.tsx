@@ -4,17 +4,17 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Task } from '../types/task';
 import TaskList from '../components/task/TaskList';
 
-function tarefa(id: string, titulo: string): Task {
+function tarefa(id: string, title: string): Task {
   return {
     id,
-    titulo,
-    descricao: null,
-    status: 'A_FAZER',
-    prioridade: 'MEDIA',
-    prazo: null,
-    idTarefaPai: null,
-    criadoEm: '2026-10-01T10:00:00Z',
-    atualizadoEm: '2026-10-01T10:00:00Z',
+    title,
+    description: null,
+    status: 'TODO',
+    priority: 'MEDIUM',
+    dueDate: null,
+    parentId: null,
+    createdAt: '2026-10-01T10:00:00Z',
+    updatedAt: '2026-10-01T10:00:00Z',
   };
 }
 

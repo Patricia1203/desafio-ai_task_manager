@@ -12,20 +12,20 @@ interface TaskFormProps {
 }
 
 interface FieldErrors {
-  titulo?: string;
-  descricao?: string;
+  title?: string;
+  description?: string;
 }
 
-function validate(titulo: string, descricao: string): FieldErrors {
+function validate(title: string, description: string): FieldErrors {
   const errors: FieldErrors = {};
-  const trimmed = titulo.trim();
+  const trimmed = title.trim();
   if (!trimmed) {
-    errors.titulo = 'Informe o título da tarefa.';
+    errors.title = 'Informe o título da tarefa.';
   } else if (trimmed.length > 200) {
-    errors.titulo = 'O título pode ter no máximo 200 caracteres.';
+    errors.title = 'O título pode ter no máximo 200 caracteres.';
   }
-  if (descricao.length > 5000) {
-    errors.descricao = 'A descrição pode ter no máximo 5000 caracteres.';
+  if (description.length > 5000) {
+    errors.description = 'A descrição pode ter no máximo 5000 caracteres.';
   }
   return errors;
 }
@@ -37,24 +37,24 @@ export default function TaskForm({
   onCancel,
   error,
 }: TaskFormProps) {
-  const [titulo, setTitulo] = useState(task?.titulo ?? '');
-  const [descricao, setDescricao] = useState(task?.descricao ?? '');
-  const [prioridade, setPrioridade] = useState<TaskPriority>(task?.prioridade ?? 'MEDIA');
-  const [prazo, setPrazo] = useState(task?.prazo ?? '');
+  const [title, setTitle] = useState(task?.title ?? '');
+  const [description, setDescription] = useState(task?.description ?? '');
+  const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? 'MEDIUM');
+  const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const errors = validate(titulo, descricao);
+    const errors = validate(title, description);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return;
     }
     onSubmit({
-      titulo: titulo.trim(),
-      descricao: descricao.trim() || null,
-      prioridade,
-      prazo: prazo || null,
+      title: title.trim(),
+      description: description.trim() || null,
+      priority,
+      dueDate: dueDate || null,
     });
   }
 
@@ -66,14 +66,14 @@ export default function TaskForm({
         <span className="field__label">Título *</span>
         <input
           id="task-form-titulo"
-          value={titulo}
+          value={title}
           maxLength={200}
-          onChange={(event) => setTitulo(event.target.value)}
-          aria-invalid={fieldErrors.titulo ? true : undefined}
+          onChange={(event) => setTitle(event.target.value)}
+          aria-invalid={fieldErrors.title ? true : undefined}
         />
-        {fieldErrors.titulo && (
+        {fieldErrors.title && (
           <span className="error-message" role="alert">
-            {fieldErrors.titulo}
+            {fieldErrors.title}
           </span>
         )}
       </label>
@@ -83,14 +83,14 @@ export default function TaskForm({
         <textarea
           id="task-form-descricao"
           rows={4}
-          value={descricao}
+          value={description}
           maxLength={5000}
-          onChange={(event) => setDescricao(event.target.value)}
-          aria-invalid={fieldErrors.descricao ? true : undefined}
+          onChange={(event) => setDescription(event.target.value)}
+          aria-invalid={fieldErrors.description ? true : undefined}
         />
-        {fieldErrors.descricao && (
+        {fieldErrors.description && (
           <span className="error-message" role="alert">
-            {fieldErrors.descricao}
+            {fieldErrors.description}
           </span>
         )}
       </label>
@@ -99,8 +99,8 @@ export default function TaskForm({
         <span className="field__label">Prioridade</span>
         <select
           id="task-form-prioridade"
-          value={prioridade}
-          onChange={(event) => setPrioridade(event.target.value as TaskPriority)}
+          value={priority}
+          onChange={(event) => setPriority(event.target.value as TaskPriority)}
         >
           {PRIORITY_OPTIONS.map((option) => (
             <option key={option} value={option}>
@@ -115,8 +115,8 @@ export default function TaskForm({
         <input
           id="task-form-prazo"
           type="date"
-          value={prazo}
-          onChange={(event) => setPrazo(event.target.value)}
+          value={dueDate}
+          onChange={(event) => setDueDate(event.target.value)}
         />
       </label>
 

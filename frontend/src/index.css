@@ -141,16 +141,16 @@ select {
   border: 1px solid var(--color-border);
 }
 
-.badge--a_fazer {
+.badge--todo {
   color: var(--color-muted);
 }
 
-.badge--em_andamento {
+.badge--in_progress {
   color: var(--color-accent);
   border-color: var(--color-accent);
 }
 
-.badge--concluida {
+.badge--done {
   color: #1a7f37;
   border-color: #1a7f37;
 }

@@ -20,14 +20,14 @@ vi.mock('../api/tasks', () => ({
 
 const tarefa: Task = {
   id: '3f1d3f6e-0000-4000-8000-000000000001',
-  titulo: 'Mover casa',
-  descricao: null,
-  status: 'A_FAZER',
-  prioridade: 'MEDIA',
-  prazo: null,
-  idTarefaPai: null,
-  criadoEm: '2026-10-01T10:00:00Z',
-  atualizadoEm: '2026-10-01T10:00:00Z',
+  title: 'Mover casa',
+  description: null,
+  status: 'TODO',
+  priority: 'MEDIUM',
+  dueDate: null,
+  parentId: null,
+  createdAt: '2026-10-01T10:00:00Z',
+  updatedAt: '2026-10-01T10:00:00Z',
 };
 
 function montar() {
@@ -49,8 +49,8 @@ describe('AiPanel', () => {
     });
     const atualizada = {
       ...tarefa,
-      titulo: 'Mover casa com calma',
-      descricao: 'Contrate uma empresa com uma semana de antecedencia',
+      title: 'Mover casa com calma',
+      description: 'Contrate uma empresa com uma semana de antecedencia',
     };
     vi.mocked(updateTask).mockResolvedValue(atualizada);
     const { onChanged } = montar();
@@ -64,10 +64,10 @@ describe('AiPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Aplicar à tarefa' }));
 
     expect(updateTask).toHaveBeenCalledWith(tarefa.id, {
-      titulo: 'Mover casa com calma',
-      descricao: 'Contrate uma empresa com uma semana de antecedencia',
-      prioridade: 'MEDIA',
-      prazo: null,
+      title: 'Mover casa com calma',
+      description: 'Contrate uma empresa com uma semana de antecedencia',
+      priority: 'MEDIUM',
+      dueDate: null,
     });
     await vi.waitFor(() => expect(onChanged).toHaveBeenCalledWith(atualizada));
     expect(screen.queryByText('Sugestão de melhoria')).not.toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('AiPanel', () => {
 
   it('analisa a tarefa e exibe prioridade, complexidade, horas e justificativa', async () => {
     vi.mocked(analyzeTask).mockResolvedValue({
-      prioridade: 'ALTA',
+      prioridade: 'HIGH',
       complexidade: 'MEDIUM',
       horasEstimadas: 12.5,
       justificativa: 'Titulo generico e prazo curto',

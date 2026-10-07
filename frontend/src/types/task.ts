@@ -1,56 +1,56 @@
-export type TaskStatus = 'A_FAZER' | 'EM_ANDAMENTO' | 'CONCLUIDA';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 
-export type TaskPriority = 'BAIXA' | 'MEDIA' | 'ALTA';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export interface Task {
   id: string;
-  titulo: string;
-  descricao: string | null;
+  title: string;
+  description: string | null;
   status: TaskStatus;
-  prioridade: TaskPriority;
-  prazo: string | null;
-  idTarefaPai: string | null;
-  criadoEm: string;
-  atualizadoEm: string;
+  priority: TaskPriority;
+  dueDate: string | null;
+  parentId: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TaskInput {
-  titulo: string;
-  descricao: string | null;
-  prioridade: TaskPriority;
-  prazo: string | null;
+  title: string;
+  description: string | null;
+  priority: TaskPriority;
+  dueDate: string | null;
 }
 
 export interface PageResponse<T> {
-  conteudo: T[];
-  pagina: number;
-  tamanho: number;
-  totalItens: number;
-  totalPaginas: number;
-  primeira: boolean;
-  ultima: boolean;
+  content: T[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
 }
 
 export interface TaskSummary {
   total: number;
-  pendentes: number;
-  emAndamento: number;
-  concluidas: number;
-  altaPrioridade: number;
+  pending: number;
+  inProgress: number;
+  done: number;
+  highPriority: number;
 }
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
-  A_FAZER: 'A fazer',
-  EM_ANDAMENTO: 'Em andamento',
-  CONCLUIDA: 'Concluída',
+  TODO: 'A fazer',
+  IN_PROGRESS: 'Em andamento',
+  DONE: 'Concluída',
 };
 
 export const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  BAIXA: 'Baixa',
-  MEDIA: 'Média',
-  ALTA: 'Alta',
+  LOW: 'Baixa',
+  MEDIUM: 'Média',
+  HIGH: 'Alta',
 };
 
-export const STATUS_OPTIONS: TaskStatus[] = ['A_FAZER', 'EM_ANDAMENTO', 'CONCLUIDA'];
+export const STATUS_OPTIONS: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'DONE'];
 
-export const PRIORITY_OPTIONS: TaskPriority[] = ['BAIXA', 'MEDIA', 'ALTA'];
+export const PRIORITY_OPTIONS: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];

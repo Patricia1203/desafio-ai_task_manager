@@ -16,10 +16,10 @@ describe('DashboardPage', () => {
   it('renderiza o titulo da pagina', () => {
     vi.mocked(getSummary).mockResolvedValue({
       total: 0,
-      pendentes: 0,
-      emAndamento: 0,
-      concluidas: 0,
-      altaPrioridade: 0,
+      pending: 0,
+      inProgress: 0,
+      done: 0,
+      highPriority: 0,
     });
     render(<DashboardPage />);
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
@@ -28,10 +28,10 @@ describe('DashboardPage', () => {
   it('mostra os indicadores do summary', async () => {
     vi.mocked(getSummary).mockResolvedValue({
       total: 12,
-      pendentes: 5,
-      emAndamento: 3,
-      concluidas: 4,
-      altaPrioridade: 2,
+      pending: 5,
+      inProgress: 3,
+      done: 4,
+      highPriority: 2,
     });
     render(<DashboardPage />);
 
@@ -49,10 +49,10 @@ describe('DashboardPage', () => {
       .mockRejectedValueOnce(new Error('Falhou a rede'))
       .mockResolvedValueOnce({
         total: 1,
-        pendentes: 1,
-        emAndamento: 0,
-        concluidas: 0,
-        altaPrioridade: 0,
+        pending: 1,
+        inProgress: 0,
+        done: 0,
+        highPriority: 0,
       });
     render(<DashboardPage />);
 

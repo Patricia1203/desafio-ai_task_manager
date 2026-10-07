@@ -15,7 +15,7 @@ export default function TaskList({ tasks, loading, error, onRetry, onSelect }: T
   const [filtro, setFiltro] = useState('');
 
   const filtradas = tasks.filter((task) =>
-    task.titulo.toLowerCase().includes(filtro.trim().toLowerCase()),
+    task.title.toLowerCase().includes(filtro.trim().toLowerCase()),
   );
 
   return (
@@ -45,15 +45,15 @@ export default function TaskList({ tasks, loading, error, onRetry, onSelect }: T
                 className="task-list__item"
                 onClick={() => onSelect(task)}
               >
-                <span className="task-list__titulo">{task.titulo}</span>
+                <span className="task-list__titulo">{task.title}</span>
                 <span className="task-list__meta">
                   <span className={`badge badge--${task.status.toLowerCase()}`}>
                     {STATUS_LABELS[task.status]}
                   </span>
                   <span className="badge badge--prioridade">
-                    {PRIORITY_LABELS[task.prioridade]}
+                    {PRIORITY_LABELS[task.priority]}
                   </span>
-                  {task.prazo && <span className="task-list__prazo">Prazo: {task.prazo}</span>}
+                  {task.dueDate && <span className="task-list__prazo">Prazo: {task.dueDate}</span>}
                 </span>
               </button>
             </li>

@@ -70,26 +70,26 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit }: TaskD
   return (
     <article className="task-detail" aria-labelledby="task-detail-titulo">
       <header className="task-detail__header">
-        <h3 id="task-detail-titulo">{task.titulo}</h3>
+        <h3 id="task-detail-titulo">{task.title}</h3>
         <span className={`badge badge--${task.status.toLowerCase()}`}>
           {STATUS_LABELS[task.status]}
         </span>
       </header>
 
-      {task.descricao && <p className="task-detail__descricao">{task.descricao}</p>}
+      {task.description && <p className="task-detail__descricao">{task.description}</p>}
 
       <dl className="task-detail__meta">
         <div>
           <dt>Prioridade</dt>
-          <dd>{PRIORITY_LABELS[task.prioridade]}</dd>
+          <dd>{PRIORITY_LABELS[task.priority]}</dd>
         </div>
         <div>
           <dt>Prazo</dt>
-          <dd>{task.prazo ?? 'Sem prazo'}</dd>
+          <dd>{task.dueDate ?? 'Sem prazo'}</dd>
         </div>
         <div>
           <dt>Criada em</dt>
-          <dd>{new Date(task.criadoEm).toLocaleDateString('pt-BR')}</dd>
+          <dd>{new Date(task.createdAt).toLocaleDateString('pt-BR')}</dd>
         </div>
       </dl>
 
@@ -133,13 +133,13 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit }: TaskD
         >
           <h4 id="dialogo-exclusao-titulo">Excluir tarefa?</h4>
           <p>
-            A tarefa <strong>{task.titulo}</strong> será excluída
+            A tarefa <strong>{task.title}</strong> será excluída
             {subtasksEmExclusao.length > 0 ? ' junto com as subtarefas:' : '.'}
           </p>
           {subtasksEmExclusao.length > 0 && (
             <ul className="dialog__lista">
               {subtasksEmExclusao.map((subtask) => (
-                <li key={subtask.id}>{subtask.titulo}</li>
+                <li key={subtask.id}>{subtask.title}</li>
               ))}
             </ul>
           )}

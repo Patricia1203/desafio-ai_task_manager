@@ -6,14 +6,14 @@ import TaskForm from '../components/task/TaskForm';
 
 const tarefa: Task = {
   id: '3f1d3f6e-0000-4000-8000-000000000001',
-  titulo: 'Revisar contrato',
-  descricao: 'Ler o anexo II',
-  status: 'A_FAZER',
-  prioridade: 'ALTA',
-  prazo: '2026-10-20',
-  idTarefaPai: null,
-  criadoEm: '2026-10-01T10:00:00Z',
-  atualizadoEm: '2026-10-01T10:00:00Z',
+  title: 'Revisar contrato',
+  description: 'Ler o anexo II',
+  status: 'TODO',
+  priority: 'HIGH',
+  dueDate: '2026-10-20',
+  parentId: null,
+  createdAt: '2026-10-01T10:00:00Z',
+  updatedAt: '2026-10-01T10:00:00Z',
 };
 
 describe('TaskForm', () => {
@@ -32,15 +32,15 @@ describe('TaskForm', () => {
     render(<TaskForm submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
 
     await userEvent.type(screen.getByLabelText(/Título/), '  Pagar boleto  ');
-    await userEvent.selectOptions(screen.getByLabelText('Prioridade'), 'BAIXA');
+    await userEvent.selectOptions(screen.getByLabelText('Prioridade'), 'LOW');
     await userEvent.type(screen.getByLabelText('Prazo'), '2026-11-01');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(onSubmit).toHaveBeenCalledWith({
-      titulo: 'Pagar boleto',
-      descricao: null,
-      prioridade: 'BAIXA',
-      prazo: '2026-11-01',
+      title: 'Pagar boleto',
+      description: null,
+      priority: 'LOW',
+      dueDate: '2026-11-01',
     });
   });
 
@@ -51,7 +51,7 @@ describe('TaskForm', () => {
     );
 
     expect(screen.getByLabelText(/Título/)).toHaveValue('Revisar contrato');
-    expect(screen.getByLabelText('Prioridade')).toHaveValue('ALTA');
+    expect(screen.getByLabelText('Prioridade')).toHaveValue('HIGH');
     expect(screen.getByLabelText('Prazo')).toHaveValue('2026-10-20');
   });
 

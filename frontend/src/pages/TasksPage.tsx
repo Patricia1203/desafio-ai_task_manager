@@ -25,12 +25,12 @@ export default function TasksPage() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const pagina = await listTasks(
         statusFiltro ? { status: statusFiltro, size: 50 } : { size: 50 },
       );
-      setTarefas(pagina.conteudo);
+      setTarefas(pagina.content);
+      setError(null);
     } catch (caught) {
       setError(messageOf(caught));
     } finally {
@@ -39,8 +39,17 @@ export default function TasksPage() {
   }, [statusFiltro]);
 
   useEffect(() => {
-    carregar();
-  }, [carregar]);
+    listTasks(statusFiltro ? { status: statusFiltro, size: 50 } : { size: 50 })
+      .then((pagina) => {
+        setTarefas(pagina.content);
+        setError(null);
+        setLoading(false);
+      })
+      .catch((caught) => {
+        setError(messageOf(caught));
+        setLoading(false);
+      });
+  }, [statusFiltro]);
 
   function abrirDetalhe(tarefa: Task) {
     setSelecionada(tarefa);
@@ -98,7 +107,10 @@ export default function TasksPage() {
             <select
               id="tasks-filtro-status"
               value={statusFiltro}
-              onChange={(event) => setStatusFiltro(event.target.value as TaskStatus | '')}
+              onChange={(event) => {
+                setStatusFiltro(event.target.value as TaskStatus | '');
+                setLoading(true);
+              }}
             >
               <option value="">Todos</option>
               {STATUS_OPTIONS.map((status) => (
@@ -113,7 +125,10 @@ export default function TasksPage() {
             tasks={tarefas}
             loading={loading}
             error={error}
-            onRetry={carregar}
+            onRetry={() => {
+              setLoading(true);
+              void carregar();
+            }}
             onSelect={abrirDetalhe}
           />
         </>

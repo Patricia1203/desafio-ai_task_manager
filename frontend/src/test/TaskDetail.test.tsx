@@ -13,14 +13,14 @@ vi.mock('../api/tasks', () => ({
 
 const tarefa: Task = {
   id: '3f1d3f6e-0000-4000-8000-000000000001',
-  titulo: 'Mover casa',
-  descricao: null,
-  status: 'A_FAZER',
-  prioridade: 'MEDIA',
-  prazo: null,
-  idTarefaPai: null,
-  criadoEm: '2026-10-01T10:00:00Z',
-  atualizadoEm: '2026-10-01T10:00:00Z',
+  title: 'Mover casa',
+  description: null,
+  status: 'TODO',
+  priority: 'MEDIUM',
+  dueDate: null,
+  parentId: null,
+  createdAt: '2026-10-01T10:00:00Z',
+  updatedAt: '2026-10-01T10:00:00Z',
 };
 
 function montar() {
@@ -39,13 +39,13 @@ describe('TaskDetail', () => {
   });
 
   it('altera o status e devolve a tarefa atualizada', async () => {
-    const atualizada = { ...tarefa, status: 'EM_ANDAMENTO' as const };
+    const atualizada = { ...tarefa, status: 'IN_PROGRESS' as const };
     vi.mocked(changeStatus).mockResolvedValue(atualizada);
     const { onChanged } = montar();
 
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'EM_ANDAMENTO');
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'IN_PROGRESS');
 
-    expect(changeStatus).toHaveBeenCalledWith(tarefa.id, 'EM_ANDAMENTO');
+    expect(changeStatus).toHaveBeenCalledWith(tarefa.id, 'IN_PROGRESS');
     expect(await vi.waitFor(() => onChanged(atualizada))).toBeUndefined();
   });
 
@@ -53,15 +53,15 @@ describe('TaskDetail', () => {
     vi.mocked(changeStatus).mockRejectedValue(new Error('422: transicao invalida'));
     montar();
 
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'CONCLUIDA');
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'DONE');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('422: transicao invalida');
   });
 
   it('lista as subtarefas no dialogo e so dispara o DELETE apos confirmar', async () => {
     vi.mocked(getSubtasks).mockResolvedValue([
-      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000002', titulo: 'Contratar empresa' },
-      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000003', titulo: 'Desligar contadores' },
+      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000002', title: 'Contratar empresa' },
+      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000003', title: 'Desligar contadores' },
     ]);
     vi.mocked(deleteTask).mockResolvedValue(undefined);
     const { onDeleted } = montar();
@@ -98,7 +98,7 @@ describe('TaskDetail', () => {
 
   it('cancela a exclusao sem chamar a API', async () => {
     vi.mocked(getSubtasks).mockResolvedValue([
-      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000002', titulo: 'Contratar empresa' },
+      { ...tarefa, id: '3f1d3f6e-0000-4000-8000-000000000002', title: 'Contratar empresa' },
     ]);
     const { onDeleted } = montar();
 
