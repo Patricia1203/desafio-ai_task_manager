@@ -5,7 +5,7 @@
 > criação das tasks. Decisão de apresentação e assimetrias registradas em `design.md`.
 
 ### T-F07-01 — Lista pública só com tarefas-raiz
-- **Status:** pending
+- **Status:** done (commit `666bf61`, 2026-10-07)
 - **Reqs:** RF-02, RF-13, RF-14
 - **Depends on:** —
 - **Arquivos (alterar):** `backend/src/main/java/com/desafio/taskmanager/task/application/TaskService.java`, testes (repository/service/controller)
@@ -14,7 +14,7 @@
 - **Gate:** `mvn test` verde; teste de integração prova que `GET /tasks` não devolve `parentId` não nulo.
 
 ### T-F07-02 — `subtaskCount` na resposta da lista
-- **Status:** pending
+- **Status:** done (commit `1b92080`, 2026-10-07)
 - **Reqs:** RF-14
 - **Depends on:** T-F07-01
 - **Arquivos (alterar):** `TaskResponse.java`, `TaskMapper.java`, `TaskService.java` (+ repository), testes
@@ -23,7 +23,7 @@
 - **Gate:** `mvn test` verde; teste prova o count agrupado.
 
 ### T-F07-03 — Lista frontend com selo de subtarefas
-- **Status:** pending
+- **Status:** done (commit `f8ed43d`, 2026-10-07)
 - **Reqs:** RF-14
 - **Depends on:** T-F07-02
 - **Arquivos (alterar):** `frontend/src/types/task.ts`, `frontend/src/components/task/TaskList.tsx`, CSS, testes de componente
@@ -32,7 +32,7 @@
 - **Gate:** `npx oxlint` limpo; `npx vitest run` verde.
 
 ### T-F07-04 — Detalhe agrupado + vínculo do pai
-- **Status:** pending
+- **Status:** done (commit `e23a773`, 2026-10-07)
 - **Reqs:** RF-13, RF-14
 - **Depends on:** T-F07-02
 - **Arquivos (alterar):** `frontend/src/components/task/TaskDetail.tsx`, `frontend/src/pages/TasksPage.tsx`, CSS, testes
@@ -41,7 +41,7 @@
 - **Gate:** `npx oxlint` limpo; `npx vitest run` verde; `npx tsc -b && npx vite build` OK.
 
 ### T-F07-05 — Docs e rastreabilidade
-- **Status:** pending
+- **Status:** done (2026-10-07)
 - **Reqs:** DOC-01
 - **Depends on:** T-F07-01, T-F07-04
 - **Arquivos (alterar):** `.specs/project/TRACEABILITY.md`, `.specs/project/STATE.md`, `README.md` (se necessário), commits de docs por task
