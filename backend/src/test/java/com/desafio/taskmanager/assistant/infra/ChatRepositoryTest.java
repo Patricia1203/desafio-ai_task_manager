@@ -2,6 +2,7 @@ package com.desafio.taskmanager.assistant.infra;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import com.desafio.taskmanager.assistant.domain.ChatConversation;
 import com.desafio.taskmanager.assistant.domain.ChatMessage;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -51,28 +53,56 @@ class ChatRepositoryTest extends PostgresIntegrationTest {
         messages.saveAndFlush(new ChatMessage(conversa.getId(), ChatRole.ASSISTANT, "Nenhuma tarefa encontrada."));
 
         List<ChatMessage> encontradas =
-                messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversa.getId());
+                messages.ultimasMensagens(conversa.getId(), PageRequest.of(0, 20));
 
         assertThat(encontradas).hasSize(2);
-        assertThat(encontradas.get(0).getRole()).isEqualTo(ChatRole.USER);
-        assertThat(encontradas.get(0).getContent()).isEqualTo("Quais tarefas estao pendentes?");
+        assertThat(encontradas.get(0).getRole()).isEqualTo(ChatRole.ASSISTANT);
+        assertThat(encontradas.get(0).getContent()).isEqualTo("Nenhuma tarefa encontrada.");
         assertThat(encontradas.get(0).getCreatedAt()).isNotNull();
-        assertThat(encontradas.get(1).getRole()).isEqualTo(ChatRole.ASSISTANT);
-        assertThat(encontradas.get(1).getContent()).isEqualTo("Nenhuma tarefa encontrada.");
+        assertThat(encontradas.get(1).getRole()).isEqualTo(ChatRole.USER);
+        assertThat(encontradas.get(1).getContent()).isEqualTo("Quais tarefas estao pendentes?");
         assertThat(conversa.getCreatedAt()).isNotNull();
     }
 
     @Test
-    void listaMensagensEmOrdemCronologica() {
+    void listaMensagensDoMaisNovoParaOMaisVelho() {
         ChatConversation conversa = conversations.saveAndFlush(ChatConversation.nova());
         UUID id = conversa.getId();
         messages.saveAndFlush(new ChatMessage(id, ChatRole.USER, "Primeira mensagem"));
         messages.saveAndFlush(new ChatMessage(id, ChatRole.ASSISTANT, "Segunda mensagem"));
         messages.saveAndFlush(new ChatMessage(id, ChatRole.USER, "Terceira mensagem"));
 
-        assertThat(messages.findByConversationIdOrderByCreatedAtAscIdAsc(id))
+        // A consulta volta invertida porque e assim que o banco corta com o LIMIT
+        // (T-F06-06); virar a ordem cronologica e responsabilidade da aplicacao,
+        // coberto pelo AssistantServiceTest.
+        assertThat(mensagensUltimas(id))
                 .extracting(ChatMessage::getContent)
-                .containsExactly("Primeira mensagem", "Segunda mensagem", "Terceira mensagem");
+                .containsExactly("Terceira mensagem", "Segunda mensagem", "Primeira mensagem");
+    }
+
+    @Test
+    void aJanelaTrazSoAsUltimasMensagensDoMaisNovoParaOMaisVelho() {
+        ChatConversation conversa = conversations.saveAndFlush(ChatConversation.nova());
+        IntStream.rangeClosed(1, 25).forEach(i ->
+                messages.saveAndFlush(new ChatMessage(conversa.getId(), ChatRole.USER, "msg " + i)));
+
+        List<ChatMessage> janela = messages.ultimasMensagens(conversa.getId(), PageRequest.of(0, 20));
+
+        assertThat(janela).hasSize(20);
+        assertThat(janela.get(0).getContent()).isEqualTo("msg 25");
+        assertThat(janela.get(19).getContent()).isEqualTo("msg 6");
+    }
+
+    @Test
+    void aJanelaLimitaNoBancoEBuscaPeloIdDaConversa() {
+        ChatConversation outra = conversations.saveAndFlush(ChatConversation.nova());
+        ChatConversation conversa = conversations.saveAndFlush(ChatConversation.nova());
+        messages.saveAndFlush(new ChatMessage(outra.getId(), ChatRole.USER, "de outra"));
+        messages.saveAndFlush(new ChatMessage(conversa.getId(), ChatRole.USER, "desta"));
+
+        List<ChatMessage> janela = messages.ultimasMensagens(conversa.getId(), PageRequest.of(0, 20));
+
+        assertThat(janela).extracting(ChatMessage::getContent).containsExactly("desta");
     }
 
     @Test
@@ -83,7 +113,7 @@ class ChatRepositoryTest extends PostgresIntegrationTest {
         messages.saveAndFlush(new ChatMessage(segunda.getId(), ChatRole.USER, "Da segunda"));
 
         List<ChatMessage> soPrimeira =
-                messages.findByConversationIdOrderByCreatedAtAscIdAsc(primeira.getId());
+                messages.ultimasMensagens(primeira.getId(), PageRequest.of(0, 20));
 
         assertThat(soPrimeira).extracting(ChatMessage::getContent).containsExactly("Da primeira");
     }
@@ -97,6 +127,11 @@ class ChatRepositoryTest extends PostgresIntegrationTest {
         conversations.flush();
 
         assertThat(conversations.findById(conversa.getId())).isEmpty();
-        assertThat(messages.findByConversationIdOrderByCreatedAtAscIdAsc(conversa.getId())).isEmpty();
+        assertThat(messages.ultimasMensagens(conversa.getId(), PageRequest.of(0, 20))).isEmpty();
+    }
+
+    /** A janela do service (T-F06-06) e a consulta com o limite; a ordem e feita na aplicacao. */
+    private List<ChatMessage> mensagensUltimas(UUID conversationId) {
+        return messages.ultimasMensagens(conversationId, PageRequest.of(0, 20));
     }
 }
