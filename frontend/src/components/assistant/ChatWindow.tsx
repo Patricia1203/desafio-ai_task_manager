@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
-import type { MensagemChat } from '../../types/assistant';
+import type { ChatMessage } from '../../types/assistant';
 import MessageBubble from './MessageBubble';
 
 interface ChatWindowProps {
-  mensagens: MensagemChat[];
+  mensagens: ChatMessage[];
   digitando: boolean;
   erro: string | null;
   onEnviar: (texto: string) => void;

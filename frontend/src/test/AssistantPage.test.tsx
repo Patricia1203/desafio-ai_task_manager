@@ -24,7 +24,7 @@ describe('AssistantPage', () => {
   it('envia pela tecla Enter a primeira mensagem (sem conversationId) e exibe a resposta', async () => {
     vi.mocked(enviarMensagem).mockResolvedValue({
       conversationId: '0052e5f4-0000-4000-8000-000000000001',
-      resposta: 'Voce tem 3 tarefas pendentes.',
+      response: 'Voce tem 3 tarefas pendentes.',
     });
     render(<AssistantPage />);
 
@@ -49,11 +49,11 @@ describe('AssistantPage', () => {
     vi.mocked(enviarMensagem)
       .mockResolvedValueOnce({
         conversationId: '0052e5f4-0000-4000-8000-000000000001',
-        resposta: 'Primeira resposta.',
+        response: 'Primeira resposta.',
       })
       .mockResolvedValueOnce({
         conversationId: '0052e5f4-0000-4000-8000-000000000001',
-        resposta: 'Segunda resposta.',
+        response: 'Segunda resposta.',
       });
     render(<AssistantPage />);
 
@@ -80,7 +80,7 @@ describe('AssistantPage', () => {
   it('nova conversa limpa o historico e zera o conversationId', async () => {
     vi.mocked(enviarMensagem).mockResolvedValue({
       conversationId: '0052e5f4-0000-4000-8000-000000000001',
-      resposta: 'Resposta.',
+      response: 'Resposta.',
     });
     render(<AssistantPage />);
 

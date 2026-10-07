@@ -2,10 +2,10 @@ import { request } from './client';
 import type { Analise, Decomposicao, Melhoria, RascunhoSubtarefa } from '../types/ai';
 import type { Task } from '../types/task';
 
-export function improveTask(titulo: string, descricao: string | null): Promise<Melhoria> {
+export function improveTask(title: string, description: string | null): Promise<Melhoria> {
   return request<Melhoria>('/ai/tasks/improve', {
     method: 'POST',
-    body: JSON.stringify({ titulo, descricao }),
+    body: JSON.stringify({ title, description }),
   });
 }
 
@@ -19,10 +19,10 @@ export function decomposeTask(id: string): Promise<Decomposicao> {
 
 export function applyDecomposition(
   id: string,
-  subtarefas: RascunhoSubtarefa[],
+  subtasks: RascunhoSubtarefa[],
 ): Promise<Task[]> {
   return request<Task[]>(`/ai/tasks/${id}/decompose/apply`, {
     method: 'POST',
-    body: JSON.stringify({ subtarefas }),
+    body: JSON.stringify({ subtasks }),
   });
 }

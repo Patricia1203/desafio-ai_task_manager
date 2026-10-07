@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { enviarMensagem } from '../api/assistant';
-import type { MensagemChat, PapelMensagem } from '../types/assistant';
+import type { ChatMessage, ChatRole } from '../types/assistant';
 import ChatWindow from '../components/assistant/ChatWindow';
 
 function messageOf(error: unknown): string {
@@ -8,27 +8,27 @@ function messageOf(error: unknown): string {
 }
 
 export default function AssistantPage() {
-  const [mensagens, setMensagens] = useState<MensagemChat[]>([]);
+  const [mensagens, setMensagens] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [digitando, setDigitando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const proximoId = useRef(1);
 
-  function adicionarMensagem(papel: PapelMensagem, texto: string) {
+  function adicionarMensagem(role: ChatRole, text: string) {
     setMensagens((anteriores) => [
       ...anteriores,
-      { id: `msg-${proximoId.current++}`, papel, texto },
+      { id: `msg-${proximoId.current++}`, role, text },
     ]);
   }
 
   async function enviar(texto: string) {
     setErro(null);
-    adicionarMensagem('usuario', texto);
+    adicionarMensagem('user', texto);
     setDigitando(true);
     try {
-      const resposta = await enviarMensagem(conversationId, texto);
-      setConversationId(resposta.conversationId);
-      adicionarMensagem('assistente', resposta.resposta);
+      const reply = await enviarMensagem(conversationId, texto);
+      setConversationId(reply.conversationId);
+      adicionarMensagem('assistant', reply.response);
     } catch (caught) {
       setErro(messageOf(caught));
     } finally {

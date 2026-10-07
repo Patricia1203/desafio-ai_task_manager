@@ -1,33 +1,33 @@
 import type { TaskPriority } from './task';
 
 export interface Melhoria {
-  titulo: string;
-  descricao: string;
+  title: string;
+  description: string;
 }
 
 export type Complexidade = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export interface Analise {
-  prioridade: TaskPriority;
-  complexidade: Complexidade;
-  horasEstimadas: number | null;
-  justificativa: string;
+  priority: TaskPriority;
+  complexity: Complexidade;
+  estimatedHours: number | null;
+  reason: string;
 }
 
 export interface SubtarefaSugerida {
-  titulo: string;
-  descricao: string | null;
-  horasEstimadas: number | null;
+  title: string;
+  description: string | null;
+  estimatedHours: number | null;
 }
 
 export interface Decomposicao {
-  subtarefas: SubtarefaSugerida[];
+  subtasks: SubtarefaSugerida[];
 }
 
 export interface RascunhoSubtarefa {
-  titulo: string;
-  descricao: string | null;
-  horasEstimadas: number | null;
+  title: string;
+  description: string | null;
+  estimatedHours: number | null;
 }
 
 export const COMPLEXIDADE_LABELS: Record<Complexidade, string> = {

@@ -14,23 +14,23 @@ export default function AnalysisResult({ analise, onFechar }: AnalysisResultProp
       <dl className="ai-resultado__meta">
         <div>
           <dt>Prioridade sugerida</dt>
-          <dd>{PRIORITY_LABELS[analise.prioridade]}</dd>
+          <dd>{PRIORITY_LABELS[analise.priority]}</dd>
         </div>
         <div>
           <dt>Complexidade</dt>
-          <dd>{COMPLEXIDADE_LABELS[analise.complexidade]}</dd>
+          <dd>{COMPLEXIDADE_LABELS[analise.complexity]}</dd>
         </div>
         <div>
           <dt>Horas estimadas</dt>
           <dd>
-            {analise.horasEstimadas === null
+            {analise.estimatedHours === null
               ? 'Não estimadas'
-              : `${analise.horasEstimadas.toLocaleString('pt-BR')} h`}
+              : `${analise.estimatedHours.toLocaleString('pt-BR')} h`}
           </dd>
         </div>
         <div>
           <dt>Justificativa</dt>
-          <dd>{analise.justificativa}</dd>
+          <dd>{analise.reason}</dd>
         </div>
       </dl>
       <div className="ai-resultado__acoes">

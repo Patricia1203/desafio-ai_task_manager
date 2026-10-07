@@ -44,8 +44,8 @@ describe('AiPanel', () => {
 
   it('melhora a tarefa, exibe a sugestão e aplica quando o usuário confirma', async () => {
     vi.mocked(improveTask).mockResolvedValue({
-      titulo: 'Mover casa com calma',
-      descricao: 'Contrate uma empresa com uma semana de antecedencia',
+      title: 'Mover casa com calma',
+      description: 'Contrate uma empresa com uma semana de antecedencia',
     });
     const atualizada = {
       ...tarefa,
@@ -75,10 +75,10 @@ describe('AiPanel', () => {
 
   it('analisa a tarefa e exibe prioridade, complexidade, horas e justificativa', async () => {
     vi.mocked(analyzeTask).mockResolvedValue({
-      prioridade: 'HIGH',
-      complexidade: 'MEDIUM',
-      horasEstimadas: 12.5,
-      justificativa: 'Titulo generico e prazo curto',
+      priority: 'HIGH',
+      complexity: 'MEDIUM',
+      estimatedHours: 12.5,
+      reason: 'Titulo generico e prazo curto',
     });
     montar();
 
@@ -94,9 +94,9 @@ describe('AiPanel', () => {
 
   it('divide a tarefa, deixa o usuário remover itens e envia só as selecionadas', async () => {
     vi.mocked(decomposeTask).mockResolvedValue({
-      subtarefas: [
-        { titulo: 'Contratar empresa', descricao: 'Ligar para 3 empresas', horasEstimadas: 2 },
-        { titulo: 'Desligar contadores', descricao: null, horasEstimadas: null },
+      subtasks: [
+        { title: 'Contratar empresa', description: 'Ligar para 3 empresas', estimatedHours: 2 },
+        { title: 'Desligar contadores', description: null, estimatedHours: null },
       ],
     });
     vi.mocked(applyDecomposition).mockResolvedValue([]);
@@ -118,7 +118,7 @@ describe('AiPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Adicionar como tarefas' }));
 
     expect(applyDecomposition).toHaveBeenCalledWith(tarefa.id, [
-      { titulo: 'Contratar empresa', descricao: 'Ligar para 3 empresas', horasEstimadas: 2 },
+      { title: 'Contratar empresa', description: 'Ligar para 3 empresas', estimatedHours: 2 },
     ]);
     await vi.waitFor(() => expect(onSubtasksCreated).toHaveBeenCalledOnce());
     expect(screen.queryByText('Subtarefas sugeridas')).not.toBeInTheDocument();
@@ -126,9 +126,9 @@ describe('AiPanel', () => {
 
   it('desmarca uma sugestão para não enviá-la', async () => {
     vi.mocked(decomposeTask).mockResolvedValue({
-      subtarefas: [
-        { titulo: 'Contratar empresa', descricao: null, horasEstimadas: null },
-        { titulo: 'Desligar contadores', descricao: null, horasEstimadas: null },
+      subtasks: [
+        { title: 'Contratar empresa', description: null, estimatedHours: null },
+        { title: 'Desligar contadores', description: null, estimatedHours: null },
       ],
     });
     vi.mocked(applyDecomposition).mockResolvedValue([]);
@@ -142,7 +142,7 @@ describe('AiPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Adicionar como tarefas' }));
 
     expect(applyDecomposition).toHaveBeenCalledWith(tarefa.id, [
-      { titulo: 'Contratar empresa', descricao: null, horasEstimadas: null },
+      { title: 'Contratar empresa', description: null, estimatedHours: null },
     ]);
   });
 

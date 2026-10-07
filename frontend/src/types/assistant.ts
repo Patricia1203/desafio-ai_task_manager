@@ -1,13 +1,13 @@
-export interface RespostaChat {
+export interface ChatReply {
   conversationId: string;
-  resposta: string;
+  response: string;
 }
 
-export type PapelMensagem = 'usuario' | 'assistente';
+export type ChatRole = 'user' | 'assistant';
 
 /** Mensagem exibida na janela de conversa: o id só identifica a bolha na UI, não vem da API. */
-export interface MensagemChat {
+export interface ChatMessage {
   id: string;
-  papel: PapelMensagem;
-  texto: string;
+  role: ChatRole;
+  text: string;
 }

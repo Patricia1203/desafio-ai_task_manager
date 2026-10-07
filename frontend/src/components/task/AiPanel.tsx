@@ -62,7 +62,7 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
   function dividir() {
     return executar('dividir', async () => {
       const resposta = await decomposeTask(task.id);
-      setSugestoes(resposta.subtarefas.map((sugestao) => ({ ...sugestao, selecionada: true })));
+      setSugestoes(resposta.subtasks.map((sugestao) => ({ ...sugestao, selecionada: true })));
       setMelhoria(null);
       setAnalise(null);
     });
@@ -75,8 +75,8 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
     const sugestao = melhoria;
     return executar('aplicar', async () => {
       const atualizada = await updateTask(task.id, {
-        title: sugestao.titulo,
-        description: sugestao.descricao,
+        title: sugestao.title,
+        description: sugestao.description,
         priority: task.priority,
         dueDate: task.dueDate,
       });
@@ -91,7 +91,7 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
     }
     const escolhidas = sugestoes
       .filter((sugestao) => sugestao.selecionada)
-      .map(({ titulo, descricao, horasEstimadas }) => ({ titulo, descricao, horasEstimadas }));
+      .map(({ title, description, estimatedHours }) => ({ title, description, estimatedHours }));
     if (escolhidas.length === 0) {
       return;
     }

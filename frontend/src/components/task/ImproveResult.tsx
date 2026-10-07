@@ -16,8 +16,8 @@ export default function ImproveResult({
   return (
     <section className="ai-resultado" aria-labelledby="ai-melhoria-titulo">
       <h5 id="ai-melhoria-titulo">Sugestão de melhoria</h5>
-      <p className="ai-resultado__titulo">{melhoria.titulo}</p>
-      <p>{melhoria.descricao}</p>
+      <p className="ai-resultado__titulo">{melhoria.title}</p>
+      <p>{melhoria.description}</p>
       <div className="ai-resultado__acoes">
         <button type="button" onClick={onAplicar} disabled={aplicando}>
           {aplicando ? 'Aplicando...' : 'Aplicar à tarefa'}

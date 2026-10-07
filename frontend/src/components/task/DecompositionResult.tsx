@@ -24,7 +24,7 @@ export default function DecompositionResult({
       <h5 id="ai-decomposicao-titulo">Subtarefas sugeridas</h5>
       <ul className="ai-resultado__lista">
         {sugestoes.map((sugestao, indice) => (
-          <li key={`${sugestao.titulo}-${indice}`}>
+          <li key={`${sugestao.title}-${indice}`}>
             <label className="ai-resultado__item">
               <input
                 type="checkbox"
@@ -32,10 +32,10 @@ export default function DecompositionResult({
                 onChange={() => onAlternar(indice)}
               />
               <span>
-                <strong>{sugestao.titulo}</strong>
-                {sugestao.descricao && <> — {sugestao.descricao}</>}
-                {sugestao.horasEstimadas !== null && (
-                  <> ({sugestao.horasEstimadas.toLocaleString('pt-BR')} h)</>
+                <strong>{sugestao.title}</strong>
+                {sugestao.description && <> — {sugestao.description}</>}
+                {sugestao.estimatedHours !== null && (
+                  <> ({sugestao.estimatedHours.toLocaleString('pt-BR')} h)</>
                 )}
               </span>
             </label>
@@ -43,7 +43,7 @@ export default function DecompositionResult({
               type="button"
               onClick={() => onRemover(indice)}
               disabled={adicionando}
-              aria-label={`Remover ${sugestao.titulo}`}
+              aria-label={`Remover ${sugestao.title}`}
             >
               Remover
             </button>
