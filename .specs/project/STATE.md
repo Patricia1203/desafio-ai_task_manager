@@ -17,7 +17,7 @@
 
 ## Task atual
 T-F05-04 - Rastreabilidade final e roteiro de demonstração - **pending**
-Anterior: T-F05-03 - README completo com 7 seções e diagrama - done.
+Anterior: T-F05-03 - README completo com 7 seções e diagrama - done (commit `d83a2b9`).
 
 ## Decisões
 - 2026-10-05: Repositório já tinha commit inicial e branch `main` com remote. Não foi necessário `git init`.

@@ -25,7 +25,7 @@
 - **Evidências:** revisão confirmou que o `GlobalExceptionHandler` já cobre ERR-01 a ERR-06 (404, 400 com `errors[].field`, 502 de comunicação, 502 `code: LLM_INVALID_RESPONSE`, 503 de indisponibilidade, 500 genérico/persistência) sem vazar stack trace, herdando `traceId`/`timestamp` desde T-F02-05k. Lacunas encontradas e corrigidas — mudanças só em teste: o slice não tinha probe para ERR-04 (criado `/__test/llm-invalida` no `ErrorProbeController`); os testes 502/503 não afirmavam `traceId` (16 hex), `timestamp` ISO-8601 e ausência de stack trace no corpo (asserts adicionados em `GlobalExceptionHandlerTest`, `AssistantControllerTest` e `AiTaskControllerTest`, com `@Import(TraceIdFilter.class)`); `AssistantServiceTest` substituiu o RuntimeException genérico por 3 testes de propagação tipada (`LlmCommunicationException`, `LlmUnavailableException`, `InvalidLlmResponseException`) com `.isSameAs(erro)` + `verify(mensagens, never()).save` — o teste antigo passava por acaso (a exceção lançada era `ResourceNotFoundException`, também `RuntimeException`, pois o stub usava `UUID.randomUUID()` diferente do id da chamada). Gate `mvn -q test`: **227 testes / 0 falhas**.
 
 ### T-F05-03 — README completo com 7 seções e diagrama
-- **Status:** done
+- **Status:** done (commit `d83a2b9`, 2026-10-07)
 - **Reqs:** DOC-01, RNF-05, RNF-10, DEL-02
 - **Depende de:** T-F05-01, T-F05-02
 - **Arquivos (criar/alterar):** README.md, docs/architecture.md
