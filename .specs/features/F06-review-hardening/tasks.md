@@ -69,7 +69,7 @@
 - **Commit (rascunho):** `refactor: Transacao so nas gravacoes e janela limitada no assistente`
 
 ### T-F06-07 — Ferramentas do assistente: envelope {total, itens} e ordem por urgência
-- **Status:** pending
+- **Status:** done (commit `d6098cb`, 2026-10-07)
 - **Reqs:** RF-16, RF-19, RNF-13
 - **Depende de:** T-F06-04 (campos inglês do `TaskToolResult`)
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/TaskQueryTools.java, backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/dto/TaskToolResult.java, backend/src/main/java/com/desafio/taskmanager/ai/adapter/AssistantToolCallbacks.java, backend/src/main/java/com/desafio/taskmanager/task/infra/TaskRepository.java, backend/src/test/java/.../assistant/application/tools/TaskQueryToolsTest.java, .../task/infra/TaskRepositoryTest.java
