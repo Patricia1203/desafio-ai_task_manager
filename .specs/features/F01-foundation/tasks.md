@@ -10,7 +10,7 @@
 - **Testes:** sem teste unitário nesta task (o smoke test com Testcontainers entra em T-F01-04).
 - **Gate:** mvn -q compile
 - **Commit (rascunho):** `add: Bootstrap backend Spring Boot 4.1.1 + Spring AI 2.0.1 (Java 21)`
-- **Nota:** versões reais Boot 4.1.1 / Spring AI 2.0.1 / Testcontainers 2.0.5 (verificadas no Maven Central). Commit: da297ee.
+- **Nota:** versões reais Boot 4.1.1 / Spring AI 2.0.1 / Testcontainers 2.0.5 (verificadas no Maven Central). Commit: 0d1e89b.
 
 ### T-F01-02 — Skeleton frontend (Vite + React + TS)
 - **Status:** done
