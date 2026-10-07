@@ -16,7 +16,7 @@
 # STATE.md
 
 ## Task atual
-T-F04-03 - Serviço de chat com grounding e memória - **done** (gate: mvn test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest — 50 verdes; suíte completa 224 testes)
+T-F04-03 - Serviço de chat com grounding e memória - **done** (commit `c132ba3`; gate: mvn test -Dtest=AssistantServiceTest,AssistantControllerTest,SpringAiAssistantAdapterTest,TaskQueryToolsTest,GlobalExceptionHandlerTest,LayerDependenciesTest,ChatRepositoryTest — 50 verdes; suíte completa 224 testes)
 Anterior: T-F04-02 - Ferramentas somente-leitura do assistente - done (commits 6c7bdb3 + 46597c2; gate: mvn -q test -Dtest=TaskQueryToolsTest,TaskRepositoryTest, 24 verdes; suíte completa 203 testes / 17 suítes).
 
 ## Decisões
