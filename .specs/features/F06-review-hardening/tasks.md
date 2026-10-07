@@ -46,7 +46,7 @@
 - **Commit (rascunho):** `update: Contrato de IA e assistente em ingles (JSON, prompts, ferramentas)`
 
 ### T-F06-05 — Frontend de IA e assistente no contrato inglês (rótulos PT)
-- **Status:** pending
+- **Status:** done (commit `cef958c`, 2026-10-07)
 - **Reqs:** RF-10, RF-11, RF-12, RF-22, RF-24, TST-02
 - **Depende de:** T-F06-04
 - **Arquivos (criar/alterar):** frontend/src/types/ai.ts, assistant.ts, frontend/src/api/ai.ts, assistant.ts, frontend/src/components/task/AiPanel.tsx, ImproveResult.tsx, AnalysisResult.tsx, DecompositionResult.tsx, frontend/src/components/assistant/*, frontend/src/test/*.tsx
