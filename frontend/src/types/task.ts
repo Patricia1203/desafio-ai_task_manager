@@ -12,6 +12,7 @@ export interface Task {
   parentId: string | null;
   createdAt: string;
   updatedAt: string;
+  subtaskCount: number;
 }
 
 export interface TaskInput {

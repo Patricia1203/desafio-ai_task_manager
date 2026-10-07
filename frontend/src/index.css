@@ -155,6 +155,11 @@ select {
   border-color: #1a7f37;
 }
 
+.badge--subtarefas {
+  color: var(--color-muted);
+  border-color: currentColor;
+}
+
 .dashboard__indicadores {
   list-style: none;
   margin: 0;

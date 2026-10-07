@@ -53,6 +53,11 @@ export default function TaskList({ tasks, loading, error, onRetry, onSelect }: T
                   <span className="badge badge--prioridade">
                     {PRIORITY_LABELS[task.priority]}
                   </span>
+                  {task.subtaskCount > 0 && (
+                    <span className="badge badge--subtarefas">
+                      {task.subtaskCount} {task.subtaskCount === 1 ? 'subtarefa' : 'subtarefas'}
+                    </span>
+                  )}
                   {task.dueDate && <span className="task-list__prazo">Prazo: {task.dueDate}</span>}
                 </span>
               </button>

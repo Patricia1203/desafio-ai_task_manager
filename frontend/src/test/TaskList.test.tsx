@@ -15,6 +15,7 @@ function tarefa(id: string, title: string): Task {
     parentId: null,
     createdAt: '2026-10-01T10:00:00Z',
     updatedAt: '2026-10-01T10:00:00Z',
+    subtaskCount: 0,
   };
 }
 
@@ -79,5 +80,23 @@ describe('TaskList', () => {
     await userEvent.click(screen.getByRole('button', { name: /Pagar boleto/ }));
 
     expect(onSelect).toHaveBeenCalledWith(tarefas[0]);
+  });
+
+  it('mostra o selo de subtarefas quando a tarefa tem filhas', () => {
+    renderizar([{ ...tarefa('1', 'Com filhas'), subtaskCount: 2 }]);
+
+    expect(screen.getByRole('button', { name: /Com filhas/ })).toHaveTextContent('2 subtarefas');
+  });
+
+  it('mostra o selo no singular para uma subtarefa', () => {
+    renderizar([{ ...tarefa('1', 'Com uma'), subtaskCount: 1 }]);
+
+    expect(screen.getByRole('button', { name: /Com uma/ })).toHaveTextContent('1 subtarefa');
+  });
+
+  it('nao mostra selo de subtarefas quando nao ha filhas', () => {
+    renderizar();
+
+    expect(screen.queryByText(/subtarefa/)).not.toBeInTheDocument();
   });
 });
