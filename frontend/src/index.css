@@ -701,6 +701,7 @@ textarea::placeholder {
 }
 
 .dashboard__prazo-titulo {
+  min-height: 0;
   border: 0;
   background: none;
   padding: 0;
@@ -710,8 +711,12 @@ textarea::placeholder {
   cursor: pointer;
 }
 
-.dashboard__prazo-titulo:hover {
-  text-decoration: underline;
+/* o hover global de button ganharia aqui (0,3,1) e pintaria o fundo do titulo */
+button.dashboard__prazo-titulo:hover:not(:disabled),
+button.dashboard__prazo-titulo:active {
+  background: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 .dashboard__prazos strong {

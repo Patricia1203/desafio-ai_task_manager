@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Task } from '../types/task';
 import { ApiError } from '../api/client';
-import { analyzeTask, applyDecomposition, decomposeTask, improveTask } from '../api/ai';
+import { analyzeTask, applyAnalysis, applyDecomposition, decomposeTask, improveTask } from '../api/ai';
 import { updateTask } from '../api/tasks';
 import AiPanel from '../components/task/AiPanel';
 
 vi.mock('../api/ai', () => ({
   improveTask: vi.fn(),
   analyzeTask: vi.fn(),
+  applyAnalysis: vi.fn(),
   decomposeTask: vi.fn(),
   applyDecomposition: vi.fn(),
 }));
@@ -95,6 +96,25 @@ describe('AiPanel', () => {
     expect(secao).toHaveTextContent('Média');
     expect(secao).toHaveTextContent('12,5 h');
     expect(secao).toHaveTextContent('Titulo generico e prazo curto');
+  });
+
+  it('aplica a sugestao da analise na tarefa e atualiza a tela', async () => {
+    vi.mocked(analyzeTask).mockResolvedValue({
+      priority: 'HIGH',
+      complexity: 'HIGH',
+      estimatedHours: 4,
+      reason: 'Priorize a mudanca',
+    });
+    const atualizada = { ...tarefa, priority: 'HIGH' as const, estimatedTime: 4, estimatedUnit: 'HOURS' as const };
+    vi.mocked(applyAnalysis).mockResolvedValue(atualizada);
+    const { onChanged } = montar();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Analisar' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Aplicar Sugestão' }));
+
+    expect(applyAnalysis).toHaveBeenCalledWith(tarefa.id, { priority: 'HIGH', estimatedHours: 4 });
+    await vi.waitFor(() => expect(onChanged).toHaveBeenCalledWith(atualizada));
+    expect(screen.queryByText('Análise da tarefa')).not.toBeInTheDocument();
   });
 
   it('divide a tarefa, deixa o usuário remover itens e envia só as selecionadas', async () => {

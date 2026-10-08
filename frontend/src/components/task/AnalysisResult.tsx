@@ -4,10 +4,12 @@ import { PRIORITY_LABELS } from '../../types/task';
 
 interface AnalysisResultProps {
   analise: Analise;
+  aplicando: boolean;
+  onAplicar: () => void;
   onFechar: () => void;
 }
 
-export default function AnalysisResult({ analise, onFechar }: AnalysisResultProps) {
+export default function AnalysisResult({ analise, aplicando, onAplicar, onFechar }: AnalysisResultProps) {
   return (
     <section className="ai-resultado" aria-labelledby="ai-analise-titulo">
       <h5 id="ai-analise-titulo">Análise da tarefa</h5>
@@ -34,7 +36,10 @@ export default function AnalysisResult({ analise, onFechar }: AnalysisResultProp
         </div>
       </dl>
       <div className="ai-resultado__acoes">
-        <button type="button" onClick={onFechar}>
+        <button type="button" onClick={onAplicar} disabled={aplicando}>
+          {aplicando ? 'Aplicando...' : 'Aplicar Sugestão'}
+        </button>
+        <button type="button" onClick={onFechar} disabled={aplicando}>
           Fechar
         </button>
       </div>

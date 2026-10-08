@@ -7,9 +7,10 @@ import { formatarTempoEstimado } from '../../utils/tempo';
 interface PrazoLinhaProps {
   tarefa: Task;
   hoje: string;
+  onAbrir?: (tarefa: Task) => void;
 }
 
-export default function PrazoLinha({ tarefa, hoje }: PrazoLinhaProps) {
+export default function PrazoLinha({ tarefa, hoje, onAbrir }: PrazoLinhaProps) {
   const [aberta, setAberta] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [filhos, setFilhos] = useState<Task[] | null>(null);
@@ -65,6 +66,14 @@ export default function PrazoLinha({ tarefa, hoje }: PrazoLinhaProps) {
           >
             {tarefa.title}
           </button>
+        ) : onAbrir ? (
+          <button
+            type="button"
+            className="dashboard__prazo-titulo"
+            onClick={() => onAbrir(tarefa)}
+          >
+            {tarefa.title}
+          </button>
         ) : (
           <strong className="dashboard__prazo-titulo">{tarefa.title}</strong>
         )}
@@ -95,7 +104,7 @@ export default function PrazoLinha({ tarefa, hoje }: PrazoLinhaProps) {
               }`}
             >
               {filhos.map((filho) => (
-                <PrazoLinha key={filho.id} tarefa={filho} hoje={hoje} />
+                <PrazoLinha key={filho.id} tarefa={filho} hoje={hoje} onAbrir={onAbrir} />
               ))}
             </ul>
           )}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Analise, Melhoria, SugestaoSubtarefa } from '../../types/ai';
 import type { Task } from '../../types/task';
 import { ApiError } from '../../api/client';
-import { analyzeTask, applyDecomposition, decomposeTask, improveTask } from '../../api/ai';
+import { analyzeTask, applyAnalysis, applyDecomposition, decomposeTask, improveTask } from '../../api/ai';
 import { updateTask } from '../../api/tasks';
 import ImproveResult from './ImproveResult';
 import AnalysisResult from './AnalysisResult';
@@ -56,6 +56,22 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
   function analisar() {
     return executar('analisar', async () => {
       setAnalise(await analyzeTask(task.id));
+    });
+  }
+
+  function aplicarAnalise() {
+    if (!analise) {
+      return;
+    }
+    const sugestao = analise;
+    return executar('aplicar', async () => {
+      const atualizada = await applyAnalysis(task.id, {
+        priority: sugestao.priority,
+        estimatedHours: sugestao.estimatedHours,
+      });
+      setAnalise(null);
+      setMelhoria(null);
+      onChanged(atualizada);
     });
   }
 
@@ -157,7 +173,14 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
         />
       )}
 
-      {analise && <AnalysisResult analise={analise} onFechar={() => setAnalise(null)} />}
+      {analise && (
+        <AnalysisResult
+          analise={analise}
+          aplicando={operacao === 'aplicar'}
+          onAplicar={aplicarAnalise}
+          onFechar={() => setAnalise(null)}
+        />
+      )}
 
       {sugestoes && (
         <DecompositionResult

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Task, TaskPriority, TaskSummary } from '../types/task';
 import { getSummary, listTasks } from '../api/tasks';
 import AsyncState from '../components/common/AsyncState';
@@ -55,6 +55,7 @@ function messageOf(error: unknown): string {
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<TaskSummary | null>(null);
   const [tarefas, setTarefas] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,7 +228,12 @@ export default function DashboardPage() {
                 {proximosPrazos.length > 0 ? (
                   <ul className="dashboard__prazos">
                     {proximosPrazos.map((tarefa) => (
-                      <PrazoLinha key={tarefa.id} tarefa={tarefa} hoje={hoje} />
+                      <PrazoLinha
+                        key={tarefa.id}
+                        tarefa={tarefa}
+                        hoje={hoje}
+                        onAbrir={(icone) => navigate(`/tasks?tarefa=${icone.id}`)}
+                      />
                     ))}
                   </ul>
                 ) : (

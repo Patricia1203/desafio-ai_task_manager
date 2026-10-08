@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { Task, TaskInput, TaskStatus } from '../types/task';
 import { STATUS_LABELS, STATUS_OPTIONS } from '../types/task';
 import { createTask, getTask, listTasks, updateTask } from '../api/tasks';
@@ -15,6 +15,7 @@ function messageOf(error: unknown): string {
 }
 
 export default function TasksPage() {
+  const [searchParams] = useSearchParams();
   const [tarefas, setTarefas] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +71,28 @@ export default function TasksPage() {
       });
   }, [statusFiltro]);
 
-function abrirDetalhe(tarefa: Task) {
+useEffect(() => {
+    const id = searchParams.get('tarefa');
+    if (!id) {
+      return;
+    }
+    let ativo = true;
+    getTask(id)
+      .then((tarefa) => {
+        if (ativo) {
+          setSelecionada(tarefa);
+          setModo('detalhe');
+        }
+      })
+      .catch(() => {
+        if (ativo) setError(messageOf('Tarefa não encontrada.'));
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [searchParams]);
+
+  function abrirDetalhe(tarefa: Task) {
   if (!tarefa.parentId) {
     setPaiDaSelecionada(null);
   }

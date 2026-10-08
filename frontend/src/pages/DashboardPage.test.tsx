@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getSubtasks, getSummary, listTasks } from '../api/tasks';
 import type { Task, TaskSummary } from '../types/task';
@@ -71,6 +71,11 @@ function pagina(tarefas: Task[]) {
     first: true,
     last: true,
   };
+}
+
+function OndeEsta() {
+  const { search } = useLocation();
+  return <div data-testid="tela-tasks">{search}</div>;
 }
 
 describe('DashboardPage', () => {
@@ -254,6 +259,40 @@ describe('DashboardPage', () => {
 
     expect(getSubtasks).toHaveBeenCalledWith('4');
     expect(await within(bloco).findByText('Definir roadmap')).toBeInTheDocument();
+  });
+
+  it('clicar na subtarefa navega para a tela dela', async () => {
+    vi.mocked(getSummary).mockResolvedValue(
+      resumo({ total: 4, pending: 3, inProgress: 1, done: 0, highPriority: 0 }),
+    );
+    vi.mocked(listTasks).mockResolvedValue(
+      pagina([
+        {
+          ...TAREFAS[0],
+          id: '4',
+          title: 'Mover casa',
+          dueDate: '2026-10-15',
+          subtaskCount: 1,
+        },
+      ]),
+    );
+    vi.mocked(getSubtasks).mockResolvedValue([
+      { ...TAREFAS[0], id: '4a', title: 'Contratar empresa', parentId: '4', subtaskCount: 0 },
+    ]);
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/tasks" element={<OndeEsta />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const bloco = await screen.findByLabelText('Próximos prazos');
+    await userEvent.click(within(bloco).getByRole('button', { name: 'Mover casa' }));
+    await userEvent.click(await within(bloco).findByRole('button', { name: 'Contratar empresa' }));
+
+    expect(await screen.findByTestId('tela-tasks')).toHaveTextContent('?tarefa=4a');
   });
 
   it('rola as subtarefas no espaco de 3 somente quando passa de 3', async () => {
