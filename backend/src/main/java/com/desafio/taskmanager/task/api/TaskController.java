@@ -92,11 +92,12 @@ public class TaskController {
     public PageResponse<TaskResponse> list(
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) UUID areaId,
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "page nao pode ser negativo") int page,
             @RequestParam(defaultValue = "20") @Min(value = 1, message = "size deve ser no minimo 1")
             @Max(value = MAX_PAGE_SIZE, message = "size deve ser no maximo " + MAX_PAGE_SIZE) int size) {
         Page<Task> pagina = service.list(
-                new TaskFilter(status, priority),
+                new TaskFilter(status, priority, areaId),
                 PageRequest.of(page, size, ORDENACAO_PADRAO));
         Map<UUID, Long> subtaskCounts = service.subtaskCounts(
                 pagina.getContent().stream().map(Task::getId).toList());
@@ -177,11 +178,11 @@ public class TaskController {
      */
     private static TaskCommand comandoDe(CreateTaskRequest request) {
         return new TaskCommand(request.title(), request.description(), request.priority(), request.dueDate(),
-                request.estimatedTime(), request.estimatedUnit());
+                request.estimatedTime(), request.estimatedUnit(), request.areaId());
     }
 
     private static TaskCommand comandoDe(UpdateTaskRequest request) {
         return new TaskCommand(request.title(), request.description(), request.priority(), request.dueDate(),
-                request.estimatedTime(), request.estimatedUnit());
+                request.estimatedTime(), request.estimatedUnit(), request.areaId());
     }
 }

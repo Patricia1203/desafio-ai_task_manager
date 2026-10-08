@@ -312,6 +312,40 @@ class TaskControllerTest {
     }
 
     @Test
+    void criarComAreaIdRepassaAoServicoESerializa() throws Exception {
+        Task criada = new Task("Projeto", null, null, null, null);
+        com.desafio.taskmanager.area.domain.WorkArea area =
+                new com.desafio.taskmanager.area.domain.WorkArea("Pessoal");
+        criada.setArea(area);
+        when(service.create(any(TaskCommand.class))).thenReturn(criada);
+
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Projeto","areaId":"11111111-1111-1111-1111-111111111111"}"""))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.areaId").value(area.getId().toString()));
+
+        ArgumentCaptor<TaskCommand> captor = ArgumentCaptor.forClass(TaskCommand.class);
+        verify(service).create(captor.capture());
+        assertThat(captor.getValue().areaId()).isEqualTo(ID);
+    }
+
+    @Test
+    void listarPorAreaIdRepassaAoFiltro() throws Exception {
+        when(service.list(any(TaskFilter.class), any())).thenReturn(
+                new org.springframework.data.domain.PageImpl<>(
+                        List.of(tarefa()), org.springframework.data.domain.PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/tasks").param("areaId", ID.toString()))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<TaskFilter> captor = ArgumentCaptor.forClass(TaskFilter.class);
+        verify(service).list(captor.capture(), any());
+        assertThat(captor.getValue().areaId()).isEqualTo(ID);
+    }
+
+    @Test
     void criarSemTituloRetorna400ComListaDeCampos() throws Exception {
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)

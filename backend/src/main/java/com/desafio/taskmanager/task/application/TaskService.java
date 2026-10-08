@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.desafio.taskmanager.area.domain.WorkArea;
+import com.desafio.taskmanager.area.infra.WorkAreaRepository;
 import com.desafio.taskmanager.common.error.BusinessRuleException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
@@ -40,15 +42,20 @@ public class TaskService {
 
     private final TaskRepository repository;
 
-    public TaskService(TaskRepository repository) {
+    private final WorkAreaRepository areaRepository;
+
+    public TaskService(TaskRepository repository, WorkAreaRepository areaRepository) {
         this.repository = repository;
+        this.areaRepository = areaRepository;
     }
 
     /** RF-01. A tarefa nasce TODO; quem decide o status inicial e a entidade. */
     @Transactional
     public Task create(TaskCommand command) {
         exigirRaizSemTempo(command.tempoEstimado());
-        return repository.save(toTask(command, null));
+        Task task = toTask(command, null);
+        task.setArea(resolverArea(command.areaId()));
+        return repository.save(task);
     }
 
     /** RF-14. Cria subtarefa sob um pai existente. Pai invalido vira 404. */
@@ -58,7 +65,9 @@ public class TaskService {
         if (command.prazo() != null) {
             throw new BusinessRuleException("subtarefa nao pode ter prazo");
         }
-        return repository.save(toTask(command, parent));
+        Task task = toTask(command, parent);
+        task.setArea(resolverArea(command.areaId()));
+        return repository.save(task);
     }
 
     /** RF-02. Filtros de status e prioridade, opcionalmente paginados. */
@@ -108,6 +117,7 @@ public class TaskService {
         }
         task.updateContent(command.titulo(), command.descricao(), command.prioridade(), command.prazo(),
                 command.tempoEstimado(), command.unidadeTempo());
+        task.setArea(resolverArea(command.areaId()));
         return task;
     }
 
@@ -235,11 +245,26 @@ public class TaskService {
         if (filter != null && filter.hasPriority()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("priority"), filter.priority()));
         }
+        if (filter != null && filter.hasArea()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("area").get("id"), filter.areaId()));
+        }
         return spec;
     }
 
     /** Raiz: {@code parent} nulo. Subtarefa so e alcancada pelo id ou pelo pai. */
     private static Specification<Task> raizSomente() {
         return (root, query, cb) -> cb.isNull(root.get("parent"));
+    }
+
+    /**
+     * F14: resolve a area do comando. {@code null} desvincula; id inexistente e
+     * 422 (referencia a recurso inexistente e regra de negocio, nao 404).
+     */
+    private WorkArea resolverArea(UUID areaId) {
+        if (areaId == null) {
+            return null;
+        }
+        return areaRepository.findById(areaId).orElseThrow(
+                () -> new BusinessRuleException("area de trabalho nao encontrada"));
     }
 }

@@ -44,6 +44,7 @@ public class TaskMapper {
                 task.getEstimatedTime(),
                 task.getEstimatedUnit(),
                 idTarefaPaiDe(task),
+                idAreaDe(task),
                 task.getCreatedAt(),
                 task.getUpdatedAt(),
                 counts == null ? 0L : counts.getOrDefault(task.getId(), 0L));
@@ -58,5 +59,16 @@ public class TaskMapper {
     private static UUID idTarefaPaiDe(Task task) {
         Task parent = task.getParent();
         return parent == null ? null : parent.getId();
+    }
+
+    /**
+     * F14: o id da area sai sem tocar no banco, pelo mesmo mecanismo do pai —
+     * {@code area} e LAZY e o id do proxy e lido sem inicializacao.
+     */
+    private static UUID idAreaDe(Task task) {
+        if (task.getArea() == null) {
+            return null;
+        }
+        return task.getArea().getId();
     }
 }

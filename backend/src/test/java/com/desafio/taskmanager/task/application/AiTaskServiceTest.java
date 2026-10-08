@@ -12,6 +12,7 @@ import com.desafio.taskmanager.ai.port.dto.TaskAnalysis;
 import com.desafio.taskmanager.ai.port.dto.TaskComplexity;
 import com.desafio.taskmanager.ai.port.dto.TaskDecomposition;
 import com.desafio.taskmanager.ai.port.dto.TaskImprovement;
+import com.desafio.taskmanager.area.infra.WorkAreaRepository;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.domain.Task;
@@ -48,7 +49,7 @@ class AiTaskServiceTest {
     void setUp() {
         repository = mock(TaskRepository.class);
         ia = new IaFake();
-        service = new AiTaskService(ia, new TaskService(repository));
+        service = new AiTaskService(ia, new TaskService(repository, mock(WorkAreaRepository.class)));
         when(repository.save(any(Task.class))).thenAnswer(chamada -> chamada.getArgument(0));
     }
 

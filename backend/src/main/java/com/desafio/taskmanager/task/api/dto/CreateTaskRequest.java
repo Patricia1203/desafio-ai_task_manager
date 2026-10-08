@@ -1,6 +1,7 @@
 package com.desafio.taskmanager.task.api.dto;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TimeUnit;
@@ -41,6 +42,11 @@ public record CreateTaskRequest(
         @DecimalMax(value = "200", message = "estimatedTime deve ter no maximo 200")
         Double estimatedTime,
 
-        /** F12: unidade do tempo estimado (HOURS ou DAYS). Opcional. */
-        TimeUnit estimatedUnit) {
+        /**
+         * F12: unidade do tempo estimado (HOURS ou DAYS). Opcional.
+         */
+        TimeUnit estimatedUnit,
+
+        /** F14: id da area de trabalho da tarefa. Opcional. */
+        UUID areaId) {
 }

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.desafio.taskmanager.area.domain.WorkArea;
 import com.desafio.taskmanager.common.error.BusinessRuleException;
 
 import jakarta.persistence.Column;
@@ -62,6 +63,11 @@ public class Task {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Task parent;
+
+    /** F14: area de trabalho da tarefa (opcional), lazy como o pai. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private WorkArea area;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -220,6 +226,16 @@ public class Task {
 
     public Task getParent() {
         return parent;
+    }
+
+    /** F14: area da tarefa; {@code null} quando a tarefa nao tem area. */
+    public WorkArea getArea() {
+        return area;
+    }
+
+    /** F14: vincula (ou desvincula, com {@code null}) a area da tarefa. */
+    public void setArea(WorkArea area) {
+        this.area = area;
     }
 
     public Instant getCreatedAt() {

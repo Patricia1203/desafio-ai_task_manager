@@ -104,15 +104,15 @@ class TaskMapperTest {
     @Test
     void createRequestValidoNaoTemViolacao() {
         assertThat(VALIDATOR.validate(new CreateTaskRequest(
-                "Valida", "descricao", TaskPriority.LOW, LocalDate.of(2026, 9, 9), null, null))).isEmpty();
+                "Valida", "descricao", TaskPriority.LOW, LocalDate.of(2026, 9, 9), null, null, null))).isEmpty();
         assertThat(VALIDATOR.validate(new CreateTaskRequest(
-                "Valida", null, null, null, 4.0, TimeUnit.HOURS))).isEmpty();
+                "Valida", null, null, null, 4.0, TimeUnit.HOURS, null))).isEmpty();
     }
 
     @Test
     void createRequestComTituloVazioApontaOCampo() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("   ", null, null, null, null, null)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("   ", null, null, null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
         assertThat(violacao.getMessage()).isEqualTo("titulo e obrigatorio");
@@ -121,7 +121,7 @@ class TaskMapperTest {
     @Test
     void createRequestComTituloLongoApontaOCampoComMensagem() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("a".repeat(201), null, null, null, null, null)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("a".repeat(201), null, null, null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
         assertThat(violacao.getMessage()).isEqualTo("titulo deve ter no maximo 200 caracteres");
@@ -130,7 +130,7 @@ class TaskMapperTest {
     @Test
     void createRequestComDescricaoLongaApontaOCampo() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("ok", "d".repeat(5001), null, null, null, null)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("ok", "d".repeat(5001), null, null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("description");
         assertThat(violacao.getMessage()).isEqualTo("descricao deve ter no maximo 5000 caracteres");
@@ -139,7 +139,7 @@ class TaskMapperTest {
     @Test
     void createRequestComTempoZeradoApontaOCampo() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("ok", null, null, null, 0.0, TimeUnit.HOURS)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("ok", null, null, null, 0.0, TimeUnit.HOURS, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("estimatedTime");
         assertThat(violacao.getMessage()).isEqualTo("estimatedTime deve ser maior que zero");
@@ -148,7 +148,7 @@ class TaskMapperTest {
     @Test
     void createRequestComTempoAcimaDoTetoApontaOCampo() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("ok", null, null, null, 200.5, TimeUnit.DAYS)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("ok", null, null, null, 200.5, TimeUnit.DAYS, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("estimatedTime");
     }
@@ -156,7 +156,7 @@ class TaskMapperTest {
     @Test
     void updateRequestExigeTitulo() {
         ConstraintViolation<UpdateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new UpdateTaskRequest("", null, null, null, null, null)));
+                unica(VALIDATOR.validate(new UpdateTaskRequest("", null, null, null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
     }

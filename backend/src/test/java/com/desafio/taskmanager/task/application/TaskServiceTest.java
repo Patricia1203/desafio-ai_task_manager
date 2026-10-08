@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import com.desafio.taskmanager.area.domain.WorkArea;
+import com.desafio.taskmanager.area.infra.WorkAreaRepository;
 import com.desafio.taskmanager.common.error.BusinessRuleException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
@@ -51,9 +53,13 @@ class TaskServiceTest extends PostgresIntegrationTest {
     @Autowired
     private TaskRepository repository;
 
+    @Autowired
+    private WorkAreaRepository areas;
+
     @BeforeEach
     void clean() {
         repository.deleteAll();
+        areas.deleteAll();
     }
 
     // --- criar (RF-01) ---
@@ -565,6 +571,60 @@ class TaskServiceTest extends PostgresIntegrationTest {
                 .containsEntry(raiz.getId(), 2L)
                 .doesNotContainKey(outraRaiz.getId());
         assertThat(service.subtaskCounts(List.of())).isEmpty();
+    }
+
+    // --- area de trabalho (F14) ---
+
+    @Test
+    void criarComAreaGravaOVinculo() {
+        UUID areaId = areas.save(new WorkArea("Pessoal")).getId();
+
+        Task task = service.create(new TaskCommand("Com area", null, null, null, null, null, areaId));
+
+        assertThat(task.getArea().getId()).isEqualTo(areaId);
+        assertThat(service.findById(task.getId()).getArea().getId()).isEqualTo(areaId);
+    }
+
+    @Test
+    void subtarefaComAreaGravaOVinculo() {
+        UUID areaId = areas.save(new WorkArea("Projeto")).getId();
+        Task raiz = criar("Raiz");
+
+        Task filha = service.createSubtask(raiz.getId(),
+                new TaskCommand("Filha", null, null, null, null, null, areaId));
+
+        assertThat(filha.getArea().getId()).isEqualTo(areaId);
+    }
+
+    @Test
+    void editarComAreaNulaRemoveAVinculacao() {
+        UUID areaId = areas.save(new WorkArea("A")).getId();
+        Task task = service.create(new TaskCommand("T", null, null, null, null, null, areaId));
+
+        Task atualizada = service.update(task.getId(),
+                new TaskCommand("T", null, null, null, null, null, null));
+
+        assertThat(atualizada.getArea()).isNull();
+    }
+
+    @Test
+    void criarComAreaInexistenteEhRecusadoCom422() {
+        assertThatThrownBy(() -> service.create(
+                new TaskCommand("T", null, null, null, null, null, UUID.randomUUID())))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("area de trabalho nao encontrada");
+    }
+
+    @Test
+    void filtroPorAreaTrazSomenteAsTarefasDaArea() {
+        UUID areaA = areas.save(new WorkArea("A")).getId();
+        UUID areaB = areas.save(new WorkArea("B")).getId();
+        service.create(new TaskCommand("NA", null, null, null, null, null, areaA));
+        service.create(new TaskCommand("NB", null, null, null, null, null, areaB));
+
+        assertThat(service.findAll(new TaskFilter(null, null, areaA)))
+                .extracting(Task::getTitle)
+                .containsExactly("NA");
     }
 
     // --- helpers ---

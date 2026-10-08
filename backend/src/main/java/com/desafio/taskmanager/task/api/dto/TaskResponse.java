@@ -25,6 +25,9 @@ import com.desafio.taskmanager.task.domain.TimeUnit;
  * <p>{@code estimatedTime}/{@code estimatedUnit} (F12) e o tempo estimado para
  * realizar a tarefa; ambos nulos quando nao ha estimativa. Valor e unidade
  * andam juntos garantido pela entidade.
+ *
+ * <p>{@code areaId} (F14) e a area de trabalho da tarefa; nulo quando a tarefa
+ * nao tem area. O titulo da area e resolvido no frontend (mapa de areas).
  */
 public record TaskResponse(
         UUID id,
@@ -36,6 +39,7 @@ public record TaskResponse(
         Double estimatedTime,
         TimeUnit estimatedUnit,
         UUID parentId,
+        UUID areaId,
         Instant createdAt,
         Instant updatedAt,
         long subtaskCount) {
