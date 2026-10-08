@@ -7,6 +7,24 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : 'Erro inesperado.';
 }
 
+function responseText(response: unknown): string {
+  if (typeof response === 'string') {
+    return response;
+  }
+
+  if (response && typeof response === 'object') {
+    const data = response as Record<string, unknown>;
+    for (const key of ['message', 'response', 'content', 'answer']) {
+      if (typeof data[key] === 'string') {
+        return data[key];
+      }
+    }
+    return JSON.stringify(response);
+  }
+
+  return String(response ?? '');
+}
+
 export default function AssistantPage() {
   const [mensagens, setMensagens] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -28,7 +46,7 @@ export default function AssistantPage() {
     try {
       const reply = await enviarMensagem(conversationId, texto);
       setConversationId(reply.conversationId);
-      adicionarMensagem('assistant', reply.response);
+      adicionarMensagem('assistant', responseText(reply.response));
     } catch (caught) {
       setErro(messageOf(caught));
     } finally {

@@ -8,7 +8,7 @@ export interface ProblemDetail {
   instance?: string;
   traceId?: string;
   timestamp?: string;
-  errors?: Record<string, string>;
+  errors?: unknown;
   code?: string;
 }
 
@@ -25,11 +25,27 @@ export class ApiError extends Error {
 }
 
 function buildMessage(problem: ProblemDetail, status: number): string {
-  if (problem.errors && Object.keys(problem.errors).length > 0) {
-    const fields = Object.entries(problem.errors)
-      .map(([field, message]) => `${field}: ${message}`)
+  if (Array.isArray(problem.errors) && problem.errors.length > 0) {
+    const fields = problem.errors
+      .map((error) => {
+        if (typeof error === 'object' && error !== null) {
+          const item = error as Record<string, unknown>;
+          const field = typeof item.field === 'string' ? item.field : 'campo';
+          const reason = typeof item.reason === 'string' ? item.reason : 'valor inválido';
+          return `${field}: ${reason}`;
+        }
+        return String(error);
+      })
       .join('; ');
     return fields;
+  }
+  if (problem.errors && typeof problem.errors === 'object') {
+    const fields = Object.entries(problem.errors as Record<string, unknown>)
+      .map(([field, message]) => `${field}: ${String(message)}`)
+      .join('; ');
+    if (fields) {
+      return fields;
+    }
   }
   return problem.detail ?? problem.title ?? `Erro inesperado (${status})`;
 }

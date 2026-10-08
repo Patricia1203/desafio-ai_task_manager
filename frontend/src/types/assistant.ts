@@ -1,6 +1,6 @@
 export interface ChatReply {
   conversationId: string;
-  response: string;
+  response: unknown;
 }
 
 export type ChatRole = 'user' | 'assistant';

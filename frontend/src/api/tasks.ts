@@ -15,6 +15,56 @@ export interface ListParams {
   size?: number;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function numberOf(value: unknown): number {
+  return typeof value === 'number' ? value : 0;
+}
+
+function normalizePageResponse<T>(payload: unknown): PageResponse<T> {
+  if (Array.isArray(payload)) {
+    return {
+      content: payload as T[],
+      page: 0,
+      size: payload.length,
+      totalItems: payload.length,
+      totalPages: payload.length > 0 ? 1 : 0,
+      first: true,
+      last: true,
+    };
+  }
+
+  const page = isRecord(payload) ? payload : {};
+  const content = Array.isArray(page.content)
+    ? page.content
+    : Array.isArray(page.items)
+      ? page.items
+      : [];
+
+  return {
+    content: content as T[],
+    page: numberOf(page.page),
+    size: numberOf(page.size) || content.length,
+    totalItems: numberOf(page.totalItems) || numberOf(page.totalElements) || content.length,
+    totalPages: numberOf(page.totalPages) || (content.length > 0 ? 1 : 0),
+    first: page.first !== false,
+    last: page.last !== false,
+  };
+}
+
+function normalizeSummary(payload: unknown): TaskSummary {
+  const summary = isRecord(payload) ? payload : {};
+  return {
+    total: numberOf(summary.total),
+    pending: numberOf(summary.pending) || numberOf(summary.pendentes),
+    inProgress: numberOf(summary.inProgress) || numberOf(summary.emAndamento),
+    done: numberOf(summary.done) || numberOf(summary.concluidas),
+    highPriority: numberOf(summary.highPriority) || numberOf(summary.altaPrioridade),
+  };
+}
+
 function queryString(params: ListParams): string {
   const search = new URLSearchParams();
   if (params.status) search.set('status', params.status);
@@ -26,11 +76,11 @@ function queryString(params: ListParams): string {
 }
 
 export function listTasks(params: ListParams = {}): Promise<PageResponse<Task>> {
-  return request<PageResponse<Task>>(`/tasks${queryString(params)}`);
+  return request<unknown>(`/tasks${queryString(params)}`).then(normalizePageResponse<Task>);
 }
 
 export function getSummary(): Promise<TaskSummary> {
-  return request<TaskSummary>('/tasks/summary');
+  return request<unknown>('/tasks/summary').then(normalizeSummary);
 }
 
 export function getTask(id: string): Promise<Task> {
