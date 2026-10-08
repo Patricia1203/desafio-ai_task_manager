@@ -23,6 +23,8 @@ const TAREFAS: Task[] = [
     createdAt: '2026-10-01T10:00:00Z',
     updatedAt: '2026-10-01T10:00:00Z',
     subtaskCount: 0,
+    estimatedTime: null,
+    estimatedUnit: null,
   },
   {
     id: '2',
@@ -35,6 +37,8 @@ const TAREFAS: Task[] = [
     createdAt: '2026-10-01T10:00:00Z',
     updatedAt: '2026-10-01T10:00:00Z',
     subtaskCount: 0,
+    estimatedTime: null,
+    estimatedUnit: null,
   },
   {
     id: '3',
@@ -47,6 +51,8 @@ const TAREFAS: Task[] = [
     createdAt: '2026-10-01T10:00:00Z',
     updatedAt: '2026-10-01T10:00:00Z',
     subtaskCount: 0,
+    estimatedTime: null,
+    estimatedUnit: null,
   },
 ];
 
@@ -103,10 +109,10 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Alta prioridade').closest('li')).toHaveTextContent('2');
 
     expect(screen.getByText('33% concluídas')).toBeInTheDocument();
-    expect(screen.getByText('5 de 12 · 42%')).toBeInTheDocument();
-    expect(screen.getByText('3 de 12 · 25%')).toBeInTheDocument();
-    expect(screen.getByText('4 de 12 · 33%')).toBeInTheDocument();
-    expect(screen.getByText('2 de 12 · 17%')).toBeInTheDocument();
+    expect(screen.getByText('5 de 12 pendentes · 58% não pendentes')).toBeInTheDocument();
+    expect(screen.getByText('3 de 12 em andamento · 75% fora de andamento')).toBeInTheDocument();
+    expect(screen.getByText('4 de 12 concluídas · 67% não concluídas')).toBeInTheDocument();
+    expect(screen.getByText('2 de 12 alta prioridade · 83% sem alta prioridade')).toBeInTheDocument();
 
     expect(screen.getByText('Alta prioridade').closest('li')).toHaveClass('dashboard__card--perigo');
     expect(screen.getByText('Total de tarefas').closest('li')).not.toHaveClass('dashboard__card--perigo');
@@ -151,10 +157,11 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Alta prioridade').closest('li')).not.toHaveClass(
       'dashboard__card--perigo',
     );
-    expect(screen.getByText('Alta prioridade').closest('li')).toHaveTextContent('0%');
+    expect(screen.getByText('Alta prioridade').closest('li')).toHaveTextContent('Nenhuma alta prioridade');
     expect(screen.getByText('Alta prioridade').closest('li')).not.toHaveTextContent('de 4');
-    expect(screen.getByText('2 de 4 · 50%')).toBeInTheDocument();
-    expect(screen.getAllByText('1 de 4 · 25%')).toHaveLength(2);
+    expect(screen.getByText('2 de 4 pendentes · 50% não pendentes')).toBeInTheDocument();
+    expect(screen.getByText('1 de 4 em andamento · 75% fora de andamento')).toBeInTheDocument();
+    expect(screen.getByText('1 de 4 concluídas · 75% não concluídas')).toBeInTheDocument();
   });
 
   it('mostra o erro quando o resumo falha e permite tentar de novo', async () => {

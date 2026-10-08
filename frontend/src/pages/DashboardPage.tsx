@@ -5,12 +5,42 @@ import { getSummary, listTasks } from '../api/tasks';
 import AsyncState from '../components/common/AsyncState';
 import { dataHojeLocal, formatarDataBR } from '../utils/date';
 
-const INDICADORES: { chave: keyof TaskSummary; rotulo: string }[] = [
-  { chave: 'total', rotulo: 'Total de tarefas' },
-  { chave: 'pending', rotulo: 'Pendentes' },
-  { chave: 'inProgress', rotulo: 'Em andamento' },
-  { chave: 'done', rotulo: 'Concluídas' },
-  { chave: 'highPriority', rotulo: 'Alta prioridade' },
+const INDICADORES: {
+  chave: keyof TaskSummary;
+  rotulo: string;
+  palavra: string;
+  comp: string;
+  vazio: string;
+}[] = [
+  { chave: 'total', rotulo: 'Total de tarefas', palavra: 'itens', comp: '', vazio: '' },
+  {
+    chave: 'pending',
+    rotulo: 'Pendentes',
+    palavra: 'pendentes',
+    comp: 'não pendentes',
+    vazio: 'Nenhuma pendente',
+  },
+  {
+    chave: 'inProgress',
+    rotulo: 'Em andamento',
+    palavra: 'em andamento',
+    comp: 'fora de andamento',
+    vazio: 'Nenhuma em andamento',
+  },
+  {
+    chave: 'done',
+    rotulo: 'Concluídas',
+    palavra: 'concluídas',
+    comp: 'não concluídas',
+    vazio: 'Nenhuma concluída',
+  },
+  {
+    chave: 'highPriority',
+    rotulo: 'Alta prioridade',
+    palavra: 'alta prioridade',
+    comp: 'sem alta prioridade',
+    vazio: 'Nenhuma alta prioridade',
+  },
 ];
 
 const PRIORIDADES: { chave: TaskPriority; rotulo: string }[] = [
@@ -78,17 +108,13 @@ export default function DashboardPage() {
   const concluidas = summary?.done ?? 0;
   const pct = total > 0 ? Math.round((concluidas / total) * 100) : 0;
   const pctDe = (parte: number, base: number) => (base > 0 ? Math.round((parte / base) * 100) : 0);
-  const detalheDe = (valor: number, base: number) =>
-    valor === 0 ? '0%' : `${valor} de ${base} · ${pctDe(valor, base)}%`;
-  const detalhes: Record<keyof TaskSummary, string> = summary
-    ? {
-        total: `${pct}% concluídas`,
-        pending: detalheDe(summary.pending, total),
-        inProgress: detalheDe(summary.inProgress, total),
-        done: detalheDe(summary.done, total),
-        highPriority: detalheDe(summary.highPriority, total),
-      }
-    : { total: '', pending: '', inProgress: '', done: '', highPriority: '' };
+  const detalheDe = (chave: keyof TaskSummary, valor: number) => {
+    const comodo = INDICADORES.find((item) => item.chave === chave);
+    if (!comodo) return '0%';
+    if (valor === 0) return comodo.vazio;
+    const complemento = 100 - pctDe(valor, total);
+    return `${valor} de ${total} ${comodo.palavra} · ${complemento}% ${comodo.comp}`;
+  };
 
   return (
     <section aria-labelledby="dashboard-heading">
@@ -134,11 +160,12 @@ export default function DashboardPage() {
               {INDICADORES.map(({ chave, rotulo }) => {
                 const valor = summary[chave];
                 const perigo = chave === 'highPriority' && valor >= 1;
+                const detalhe = chave === 'total' ? `${pct}% concluídas` : detalheDe(chave, valor);
                 return (
                   <li key={chave} className={`dashboard__card${perigo ? ' dashboard__card--perigo' : ''}`}>
                     <span className="dashboard__valor">{valor}</span>
                     <span className="dashboard__rotulo">{rotulo}</span>
-                    <span className="dashboard__detalhe">{detalhes[chave]}</span>
+                    <span className="dashboard__detalhe">{detalhe}</span>
                   </li>
                 );
               })}
