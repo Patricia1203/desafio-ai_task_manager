@@ -18,6 +18,7 @@ import com.desafio.taskmanager.task.api.dto.TaskResponse;
 import com.desafio.taskmanager.task.application.AiTaskService;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.domain.Task;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -105,8 +106,12 @@ public class AiTaskController {
         return ResponseEntity.created(location).body(criadas);
     }
 
-    /** estimatedHours nao tem coluna na tabela; o valor cai na validacao e no usuario, nao no banco. */
+    /**
+     * A IA sempre propoe horas: o estimatedHours vira committedTime e HOURS.
+     * F12 passou a persistir esse tempo (antes caia na validacao e no usuario, sem coluna).
+     */
     private static TaskCommand comandoDe(SubtaskDraft draft) {
-        return new TaskCommand(draft.title(), draft.description(), null, null);
+        return new TaskCommand(draft.title(), draft.description(), null, null,
+                draft.estimatedHours(), TimeUnit.HOURS);
     }
 }

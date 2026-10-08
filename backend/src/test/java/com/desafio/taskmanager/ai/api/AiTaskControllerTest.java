@@ -19,6 +19,7 @@ import com.desafio.taskmanager.task.application.AiTaskService;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -167,6 +168,9 @@ class AiTaskControllerTest {
         assertThat(captor.getValue()).extracting(TaskCommand::titulo)
                 .containsExactly("Sub 1", "Sub 2");
         assertThat(captor.getValue().get(1).prioridade()).isNull();
+        assertThat(captor.getValue().get(0).tempoEstimado()).isEqualTo(2.0);
+        assertThat(captor.getValue().get(0).unidadeTempo()).isEqualTo(TimeUnit.HOURS);
+        assertThat(captor.getValue().get(1).tempoEstimado()).isNull();
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.desafio.taskmanager.task.application.dto.TaskSummary;
 import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -266,6 +267,48 @@ class TaskControllerTest {
                 .andExpect(header().string("Location", "http://localhost/api/tasks/" + criada.getId()))
                 .andExpect(jsonPath("$.id").value(criada.getId().toString()))
                 .andExpect(jsonPath("$.title").value("Titulo"));
+    }
+
+    @Test
+    void criarComTempoEstimadoRepassaAoServicoESerializa() throws Exception {
+        Task criada = new Task("Instalar", null, null, null, 4.0, TimeUnit.DAYS, null);
+        when(service.create(any(TaskCommand.class))).thenReturn(criada);
+
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Instalar","estimatedTime":4.0,"estimatedUnit":"DAYS"}"""))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estimatedTime").value(4.0))
+                .andExpect(jsonPath("$.estimatedUnit").value("DAYS"));
+
+        ArgumentCaptor<TaskCommand> captor = ArgumentCaptor.forClass(TaskCommand.class);
+        verify(service).create(captor.capture());
+        assertThat(captor.getValue().tempoEstimado()).isEqualTo(4.0);
+        assertThat(captor.getValue().unidadeTempo()).isEqualTo(TimeUnit.DAYS);
+    }
+
+    @Test
+    void criarComTempoEstimadoZeradoRetorna400ApontandoOCampo() throws Exception {
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"T","estimatedTime":0}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("estimatedTime"))
+                .andExpect(jsonPath("$.errors[0].reason").value("estimatedTime deve ser maior que zero"));
+
+        verify(service, never()).create(any());
+    }
+
+    @Test
+    void criarComTempoEstimadoAcimaDoTetoRetorna400() throws Exception {
+        mockMvc.perform(post("/tasks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"T","estimatedTime":500}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("estimatedTime"));
     }
 
     @Test

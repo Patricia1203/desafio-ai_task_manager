@@ -13,6 +13,7 @@ import com.desafio.taskmanager.task.api.dto.UpdateTaskRequest;
 import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -56,9 +57,21 @@ class TaskMapperTest {
         assertThat(response.status()).isEqualTo(TaskStatus.TODO);
         assertThat(response.priority()).isEqualTo(TaskPriority.LOW);
         assertThat(response.dueDate()).isEqualTo(LocalDate.of(2026, 1, 1));
+        assertThat(response.estimatedTime()).isNull();
+        assertThat(response.estimatedUnit()).isNull();
         assertThat(response.parentId()).isNull();
         assertThat(response.createdAt()).isEqualTo(task.getCreatedAt());
         assertThat(response.updatedAt()).isEqualTo(task.getUpdatedAt());
+    }
+
+    @Test
+    void toResponseCobreOTempoEstimado() {
+        Task task = new Task("Titulo", null, null, null, 2.5, TimeUnit.DAYS, null);
+
+        TaskResponse response = mapper.toResponse(task);
+
+        assertThat(response.estimatedTime()).isEqualTo(2.5);
+        assertThat(response.estimatedUnit()).isEqualTo(TimeUnit.DAYS);
     }
 
     @Test
@@ -91,13 +104,15 @@ class TaskMapperTest {
     @Test
     void createRequestValidoNaoTemViolacao() {
         assertThat(VALIDATOR.validate(new CreateTaskRequest(
-                "Valida", "descricao", TaskPriority.LOW, LocalDate.of(2026, 9, 9)))).isEmpty();
+                "Valida", "descricao", TaskPriority.LOW, LocalDate.of(2026, 9, 9), null, null))).isEmpty();
+        assertThat(VALIDATOR.validate(new CreateTaskRequest(
+                "Valida", null, null, null, 4.0, TimeUnit.HOURS))).isEmpty();
     }
 
     @Test
     void createRequestComTituloVazioApontaOCampo() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("   ", null, null, null)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("   ", null, null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
         assertThat(violacao.getMessage()).isEqualTo("titulo e obrigatorio");
@@ -106,7 +121,7 @@ class TaskMapperTest {
     @Test
     void createRequestComTituloLongoApontaOCampoComMensagem() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("a".repeat(201), null, null, null)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("a".repeat(201), null, null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
         assertThat(violacao.getMessage()).isEqualTo("titulo deve ter no maximo 200 caracteres");
@@ -115,16 +130,33 @@ class TaskMapperTest {
     @Test
     void createRequestComDescricaoLongaApontaOCampo() {
         ConstraintViolation<CreateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new CreateTaskRequest("ok", "d".repeat(5001), null, null)));
+                unica(VALIDATOR.validate(new CreateTaskRequest("ok", "d".repeat(5001), null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("description");
         assertThat(violacao.getMessage()).isEqualTo("descricao deve ter no maximo 5000 caracteres");
     }
 
     @Test
+    void createRequestComTempoZeradoApontaOCampo() {
+        ConstraintViolation<CreateTaskRequest> violacao =
+                unica(VALIDATOR.validate(new CreateTaskRequest("ok", null, null, null, 0.0, TimeUnit.HOURS)));
+
+        assertThat(violacao.getPropertyPath().toString()).isEqualTo("estimatedTime");
+        assertThat(violacao.getMessage()).isEqualTo("estimatedTime deve ser maior que zero");
+    }
+
+    @Test
+    void createRequestComTempoAcimaDoTetoApontaOCampo() {
+        ConstraintViolation<CreateTaskRequest> violacao =
+                unica(VALIDATOR.validate(new CreateTaskRequest("ok", null, null, null, 200.5, TimeUnit.DAYS)));
+
+        assertThat(violacao.getPropertyPath().toString()).isEqualTo("estimatedTime");
+    }
+
+    @Test
     void updateRequestExigeTitulo() {
         ConstraintViolation<UpdateTaskRequest> violacao =
-                unica(VALIDATOR.validate(new UpdateTaskRequest("", null, null, null)));
+                unica(VALIDATOR.validate(new UpdateTaskRequest("", null, null, null, null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("title");
     }

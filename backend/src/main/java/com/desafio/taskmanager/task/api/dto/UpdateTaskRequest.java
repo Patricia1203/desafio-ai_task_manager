@@ -3,7 +3,10 @@ package com.desafio.taskmanager.task.api.dto;
 import java.time.LocalDate;
 
 import com.desafio.taskmanager.task.domain.TaskPriority;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -24,5 +27,13 @@ public record UpdateTaskRequest(
 
         TaskPriority priority,
 
-        LocalDate dueDate) {
+        LocalDate dueDate,
+
+        /** F12: tempo estimado para realizar; valor sem unidade assume HOURS. */
+        @DecimalMin(value = "0", inclusive = false, message = "estimatedTime deve ser maior que zero")
+        @DecimalMax(value = "200", message = "estimatedTime deve ter no maximo 200")
+        Double estimatedTime,
+
+        /** F12: unidade do tempo estimado (HOURS ou DAYS). Opcional. */
+        TimeUnit estimatedUnit) {
 }

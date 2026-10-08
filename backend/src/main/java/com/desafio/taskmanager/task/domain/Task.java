@@ -50,6 +50,15 @@ public class Task {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    /** F12: tempo estimado para realizar (valor). Nulo = sem estimativa. */
+    @Column(name = "estimated_time")
+    private Double estimatedTime;
+
+    /** F12: unidade do tempo estimado; nula junto com {@link #estimatedTime}. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estimated_unit", length = 10)
+    private TimeUnit estimatedUnit;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Task parent;
@@ -69,12 +78,22 @@ public class Task {
      * entidade ja fique consistente antes de chegar ao banco.
      */
     public Task(String title, String description, TaskPriority priority, LocalDate dueDate, Task parent) {
+        this(title, description, priority, dueDate, null, null, parent);
+    }
+
+    /**
+     * Variante completa (F12): acrescenta o tempo estimado. Unidade sem valor
+     * estimado e descartada e, valor sem unidade, vira HOURS como default.
+     */
+    public Task(String title, String description, TaskPriority priority, LocalDate dueDate,
+            Double estimatedTime, TimeUnit estimatedUnit, Task parent) {
         this.id = UUID.randomUUID();
         this.title = requireTitle(title);
         this.description = description;
         this.status = TaskStatus.INITIAL;
         this.priority = priority == null ? TaskPriority.DEFAULT : priority;
         this.dueDate = dueDate;
+        setEstimatedTime(estimatedTime, estimatedUnit);
         this.parent = parent;
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
@@ -114,6 +133,31 @@ public class Task {
         touch();
     }
 
+    /** F12: edicao do tempo estimado junto com as demais informacoes. */
+    public void updateContent(String title, String description, TaskPriority priority, LocalDate dueDate,
+            Double estimatedTime, TimeUnit estimatedUnit) {
+        updateContent(title, description, priority, dueDate);
+        setEstimatedTime(estimatedTime, estimatedUnit);
+    }
+
+    /**
+     * F12: valor e unidade andam juntos. Valor sem unidade assume HOURS;
+     * unidade sem valor e descartada. Valor informado deve ser positivo e
+     * respeitar o teto da analise de IA (0, 200].
+     */
+    private void setEstimatedTime(Double estimatedTime, TimeUnit estimatedUnit) {
+        if (estimatedTime == null) {
+            this.estimatedTime = null;
+            this.estimatedUnit = null;
+            return;
+        }
+        if (estimatedTime <= 0 || estimatedTime > 200) {
+            throw new BusinessRuleException("tempo estimado deve ser maior que zero e no maximo 200");
+        }
+        this.estimatedTime = estimatedTime;
+        this.estimatedUnit = estimatedUnit == null ? TimeUnit.HOURS : estimatedUnit;
+    }
+
     private void touch() {
         this.updatedAt = Instant.now();
     }
@@ -150,6 +194,14 @@ public class Task {
 
     public LocalDate getDueDate() {
         return dueDate;
+    }
+
+    public Double getEstimatedTime() {
+        return estimatedTime;
+    }
+
+    public TimeUnit getEstimatedUnit() {
+        return estimatedUnit;
     }
 
     public Task getParent() {

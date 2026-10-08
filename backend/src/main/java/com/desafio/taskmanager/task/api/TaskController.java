@@ -176,10 +176,12 @@ public class TaskController {
      * entidade, entao o comando carrega o valor tal qual chegou.
      */
     private static TaskCommand comandoDe(CreateTaskRequest request) {
-        return new TaskCommand(request.title(), request.description(), request.priority(), request.dueDate());
+        return new TaskCommand(request.title(), request.description(), request.priority(), request.dueDate(),
+                request.estimatedTime(), request.estimatedUnit());
     }
 
     private static TaskCommand comandoDe(UpdateTaskRequest request) {
-        return new TaskCommand(request.title(), request.description(), request.priority(), request.dueDate());
+        return new TaskCommand(request.title(), request.description(), request.priority(), request.dueDate(),
+                request.estimatedTime(), request.estimatedUnit());
     }
 }

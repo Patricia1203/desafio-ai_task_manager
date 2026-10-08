@@ -41,6 +41,8 @@ public class TaskMapper {
                 task.getStatus(),
                 task.getPriority(),
                 task.getDueDate(),
+                task.getEstimatedTime(),
+                task.getEstimatedUnit(),
                 idTarefaPaiDe(task),
                 task.getCreatedAt(),
                 task.getUpdatedAt(),

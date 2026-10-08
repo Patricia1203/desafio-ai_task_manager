@@ -13,6 +13,7 @@ import com.desafio.taskmanager.task.application.dto.TaskSummary;
 import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 import com.desafio.taskmanager.task.infra.TaskRepository;
 
 import com.desafio.taskmanager.support.PostgresIntegrationTest;
@@ -193,6 +194,23 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(editada.getPriority()).isEqualTo(TaskPriority.HIGH);
         assertThat(editada.getDueDate()).isEqualTo(LocalDate.of(2026, 6, 1));
         assertThat(editada.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
+    }
+
+    @Test
+    void criarEDitarComTempoEstimadoGravaESerializa() {
+        Task criada = service.create(new TaskCommand("T", null, null, null, 2.0, TimeUnit.DAYS));
+        assertThat(criada.getEstimatedTime()).isEqualTo(2.0);
+        assertThat(criada.getEstimatedUnit()).isEqualTo(TimeUnit.DAYS);
+
+        Task editada = service.update(criada.getId(),
+                new TaskCommand("T editado", null, null, null, 5.0, TimeUnit.HOURS));
+        assertThat(editada.getEstimatedTime()).isEqualTo(5.0);
+        assertThat(editada.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
+
+        Task vazia = service.update(criada.getId(),
+                new TaskCommand("T editado", null, null, null, null, null));
+        assertThat(vazia.getEstimatedTime()).isNull();
+        assertThat(vazia.getEstimatedUnit()).isNull();
     }
 
     @Test
@@ -472,7 +490,7 @@ class TaskServiceTest extends PostgresIntegrationTest {
 
     private static TaskCommand pedido(String title, String description, TaskPriority priority,
             LocalDate dueDate) {
-        return new TaskCommand(title, description, priority, dueDate);
+        return new TaskCommand(title, description, priority, dueDate, null, null);
     }
 
     private Task criar(String title) {

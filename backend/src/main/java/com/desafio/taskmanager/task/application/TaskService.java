@@ -93,7 +93,8 @@ public class TaskService {
     @Transactional
     public Task update(UUID id, TaskCommand command) {
         Task task = getOrThrow(id);
-        task.updateContent(command.titulo(), command.descricao(), command.prioridade(), command.prazo());
+        task.updateContent(command.titulo(), command.descricao(), command.prioridade(), command.prazo(),
+                command.tempoEstimado(), command.unidadeTempo());
         return task;
     }
 
@@ -157,6 +158,8 @@ public class TaskService {
                 command.descricao(),
                 command.prioridade(),
                 command.prazo(),
+                command.tempoEstimado(),
+                command.unidadeTempo(),
                 parent);
     }
 

@@ -273,6 +273,72 @@ class TaskTest {
     }
 
     @Nested
+    @DisplayName("tempo estimado")
+    class TempoEstimado {
+
+        @Test
+        @DisplayName("valor com unidade escolhida fica como veio")
+        void valorComUnidadeFicaComoVeio() {
+            Task task = new Task("T", null, null, null, 1.5, TimeUnit.DAYS, null);
+
+            assertThat(task.getEstimatedTime()).isEqualTo(1.5);
+            assertThat(task.getEstimatedUnit()).isEqualTo(TimeUnit.DAYS);
+        }
+
+        @Test
+        @DisplayName("valor sem unidade assume HOURS")
+        void valorSemUnidadeAssumeHours() {
+            Task task = new Task("T", null, null, null, 4.0, null, null);
+
+            assertThat(task.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
+        }
+
+        @Test
+        @DisplayName("unidade sem valor e descartada")
+        void unidadeSemValorEDescartada() {
+            Task task = new Task("T", null, null, null, null, TimeUnit.DAYS, null);
+
+            assertThat(task.getEstimatedTime()).isNull();
+            assertThat(task.getEstimatedUnit()).isNull();
+        }
+
+        @Test
+        @DisplayName("valor fora de (0, 200] e recusado no construtor")
+        void valorForaDoIntervaloEhRecusado() {
+            assertThatThrownBy(() -> new Task("T", null, null, null, 0.0, TimeUnit.HOURS, null))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("tempo estimado");
+            assertThatThrownBy(() -> new Task("T", null, null, null, -2.0, TimeUnit.HOURS, null))
+                    .isInstanceOf(BusinessRuleException.class);
+            assertThatThrownBy(() -> new Task("T", null, null, null, 201.0, TimeUnit.HOURS, null))
+                    .isInstanceOf(BusinessRuleException.class);
+        }
+
+        @Test
+        @DisplayName("a variante de 5 argumentos nasce sem tempo estimado")
+        void varianteCurtaNasceSemTempo() {
+            Task task = new Task("T", null, null, null, null);
+
+            assertThat(task.getEstimatedTime()).isNull();
+            assertThat(task.getEstimatedUnit()).isNull();
+        }
+
+        @Test
+        @DisplayName("edicao com tempo substitui; sem tempo zera os dois campos")
+        void edicaoSubstituiEZera() {
+            Task task = new Task("T", null, null, null, 2.0, TimeUnit.DAYS, null);
+
+            task.updateContent("T", null, null, null, 6.0, TimeUnit.HOURS);
+            assertThat(task.getEstimatedTime()).isEqualTo(6.0);
+            assertThat(task.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
+
+            task.updateContent("T", null, null, null, null, null);
+            assertThat(task.getEstimatedTime()).isNull();
+            assertThat(task.getEstimatedUnit()).isNull();
+        }
+    }
+
+    @Nested
     @DisplayName("igualdade")
     class Igualdade {
 

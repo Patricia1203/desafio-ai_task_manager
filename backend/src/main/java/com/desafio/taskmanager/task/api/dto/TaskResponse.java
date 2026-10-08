@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 
 /**
  * Tarefa exposta na API. Record imutavel: a entidade JPA nunca sai do backend
@@ -20,6 +21,10 @@ import com.desafio.taskmanager.task.domain.TaskStatus;
  * <p>{@code subtaskCount} (T-F07-02) e o numero de subtarefas quando a tarefa e
  * raiz; vem preenchido so na listagem publica (contagem agrupada no banco, sem
  * N+1), e 0 nos demais usos.
+ *
+ * <p>{@code estimatedTime}/{@code estimatedUnit} (F12) e o tempo estimado para
+ * realizar a tarefa; ambos nulos quando nao ha estimativa. Valor e unidade
+ * andam juntos garantido pela entidade.
  */
 public record TaskResponse(
         UUID id,
@@ -28,6 +33,8 @@ public record TaskResponse(
         TaskStatus status,
         TaskPriority priority,
         LocalDate dueDate,
+        Double estimatedTime,
+        TimeUnit estimatedUnit,
         UUID parentId,
         Instant createdAt,
         Instant updatedAt,
