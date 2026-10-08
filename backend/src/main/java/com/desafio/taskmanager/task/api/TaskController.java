@@ -152,7 +152,8 @@ public class TaskController {
     /** RF-06. Transicao de status; recusa vira 422, id inexistente vira 404. */
     @PatchMapping("/{id}/status")
     public TaskResponse changeStatus(@PathVariable UUID id, @Valid @RequestBody UpdateStatusRequest request) {
-        return mapper.toResponse(service.changeStatus(id, request.status()));
+        return mapper.toResponse(service.changeStatus(
+                id, request.status(), Boolean.TRUE.equals(request.completeSubtasks())));
     }
 
     /**

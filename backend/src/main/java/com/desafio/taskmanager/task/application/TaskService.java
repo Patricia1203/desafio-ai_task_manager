@@ -100,8 +100,27 @@ public class TaskService {
     /** RF-06. A regra de transicao e de dominio e vira 422 se for violada. */
     @Transactional
     public Task changeStatus(UUID id, TaskStatus newStatus) {
+        return changeStatus(id, newStatus, false);
+    }
+
+    /**
+     * RF-06 + RF-14 (F09). Variante da conclusao em cascata.
+     *
+     * <p>Com {@code completeSubtasks == true} e {@code status == DONE}, a transicao do pai
+     * conclui tambem as subtarefas diretas ainda nao concluidas, tudo na mesma transacao
+     * (filhas ja {@code DONE} sao no-op). Filhas diretas apenas — o mesmo universo do modal
+     * de exclusao em cascata e do bloco de subtarefas do detalhe. O campo e ignorado para
+     * qualquer outro status; sem a flag o comportamento e identico ao de 2 argumentos.
+     */
+    @Transactional
+    public Task changeStatus(UUID id, TaskStatus newStatus, boolean completeSubtasks) {
         Task task = getOrThrow(id);
         task.changeStatus(newStatus);
+        if (completeSubtasks && newStatus == TaskStatus.DONE) {
+            repository.findByParentIdOrderByCreatedAtAsc(id).stream()
+                    .filter(subtask -> subtask.getStatus() != TaskStatus.DONE)
+                    .forEach(subtask -> subtask.changeStatus(TaskStatus.DONE));
+        }
         return task;
     }
 

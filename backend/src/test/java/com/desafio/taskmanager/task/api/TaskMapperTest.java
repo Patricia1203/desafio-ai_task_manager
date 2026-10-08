@@ -132,7 +132,7 @@ class TaskMapperTest {
     @Test
     void updateStatusRequestExigeStatus() {
         ConstraintViolation<UpdateStatusRequest> violacao =
-                unica(VALIDATOR.validate(new UpdateStatusRequest(null)));
+                unica(VALIDATOR.validate(new UpdateStatusRequest(null, null)));
 
         assertThat(violacao.getPropertyPath().toString()).isEqualTo("status");
         assertThat(violacao.getMessage()).isEqualTo("status e obrigatorio");
@@ -141,7 +141,8 @@ class TaskMapperTest {
     @Test
     void updateStatusRequestAceitaOsTresStatus() {
         for (TaskStatus status : TaskStatus.values()) {
-            assertThat(VALIDATOR.validate(new UpdateStatusRequest(status))).isEmpty();
+            assertThat(VALIDATOR.validate(new UpdateStatusRequest(status, null))).isEmpty();
+            assertThat(VALIDATOR.validate(new UpdateStatusRequest(status, true))).isEmpty();
         }
     }
 

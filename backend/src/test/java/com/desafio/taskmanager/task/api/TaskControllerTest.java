@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -377,7 +378,7 @@ class TaskControllerTest {
 
     @Test
     void alterarStatusRetorna200() throws Exception {
-        when(service.changeStatus(ID, TaskStatus.IN_PROGRESS)).thenReturn(tarefa());
+        when(service.changeStatus(ID, TaskStatus.IN_PROGRESS, false)).thenReturn(tarefa());
 
         mockMvc.perform(patch("/tasks/{id}/status", ID)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -385,7 +386,20 @@ class TaskControllerTest {
                                 {"status":"IN_PROGRESS"}"""))
                 .andExpect(status().isOk());
 
-        verify(service).changeStatus(ID, TaskStatus.IN_PROGRESS);
+        verify(service).changeStatus(ID, TaskStatus.IN_PROGRESS, false);
+    }
+
+    @Test
+    void concluirComFlagRepassaOCompleteSubtasks() throws Exception {
+        when(service.changeStatus(ID, TaskStatus.DONE, true)).thenReturn(tarefa());
+
+        mockMvc.perform(patch("/tasks/{id}/status", ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"DONE","completeSubtasks":true}"""))
+                .andExpect(status().isOk());
+
+        verify(service).changeStatus(ID, TaskStatus.DONE, true);
     }
 
     @Test
@@ -396,7 +410,7 @@ class TaskControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].field").value("status"));
 
-        verify(service, never()).changeStatus(any(), any());
+        verify(service, never()).changeStatus(any(), any(TaskStatus.class), anyBoolean());
     }
 
     @Test
@@ -410,7 +424,7 @@ class TaskControllerTest {
 
     @Test
     void transicaoRecusadaRetorna422() throws Exception {
-        when(service.changeStatus(ID, TaskStatus.IN_PROGRESS))
+        when(service.changeStatus(ID, TaskStatus.IN_PROGRESS, false))
                 .thenThrow(new BusinessRuleException("status nao pode ir de DONE para IN_PROGRESS"));
 
         mockMvc.perform(patch("/tasks/{id}/status", ID)

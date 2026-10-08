@@ -258,6 +258,45 @@ class TaskServiceTest extends PostgresIntegrationTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
+    @Test
+    void concluirPaiComFlagConcluiSubtarefasPendentes() {
+        Task pai = criar("Pai");
+        Task pendente = criarSubtask(pai.getId(), "Filha pendente");
+        Task emAndamento = criarSubtask(pai.getId(), "Filha em andamento");
+        Task feita = criarSubtask(pai.getId(), "Filha feita");
+        service.changeStatus(feita.getId(), TaskStatus.DONE);
+        service.changeStatus(emAndamento.getId(), TaskStatus.IN_PROGRESS);
+
+        Task paiConcluido = service.changeStatus(pai.getId(), TaskStatus.DONE, true);
+
+        assertThat(paiConcluido.getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(service.findById(pendente.getId()).getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(service.findById(emAndamento.getId()).getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(service.findById(feita.getId()).getStatus()).isEqualTo(TaskStatus.DONE);
+    }
+
+    @Test
+    void concluirPaiSemFlagNaoMexeNasFilhas() {
+        Task pai = criar("Pai");
+        Task filha = criarSubtask(pai.getId(), "Filha");
+
+        service.changeStatus(pai.getId(), TaskStatus.DONE, false);
+
+        assertThat(service.findById(pai.getId()).getStatus()).isEqualTo(TaskStatus.DONE);
+        assertThat(service.findById(filha.getId()).getStatus()).isEqualTo(TaskStatus.TODO);
+    }
+
+    @Test
+    void flagComStatusDiferenteDeConcluidaNaoConcluiFilhas() {
+        Task pai = criar("Pai");
+        Task filha = criarSubtask(pai.getId(), "Filha");
+
+        Task paiEmAndamento = service.changeStatus(pai.getId(), TaskStatus.IN_PROGRESS, true);
+
+        assertThat(paiEmAndamento.getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
+        assertThat(service.findById(filha.getId()).getStatus()).isEqualTo(TaskStatus.TODO);
+    }
+
     // --- excluir (RF-05) ---
 
     @Test
