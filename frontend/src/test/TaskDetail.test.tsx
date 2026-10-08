@@ -23,6 +23,8 @@ const tarefa: Task = {
   createdAt: '2026-10-01T10:00:00Z',
   updatedAt: '2026-10-01T10:00:00Z',
   subtaskCount: 0,
+  estimatedTime: null,
+  estimatedUnit: null,
 };
 
 const filha: Task = {
@@ -52,6 +54,18 @@ describe('TaskDetail', () => {
     vi.clearAllMocks();
     vi.mocked(getSubtasks).mockResolvedValue([]);
     vi.mocked(getTask).mockResolvedValue({ ...tarefa, title: 'Meta maior' });
+  });
+
+  it('exibe o tempo estimado formatado quando existe', () => {
+    montar({ estimatedTime: 3, estimatedUnit: 'DAYS' });
+
+    expect(screen.getByText('3 dias')).toBeInTheDocument();
+  });
+
+  it('indica ausencia de tempo estimado', () => {
+    montar();
+
+    expect(screen.getByText('Sem tempo estimado')).toBeInTheDocument();
   });
 
   it('altera o status e devolve a tarefa atualizada', async () => {

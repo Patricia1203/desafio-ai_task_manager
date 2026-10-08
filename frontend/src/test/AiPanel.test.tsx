@@ -29,6 +29,8 @@ const tarefa: Task = {
   createdAt: '2026-10-01T10:00:00Z',
   updatedAt: '2026-10-01T10:00:00Z',
   subtaskCount: 0,
+  estimatedTime: null,
+  estimatedUnit: null,
 };
 
 function montar() {
@@ -69,6 +71,8 @@ describe('AiPanel', () => {
       description: 'Contrate uma empresa com uma semana de antecedencia',
       priority: 'MEDIUM',
       dueDate: null,
+      estimatedTime: null,
+      estimatedUnit: null,
     });
     await vi.waitFor(() => expect(onChanged).toHaveBeenCalledWith(atualizada));
     expect(screen.queryByText('Sugestão de melhoria')).not.toBeInTheDocument();

@@ -79,6 +79,8 @@ export default function AiPanel({ task, onChanged, onSubtasksCreated }: AiPanelP
         description: sugestao.description,
         priority: task.priority,
         dueDate: task.dueDate,
+        estimatedTime: task.estimatedTime,
+        estimatedUnit: task.estimatedUnit,
       });
       setMelhoria(null);
       onChanged(atualizada);

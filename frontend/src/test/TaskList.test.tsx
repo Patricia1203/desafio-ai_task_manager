@@ -16,6 +16,8 @@ function tarefa(id: string, title: string): Task {
     createdAt: '2026-10-01T10:00:00Z',
     updatedAt: '2026-10-01T10:00:00Z',
     subtaskCount: 0,
+  estimatedTime: null,
+  estimatedUnit: null,
   };
 }
 

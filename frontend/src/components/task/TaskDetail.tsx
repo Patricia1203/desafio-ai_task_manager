@@ -3,6 +3,7 @@ import type { Task, TaskStatus } from '../../types/task';
 import { PRIORITY_LABELS, STATUS_LABELS } from '../../types/task';
 import { changeStatus, deleteTask, getSubtasks, getTask } from '../../api/tasks';
 import { formatarDataBR } from '../../utils/date';
+import { formatarTempoEstimado } from '../../utils/tempo';
 import StatusSelect from './StatusSelect';
 
 interface TaskDetailProps {
@@ -176,6 +177,12 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
         <div>
           <dt>Prazo</dt>
           <dd>{task.dueDate ?? 'Sem prazo'}</dd>
+        </div>
+        <div>
+          <dt>Tempo estimado</dt>
+          <dd>
+            {formatarTempoEstimado(task.estimatedTime, task.estimatedUnit) || 'Sem tempo estimado'}
+          </dd>
         </div>
         <div>
           <dt>Criada em</dt>

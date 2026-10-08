@@ -15,6 +15,8 @@ const tarefa: Task = {
   createdAt: '2026-10-01T10:00:00Z',
   updatedAt: '2026-10-01T10:00:00Z',
   subtaskCount: 0,
+  estimatedTime: 2,
+  estimatedUnit: 'HOURS',
 };
 
 describe('TaskForm', () => {
@@ -42,7 +44,41 @@ describe('TaskForm', () => {
       description: null,
       priority: 'LOW',
       dueDate: '2026-11-01',
+      estimatedTime: null,
+      estimatedUnit: null,
     });
+  });
+
+  it('envia o tempo estimado com a unidade escolhida', async () => {
+    const onSubmit = vi.fn();
+    render(<TaskForm submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
+
+    await userEvent.type(screen.getByLabelText(/Título/), 'Criar relatorio');
+    await userEvent.type(screen.getByLabelText('Tempo estimado'), '4');
+    await userEvent.selectOptions(screen.getByLabelText('Unidade'), 'DAYS');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Criar relatorio',
+        estimatedTime: 4,
+        estimatedUnit: 'DAYS',
+      }),
+    );
+  });
+
+  it('recusa tempo estimado fora do intervalo', async () => {
+    const onSubmit = vi.fn();
+    render(<TaskForm submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
+
+    await userEvent.type(screen.getByLabelText(/Título/), 'Criar relatorio');
+    await userEvent.type(screen.getByLabelText('Tempo estimado'), '250');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'O tempo estimado deve ser maior que zero e até 200.',
+    );
   });
 
   it('preenche os campos ao editar uma tarefa existente', () => {
@@ -54,6 +90,8 @@ describe('TaskForm', () => {
     expect(screen.getByLabelText(/Título/)).toHaveValue('Revisar contrato');
     expect(screen.getByLabelText('Prioridade')).toHaveValue('HIGH');
     expect(screen.getByLabelText('Prazo')).toHaveValue('2026-10-20');
+    expect(screen.getByLabelText('Tempo estimado')).toHaveValue(2);
+    expect(screen.getByLabelText('Unidade')).toHaveValue('HOURS');
   });
 
   it('desabilita os botoes enquanto o submit esta em andamento', () => {

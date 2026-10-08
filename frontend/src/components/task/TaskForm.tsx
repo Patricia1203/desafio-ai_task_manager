@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import type { Task, TaskInput, TaskPriority } from '../../types/task';
-import { PRIORITY_LABELS, PRIORITY_OPTIONS } from '../../types/task';
+import type { Task, TaskInput, TaskPriority, TaskTimeUnit } from '../../types/task';
+import { PRIORITY_LABELS, PRIORITY_OPTIONS, TIME_UNIT_LABELS, TIME_UNIT_OPTIONS } from '../../types/task';
 
 interface TaskFormProps {
   task?: Task | null;
@@ -14,9 +14,10 @@ interface TaskFormProps {
 interface FieldErrors {
   title?: string;
   description?: string;
+  estimatedTime?: string;
 }
 
-function validate(title: string, description: string): FieldErrors {
+function validate(title: string, description: string, estimatedTime: string): FieldErrors {
   const errors: FieldErrors = {};
   const trimmed = title.trim();
   if (!trimmed) {
@@ -26,6 +27,13 @@ function validate(title: string, description: string): FieldErrors {
   }
   if (description.length > 5000) {
     errors.description = 'A descrição pode ter no máximo 5000 caracteres.';
+  }
+  const tempo = estimatedTime.trim();
+  if (tempo) {
+    const numero = Number(tempo);
+    if (!Number.isFinite(numero) || numero <= 0 || numero > 200) {
+      errors.estimatedTime = 'O tempo estimado deve ser maior que zero e até 200.';
+    }
   }
   return errors;
 }
@@ -41,20 +49,30 @@ export default function TaskForm({
   const [description, setDescription] = useState(task?.description ?? '');
   const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? 'MEDIUM');
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
+  const [estimatedTime, setEstimatedTime] = useState(
+    task?.estimatedTime != null ? String(task.estimatedTime) : '',
+  );
+  const [estimatedUnit, setEstimatedUnit] = useState<TaskTimeUnit>(
+    task?.estimatedUnit ?? 'HOURS',
+  );
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const errors = validate(title, description);
+    const errors = validate(title, description, estimatedTime);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return;
     }
+    const tempo = estimatedTime.trim();
+    const numero = tempo ? Number(tempo) : null;
     onSubmit({
       title: title.trim(),
       description: description.trim() || null,
       priority,
       dueDate: dueDate || null,
+      estimatedTime: numero,
+      estimatedUnit: numero != null ? estimatedUnit : null,
     });
   }
 
@@ -119,6 +137,44 @@ export default function TaskForm({
           onChange={(event) => setDueDate(event.target.value)}
         />
       </label>
+
+      <div className="task-form__linha">
+        <label htmlFor="task-form-tempo" className="field">
+          <span className="field__label">Tempo estimado</span>
+          <input
+            id="task-form-tempo"
+            type="number"
+            min="0"
+            max="200"
+            step="0.1"
+            inputMode="decimal"
+            value={estimatedTime}
+            placeholder="Ex.: 4"
+            onChange={(event) => setEstimatedTime(event.target.value)}
+            aria-invalid={fieldErrors.estimatedTime ? true : undefined}
+          />
+          {fieldErrors.estimatedTime && (
+            <span className="error-message" role="alert">
+              {fieldErrors.estimatedTime}
+            </span>
+          )}
+        </label>
+
+        <label htmlFor="task-form-unidade" className="field">
+          <span className="field__label">Unidade</span>
+          <select
+            id="task-form-unidade"
+            value={estimatedUnit}
+            onChange={(event) => setEstimatedUnit(event.target.value as TaskTimeUnit)}
+          >
+            {TIME_UNIT_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {TIME_UNIT_LABELS[option]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       {error && (
         <p className="error-message" role="alert">

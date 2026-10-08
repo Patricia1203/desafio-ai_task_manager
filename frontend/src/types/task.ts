@@ -2,6 +2,8 @@ export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 
+export type TaskTimeUnit = 'HOURS' | 'DAYS';
+
 export interface Task {
   id: string;
   title: string;
@@ -13,6 +15,8 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   subtaskCount: number;
+  estimatedTime: number | null;
+  estimatedUnit: TaskTimeUnit | null;
 }
 
 export interface TaskInput {
@@ -20,6 +24,8 @@ export interface TaskInput {
   description: string | null;
   priority: TaskPriority;
   dueDate: string | null;
+  estimatedTime: number | null;
+  estimatedUnit: TaskTimeUnit | null;
 }
 
 export interface PageResponse<T> {
@@ -55,3 +61,10 @@ export const PRIORITY_LABELS: Record<TaskPriority, string> = {
 export const STATUS_OPTIONS: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'DONE'];
 
 export const PRIORITY_OPTIONS: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
+
+export const TIME_UNIT_LABELS: Record<TaskTimeUnit, string> = {
+  HOURS: 'Horas',
+  DAYS: 'Dias',
+};
+
+export const TIME_UNIT_OPTIONS: TaskTimeUnit[] = ['HOURS', 'DAYS'];
