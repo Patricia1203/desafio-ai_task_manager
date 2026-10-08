@@ -681,10 +681,11 @@ textarea::placeholder {
 }
 
 .tasks__voltar--seta {
-  width: 44px;
+  width: 36px;
+  min-height: 36px;
   flex: none;
   padding: 0;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   line-height: 1;
   color: #fff;
   background: var(--color-accent);
