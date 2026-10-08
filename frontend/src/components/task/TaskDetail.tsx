@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Task, TaskStatus } from '../../types/task';
 import { PRIORITY_LABELS, STATUS_LABELS } from '../../types/task';
-import { changeStatus, deleteTask, getSubtasks, getTask } from '../../api/tasks';
+import { changeStatus, deleteTask, getSubtasks } from '../../api/tasks';
 import { formatarDataBR } from '../../utils/date';
 import { formatarTempoEstimado } from '../../utils/tempo';
 import StatusSelect from './StatusSelect';
@@ -28,7 +28,6 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
   const [subtasks, setSubtasks] = useState<Task[] | null>(null);
   const [subtasksBusy, setSubtasksBusy] = useState(true);
   const [subtasksError, setSubtasksError] = useState<string | null>(null);
-  const [pai, setPai] = useState<Task | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -46,22 +45,6 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
       ativo = false;
     };
   }, [task.id]);
-
-  useEffect(() => {
-    let ativo = true;
-    if (task.parentId) {
-      getTask(task.parentId)
-        .then((encontrado) => {
-          if (ativo) setPai(encontrado);
-        })
-        .catch(() => {
-          // Vinculo e secundario: sem o pai, somente nao desenhamos o selo.
-        });
-    }
-    return () => {
-      ativo = false;
-    };
-  }, [task.parentId]);
 
   async function handleStatusChange(status: TaskStatus) {
     if (status === 'DONE') {
@@ -159,14 +142,6 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
         </span>
       </header>
 
-      {pai && (
-        <p className="task-detail__origem">
-          <button type="button" onClick={() => onOpen(pai)}>
-            Subtarefa de {pai.title}
-          </button>
-        </p>
-      )}
-
       {task.description && <p className="task-detail__descricao">{task.description}</p>}
 
       <dl className="task-detail__meta">
@@ -174,20 +149,24 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
           <dt>Prioridade</dt>
           <dd>{PRIORITY_LABELS[task.priority]}</dd>
         </div>
-        <div>
-          <dt>Prazo</dt>
-          <dd>{task.dueDate ?? 'Sem prazo'}</dd>
-        </div>
-        <div>
-          <dt>Tempo estimado</dt>
-          <dd>
-            {formatarTempoEstimado(task.estimatedTime, task.estimatedUnit) || 'Sem tempo estimado'}
-          </dd>
-        </div>
+        {task.parentId ? (
+          <div>
+            <dt>Tempo estimado</dt>
+            <dd>
+              {formatarTempoEstimado(task.estimatedTime, task.estimatedUnit) || 'Sem tempo estimado'}
+            </dd>
+          </div>
+        ) : null}
         <div>
           <dt>Criada em</dt>
           <dd>{new Date(task.createdAt).toLocaleDateString('pt-BR')}</dd>
         </div>
+        {task.parentId ? null : (
+          <div>
+            <dt>Prazo</dt>
+            <dd>{task.dueDate ? formatarDataBR(task.dueDate) : 'Sem prazo'}</dd>
+          </div>
+        )}
       </dl>
 
       <div className="task-detail__acoes">

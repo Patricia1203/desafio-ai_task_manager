@@ -19,6 +19,15 @@ const tarefa: Task = {
   estimatedUnit: 'HOURS',
 };
 
+const subtarefa: Task = {
+  ...tarefa,
+  id: '3f1d3f6e-0000-4000-8000-0000000000aa',
+  parentId: '3f1d3f6e-0000-4000-8000-0000000000bb',
+  dueDate: null,
+  estimatedTime: 2,
+  estimatedUnit: 'HOURS',
+};
+
 describe('TaskForm', () => {
   it('recusa submit sem titulo e mostra o erro no campo', async () => {
     const onSubmit = vi.fn();
@@ -51,7 +60,14 @@ describe('TaskForm', () => {
 
   it('envia o tempo estimado com a unidade escolhida', async () => {
     const onSubmit = vi.fn();
-    render(<TaskForm submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
+    render(
+      <TaskForm
+        task={{ ...subtarefa, title: '', estimatedTime: null, estimatedUnit: null }}
+        submitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
 
     await userEvent.type(screen.getByLabelText(/Título/), 'Criar relatorio');
     await userEvent.type(screen.getByLabelText('Tempo estimado'), '4');
@@ -63,13 +79,21 @@ describe('TaskForm', () => {
         title: 'Criar relatorio',
         estimatedTime: 4,
         estimatedUnit: 'DAYS',
+        dueDate: null,
       }),
     );
   });
 
   it('recusa tempo estimado fora do intervalo', async () => {
     const onSubmit = vi.fn();
-    render(<TaskForm submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
+    render(
+      <TaskForm
+        task={{ ...subtarefa, title: '', estimatedTime: null, estimatedUnit: null }}
+        submitting={false}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    );
 
     await userEvent.type(screen.getByLabelText(/Título/), 'Criar relatorio');
     await userEvent.type(screen.getByLabelText('Tempo estimado'), '250');
@@ -81,17 +105,24 @@ describe('TaskForm', () => {
     );
   });
 
-  it('preenche os campos ao editar uma tarefa existente', () => {
-    const onSubmit = vi.fn();
-    render(
-      <TaskForm task={tarefa} submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />,
-    );
+  it('a raiz edita somente o prazo e nao mostra tempo', () => {
+    render(<TaskForm task={tarefa} submitting={false} onSubmit={vi.fn()} onCancel={vi.fn()} />);
 
     expect(screen.getByLabelText(/Título/)).toHaveValue('Revisar contrato');
     expect(screen.getByLabelText('Prioridade')).toHaveValue('HIGH');
     expect(screen.getByLabelText('Prazo')).toHaveValue('2026-10-20');
+    expect(screen.queryByLabelText('Tempo estimado')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Unidade')).not.toBeInTheDocument();
+  });
+
+  it('a subtarefa edita somente o tempo e nao mostra prazo', () => {
+    render(
+      <TaskForm task={subtarefa} submitting={false} onSubmit={vi.fn()} onCancel={vi.fn()} />,
+    );
+
     expect(screen.getByLabelText('Tempo estimado')).toHaveValue(2);
     expect(screen.getByLabelText('Unidade')).toHaveValue('HOURS');
+    expect(screen.queryByLabelText('Prazo')).not.toBeInTheDocument();
   });
 
   it('desabilita os botoes enquanto o submit esta em andamento', () => {

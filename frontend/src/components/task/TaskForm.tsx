@@ -45,6 +45,7 @@ export default function TaskForm({
   onCancel,
   error,
 }: TaskFormProps) {
+  const eSubtarefa = Boolean(task?.parentId);
   const [title, setTitle] = useState(task?.title ?? '');
   const [description, setDescription] = useState(task?.description ?? '');
   const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? 'MEDIUM');
@@ -70,9 +71,9 @@ export default function TaskForm({
       title: title.trim(),
       description: description.trim() || null,
       priority,
-      dueDate: dueDate || null,
-      estimatedTime: numero,
-      estimatedUnit: numero != null ? estimatedUnit : null,
+      dueDate: eSubtarefa ? null : dueDate || null,
+      estimatedTime: eSubtarefa ? numero : null,
+      estimatedUnit: numero != null && eSubtarefa ? estimatedUnit : null,
     });
   }
 
@@ -128,53 +129,55 @@ export default function TaskForm({
         </select>
       </label>
 
-      <label htmlFor="task-form-prazo" className="field">
-        <span className="field__label">Prazo</span>
-        <input
-          id="task-form-prazo"
-          type="date"
-          value={dueDate}
-          onChange={(event) => setDueDate(event.target.value)}
-        />
-      </label>
+      {eSubtarefa ? (
+        <div className="task-form__linha">
+          <label htmlFor="task-form-tempo" className="field">
+            <span className="field__label">Tempo estimado</span>
+            <input
+              id="task-form-tempo"
+              type="number"
+              min="0"
+              max="200"
+              step="0.1"
+              inputMode="decimal"
+              value={estimatedTime}
+              placeholder="Ex.: 4"
+              onChange={(event) => setEstimatedTime(event.target.value)}
+              aria-invalid={fieldErrors.estimatedTime ? true : undefined}
+            />
+            {fieldErrors.estimatedTime && (
+              <span className="error-message" role="alert">
+                {fieldErrors.estimatedTime}
+              </span>
+            )}
+          </label>
 
-      <div className="task-form__linha">
-        <label htmlFor="task-form-tempo" className="field">
-          <span className="field__label">Tempo estimado</span>
+          <label htmlFor="task-form-unidade" className="field">
+            <span className="field__label">Unidade</span>
+            <select
+              id="task-form-unidade"
+              value={estimatedUnit}
+              onChange={(event) => setEstimatedUnit(event.target.value as TaskTimeUnit)}
+            >
+              {TIME_UNIT_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {TIME_UNIT_LABELS[option]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : (
+        <label htmlFor="task-form-prazo" className="field">
+          <span className="field__label">Prazo</span>
           <input
-            id="task-form-tempo"
-            type="number"
-            min="0"
-            max="200"
-            step="0.1"
-            inputMode="decimal"
-            value={estimatedTime}
-            placeholder="Ex.: 4"
-            onChange={(event) => setEstimatedTime(event.target.value)}
-            aria-invalid={fieldErrors.estimatedTime ? true : undefined}
+            id="task-form-prazo"
+            type="date"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
           />
-          {fieldErrors.estimatedTime && (
-            <span className="error-message" role="alert">
-              {fieldErrors.estimatedTime}
-            </span>
-          )}
         </label>
-
-        <label htmlFor="task-form-unidade" className="field">
-          <span className="field__label">Unidade</span>
-          <select
-            id="task-form-unidade"
-            value={estimatedUnit}
-            onChange={(event) => setEstimatedUnit(event.target.value as TaskTimeUnit)}
-          >
-            {TIME_UNIT_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {TIME_UNIT_LABELS[option]}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      )}
 
       {error && (
         <p className="error-message" role="alert">

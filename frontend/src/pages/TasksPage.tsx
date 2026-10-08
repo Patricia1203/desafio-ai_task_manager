@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Task, TaskInput, TaskStatus } from '../types/task';
 import { STATUS_LABELS, STATUS_OPTIONS } from '../types/task';
-import { createTask, listTasks, updateTask } from '../api/tasks';
+import { createTask, getTask, listTasks, updateTask } from '../api/tasks';
 import TaskList from '../components/task/TaskList';
 import TaskForm from '../components/task/TaskForm';
 import TaskDetail from '../components/task/TaskDetail';
@@ -24,6 +24,23 @@ export default function TasksPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [detalheVersao, setDetalheVersao] = useState(0);
+  const [paiDaSelecionada, setPaiDaSelecionada] = useState<Task | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    if (selecionada?.parentId) {
+      getTask(selecionada.parentId)
+        .then((pai) => {
+          if (ativo) setPaiDaSelecionada(pai);
+        })
+        .catch(() => {
+          if (ativo) setPaiDaSelecionada(null);
+        });
+    }
+    return () => {
+      ativo = false;
+    };
+  }, [selecionada?.id, selecionada?.parentId]);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -53,10 +70,13 @@ export default function TasksPage() {
       });
   }, [statusFiltro]);
 
-  function abrirDetalhe(tarefa: Task) {
-    setSelecionada(tarefa);
-    setModo('detalhe');
+function abrirDetalhe(tarefa: Task) {
+  if (!tarefa.parentId) {
+    setPaiDaSelecionada(null);
   }
+  setSelecionada(tarefa);
+  setModo('detalhe');
+}
 
   function voltar() {
     setModo(modo === 'editar' && selecionada ? 'detalhe' : 'lista');
@@ -116,6 +136,20 @@ export default function TasksPage() {
             <Link to="/tasks" onClick={() => setModo('lista')}>
               Tarefas
             </Link>
+            {paiDaSelecionada && (
+              <>
+                <span className="breadcrumb__sep" aria-hidden="true">
+                  /
+                </span>
+                <button
+                  type="button"
+                  className="breadcrumb__link"
+                  onClick={() => abrirDetalhe(paiDaSelecionada)}
+                >
+                  {paiDaSelecionada.title}
+                </button>
+              </>
+            )}
             <span className="breadcrumb__sep" aria-hidden="true">
               /
             </span>

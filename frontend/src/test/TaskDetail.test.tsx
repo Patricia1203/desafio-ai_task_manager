@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Task } from '../types/task';
-import { changeStatus, deleteTask, getSubtasks, getTask } from '../api/tasks';
+import { changeStatus, deleteTask, getSubtasks } from '../api/tasks';
 import TaskDetail from '../components/task/TaskDetail';
 
 vi.mock('../api/tasks', () => ({
@@ -53,17 +53,30 @@ describe('TaskDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSubtasks).mockResolvedValue([]);
-    vi.mocked(getTask).mockResolvedValue({ ...tarefa, title: 'Meta maior' });
   });
 
-  it('exibe o tempo estimado formatado quando existe', () => {
-    montar({ estimatedTime: 3, estimatedUnit: 'DAYS' });
+  it('a raiz mostra o prazo em dd/mm/aaaa e esconde a linha de tempo', () => {
+    montar({ dueDate: '2026-10-20' });
+
+    expect(screen.getByText('20/10/2026')).toBeInTheDocument();
+    expect(screen.queryByText('Tempo estimado')).not.toBeInTheDocument();
+  });
+
+  it('a raiz sem prazo mostra Sem prazo', () => {
+    montar();
+
+    expect(screen.getByText('Sem prazo')).toBeInTheDocument();
+  });
+
+  it('a subtarefa mostra o tempo estimado e esconde a linha de prazo', () => {
+    montar({ parentId: tarefa.id, estimatedTime: 3, estimatedUnit: 'DAYS' });
 
     expect(screen.getByText('3 dias')).toBeInTheDocument();
+    expect(screen.queryByText('Prazo')).not.toBeInTheDocument();
   });
 
-  it('indica ausencia de tempo estimado', () => {
-    montar();
+  it('indica ausencia de tempo estimado na subtarefa', () => {
+    montar({ parentId: tarefa.id });
 
     expect(screen.getByText('Sem tempo estimado')).toBeInTheDocument();
   });
@@ -151,6 +164,15 @@ describe('TaskDetail', () => {
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 
+  it('mantem a ordem da meta: Prioridade, tempo (subtarefa), Criada em, prazo (raiz)', () => {
+    montar({ parentId: tarefa.id, dueDate: '2026-10-20', estimatedTime: 2, estimatedUnit: 'HOURS' });
+
+    const meta = screen.getByText('Prioridade').closest('dl');
+    expect(meta).not.toBeNull();
+    const termos = meta ? Array.from(meta.querySelectorAll('dt')).map((node) => node.textContent) : [];
+    expect(termos).toEqual(['Prioridade', 'Tempo estimado', 'Criada em']);
+  });
+
   it('agrupa as subtarefas em bloco e abre a selecionada', async () => {
     vi.mocked(getSubtasks).mockResolvedValue([
       filha,
@@ -168,14 +190,10 @@ describe('TaskDetail', () => {
     );
   });
 
-  it('mostra o vinculo com o pai e volta para ele', async () => {
-    vi.mocked(getTask).mockResolvedValue({ ...tarefa, title: 'Mover casa' });
-    const { onOpen } = montar({ id: filha.id, title: 'Contratar empresa', parentId: tarefa.id });
+  it('nao exibe mais o selo Subtarefa de X', () => {
+    montar({ id: filha.id, title: 'Contratar empresa', parentId: tarefa.id });
 
-    const vinculo = await screen.findByRole('button', { name: 'Subtarefa de Mover casa' });
-    await userEvent.click(vinculo);
-
-    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ title: 'Mover casa' }));
+    expect(screen.queryByRole('button', { name: 'Subtarefa de Mover casa' })).not.toBeInTheDocument();
   });
 
   it('lista as subtarefas no dialogo sem refazer a busca', async () => {
