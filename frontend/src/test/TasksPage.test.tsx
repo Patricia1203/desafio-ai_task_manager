@@ -105,4 +105,86 @@ describe('TasksPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Mover casa' })).toBeInTheDocument();
   });
+
+  it('muda o status pelo filtro dentro do quadro e recarrega a lista', async () => {
+    montar();
+
+    await userEvent.selectOptions(screen.getByLabelText('Filtrar por status'), 'IN_PROGRESS');
+
+    expect(listTasks).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'IN_PROGRESS' }),
+    );
+  });
+
+  it('exibe a linha do tempo com as proximas datas de vencimento', async () => {
+    montar();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Próximos 7 dias' }),
+    ).toBeInTheDocument();
+  });
+
+  it('exibe o calendario do mes atual', async () => {
+    montar();
+
+    const hoje = new Date();
+    const meses = [
+      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+    ];
+    expect(
+      await screen.findByRole('heading', {
+        name: `${meses[hoje.getMonth()]} ${hoje.getFullYear()}`,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('clicar em um dia do calendario abre o resumo com prioridade e descricao', async () => {
+    function hojeISO() {
+      const data = new Date();
+      const mm = String(data.getMonth() + 1).padStart(2, '0');
+      const dd = String(data.getDate()).padStart(2, '0');
+      return `${data.getFullYear()}-${mm}-${dd}`;
+    }
+
+    vi.mocked(listTasks).mockResolvedValue({
+      content: [
+        {
+          ...raiz,
+          id: '3f1d3f6e-0000-4000-8000-000000000099',
+          title: 'Revisar contrato',
+          dueDate: hojeISO(),
+          description: 'Conferir cláusulas antes de assinar.',
+        },
+      ],
+      page: 0,
+      size: 50,
+      totalItems: 1,
+      totalPages: 1,
+      first: true,
+      last: true,
+    });
+    montar();
+
+    expect(await screen.findByText('Revisar contrato')).toBeInTheDocument();
+
+    const [ano, mes, diaNum] = hojeISO().split('-').map(Number);
+    const rotulo = `Atividades de ${String(diaNum).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`;
+
+    const botoesDia = screen.getAllByRole('button', { name: rotulo });
+    expect(botoesDia.length).toBeGreaterThanOrEqual(1);
+    await userEvent.click(botoesDia[botoesDia.length - 1]);
+
+    expect(
+      await screen.findByRole('heading', { name: rotulo }),
+    );
+
+    const dialogo = screen.getByRole('dialog');
+    expect(
+      within(dialogo).getByText('Revisar contrato'),
+    ).toBeInTheDocument();
+    expect(within(dialogo).getByText('Conferir cláusulas antes de assinar.')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Média')).toBeInTheDocument();
+    expect(within(dialogo).getByText('A fazer')).toBeInTheDocument();
+  });
 });

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Task, TaskInput, TaskStatus } from '../types/task';
-import { STATUS_LABELS, STATUS_OPTIONS } from '../types/task';
 import type { WorkArea } from '../types/area';
 import { areasPorId, listAreas } from '../api/areas';
 import { createTask, getTask, listTasks, updateTask } from '../api/tasks';
 import TaskList from '../components/task/TaskList';
+import TaskSchedule from '../components/task/TaskSchedule';
 import TaskForm from '../components/task/TaskForm';
 import TaskDetail from '../components/task/TaskDetail';
 import AiPanel from '../components/task/AiPanel';
@@ -65,9 +65,7 @@ export default function TasksPage() {
   const carregar = useCallback(async () => {
     setLoading(true);
     try {
-      const pagina = await listTasks(
-        statusFiltro ? { status: statusFiltro, size: 50 } : { size: 50 },
-      );
+      const pagina = await listTasks({ size: 50, status: statusFiltro || undefined });
       setTarefas(pagina.content);
       setError(null);
     } catch (caught) {
@@ -78,7 +76,7 @@ export default function TasksPage() {
   }, [statusFiltro]);
 
   useEffect(() => {
-    listTasks(statusFiltro ? { status: statusFiltro, size: 50 } : { size: 50 })
+    listTasks({ size: 50, status: statusFiltro || undefined })
       .then((pagina) => {
         setTarefas(pagina.content);
         setError(null);
@@ -232,38 +230,24 @@ function voltar() {
       </header>
 
       {modo === 'lista' && (
-        <>
-          <label htmlFor="tasks-filtro-status" className="field">
-            <span className="field__label">Filtrar por status</span>
-            <select
-              id="tasks-filtro-status"
-              value={statusFiltro}
-              onChange={(event) => {
-                setStatusFiltro(event.target.value as TaskStatus | '');
-                setLoading(true);
-              }}
-            >
-              <option value="">Todos</option>
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>
-                  {STATUS_LABELS[status]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <TaskList
-            tasks={tarefas}
-            loading={loading}
-            error={error}
-            onRetry={() => {
-              setLoading(true);
-              void carregar();
-            }}
-            onSelect={abrirDetalhe}
-          />
-        </>
+        <TaskList
+          tasks={tarefas}
+          loading={loading}
+          error={error}
+          status={statusFiltro}
+          onStatusChange={(status) => {
+            setStatusFiltro(status);
+            setLoading(true);
+          }}
+          onRetry={() => {
+            setLoading(true);
+            void carregar();
+          }}
+          onSelect={abrirDetalhe}
+        />
       )}
+
+      {modo === 'lista' && <TaskSchedule tarefas={tarefas} />}
 
       {(modo === 'criar' || modo === 'editar') && (
         <TaskForm
