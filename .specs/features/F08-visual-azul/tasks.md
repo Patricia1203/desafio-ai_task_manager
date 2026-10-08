@@ -68,6 +68,42 @@
 - **Pronto quando:** formulário de criar/editar ocupa ~76% da seção em desktop com margens laterais simétricas e pequenas.
 - **Gate:** `npx vitest run` verde; `npx oxlint` limpo; `npx tsc -b && npx vite build` OK.
 
+### T-F08-11 — Voltar em criar/editar e breadcrumb na página de tarefas
+- **Status:** done (commit `9dfcffe`, 2026-10-08)
+- **Reqs:** RF-21, RF-22
+- **Depends on:** T-F08-01
+- **Arquivos (alterar):** `frontend/src/pages/TasksPage.tsx` (breadcrumb com `Link`, botão Voltar acima do form) e `frontend/src/index.css` (regras `.breadcrumb*`)
+- **O que fazer:** em criar/editar, o usuário pediu um botão para voltar (o "Cancelar" fica só no fim do form): acrescentar botão "Voltar" acima do form, que volta para o detalhe em edição ou para a lista em criação. Adicionar breadcrumb na página de tarefas: `Dashboard / Tarefas` (com link ao Dashboard); em criando/edição mostram `Tarefas` como link para a lista e o sub-nível atual (`Nova tarefa`/`Editar tarefa`/título da tarefa) precisa de `aria-current="page"`. Só na página de tarefas (dashboard e assistente não ganham breadcrumb).
+- **Pronto quando:** navegar criar/editar e voltar funciona; breadcrumb aparece só em `/tasks` com vínculo ao Dashboard e ao sub-estado; testes verdes.
+- **Gate:** `npx vitest run` verde; `npx oxlint` limpo; `npx tsc -b && npx vite build` OK.
+
+### T-F08-13 — Seta de voltar ao lado do título (no lugar do botão Voltar)
+- **Status:** done (commit `664bb49`, 2026-10-08)
+- **Reqs:** RF-21, RF-22
+- **Depends on:** T-F08-11
+- **Arquivos (alterar):** `frontend/src/pages/TasksPage.tsx` (cabeçalho) e `frontend/src/index.css` (`.tasks__titulo`, `.tasks__voltar--seta`)
+- **O que fazer:** o usuário pediu seta em vez do botão: remover o botão "Voltar" acima do form e a seta `←` ao lado do título "Tarefas" (`.tasks__voltar--seta`, 44px com aria-label "Voltar"), agrupando seta + título em `.tasks__titulo` (flex) para ficarem juntos à esquerda; remover também o "Voltar para a lista" do detalhe (a seta cobre o retorno). O clique da seta usa o mesmo `voltar()`.
+- **Pronto quando:** seta colada ao título em criar/editar/detalhe e o clique retorna ao destino certo; sem botões de texto duplicados.
+- **Gate:** `npx vitest run` verde; `npx oxlint` limpo; `npx tsc -b && npx vite build` OK.
+
+### T-F08-15 — Seta de voltar um pouco menor (44px → 36px)
+- **Status:** done (commit `0c53b71`, 2026-10-08)
+- **Reqs:** RF-21, RF-22
+- **Depends on:** T-F08-13
+- **Arquivos (alterar):** somente `frontend/src/index.css` (`.tasks__voltar--seta`)
+- **O que fazer:** o usuário pediu o botão da seta um pouco menor: reduzir `width`/`min-height` de 44px para 36px e fonte de 1.5rem para 1.25rem, mantendo o azul accent e a seta branca.
+- **Pronto quando:** seta ~36px visivelmente menor, ainda azul, clicável e colada ao título.
+- **Gate:** `npx vitest run` verde; `npx oxlint` limpo; `npx tsc -b && npx vite build` OK.
+
+### T-F08-16 — Breadcrumb "Tarefas" volta para a lista ao clicar dentro de uma tarefa
+- **Status:** done (commit `f2edb5a`, 2026-10-08)
+- **Reqs:** RF-21, RF-22
+- **Depends on:** T-F08-11
+- **Arquivos (alterar):** somente `frontend/src/pages/TasksPage.tsx` (link "Tarefas" do breadcrumb)
+- **O que fazer:** dentro de uma tarefa (detalhe) o link `Tarefas` do breadcrumb (`Link to="/tasks"`) não voltava para a lista porque, já estando em `/tasks`, o React Router não remonta a página e o estado `modo` continuava `'detalhe'`. Adicionar `onClick={() => setModo('lista')}` ao link.
+- **Pronto quando:** em detalhe/criar/editar, clicar no breadcrumb "Tarefas" mostra a lista (e muda o estado interno do modo).
+- **Gate:** `npx vitest run` verde; `npx oxlint` limpo; `npx tsc -b && npx vite build` OK.
+
 ### T-F08-07 — Card do formulário de criar/editar centralizado
 - **Status:** done (commit `6ead194`, 2026-10-08)
 - **Reqs:** RF-21, RF-22
