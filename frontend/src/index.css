@@ -833,3 +833,214 @@ textarea::placeholder {
 .dialog__acoes {
   margin-top: var(--space-3);
 }
+
+.ai-panel {
+  margin-top: var(--space-3);
+  border-left: 4px solid var(--color-ai);
+}
+
+.ai-panel h4 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  color: var(--color-ai-text);
+}
+
+.ai-panel__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ai-panel__status {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.ai-panel button {
+  color: var(--color-ai-text);
+  background: var(--color-surface);
+  border-color: var(--color-ai);
+}
+
+.ai-panel button:hover:not(:disabled) {
+  background: var(--color-ai-soft);
+}
+
+.ai-resultado__acoes button:first-child {
+  color: #fff;
+  background: var(--color-ai);
+}
+
+.ai-resultado__acoes button:first-child:hover:not(:disabled) {
+  background: var(--color-ai-hover);
+}
+
+.ai-resultado {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-ai-soft);
+  border: 1px solid var(--color-ai-border);
+  border-radius: var(--radius);
+}
+
+.ai-resultado h5 {
+  margin-top: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ai-resultado__titulo {
+  font-weight: 700;
+}
+
+.ai-resultado__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.ai-resultado__meta dt {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.ai-resultado__meta dd {
+  margin: 0;
+}
+
+.ai-resultado__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ai-resultado__lista li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.ai-resultado__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.ai-resultado__item input {
+  width: 24px;
+  min-height: 0;
+  height: 24px;
+  accent-color: var(--color-ai);
+}
+
+.ai-resultado__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.ai-resultado__contagem {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.assistant__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.assistant__janela {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.assistant__bolhas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: min(60vh, 640px);
+  overflow-y: auto;
+}
+
+.assistant__bolha {
+  align-self: flex-start;
+  max-width: min(80%, 72ch);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-ai-soft);
+  border-left: 4px solid var(--color-ai);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.assistant__bolha--usuario {
+  align-self: flex-end;
+  color: #fff;
+  background: var(--color-accent);
+  border-left: 0;
+  border-radius: var(--radius) var(--radius) 0 var(--radius);
+}
+
+.assistant__autoria {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.assistant__bolha--usuario .assistant__autoria {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.assistant__texto {
+  margin: var(--space-1) 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.assistant__vazio,
+.assistant__digitando {
+  color: var(--color-muted);
+}
+
+.assistant__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.assistant__form .field {
+  margin-bottom: 0;
+}
+
+.assistant__form button[type='submit'] {
+  align-self: flex-end;
+  background: var(--color-ai);
+  border-color: var(--color-ai);
+}
+
+.assistant__form button[type='submit']:hover:not(:disabled) {
+  background: var(--color-ai-hover);
+  border-color: var(--color-ai-hover);
+}
