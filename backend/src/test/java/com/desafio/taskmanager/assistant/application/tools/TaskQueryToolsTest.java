@@ -1,6 +1,9 @@
 package com.desafio.taskmanager.assistant.application.tools;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -45,11 +48,15 @@ class TaskQueryToolsTest {
     @Mock
     private TaskRepository repository;
 
+    /** Meio-dia UTC de 08/10/2026 -> 09h no horario de Sao Paulo, sem depender do dia da suite. */
+    private final Clock clock = Clock.fixed(
+            Instant.parse("2026-10-08T12:00:00Z"), ZoneId.of("America/Sao_Paulo"));
+
     private TaskQueryTools tools;
 
     @BeforeEach
     void montaFerramentas() {
-        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(10, true));
+        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(10, true), clock);
     }
 
     @Test
@@ -73,7 +80,7 @@ class TaskQueryToolsTest {
 
     @Test
     void oTotalVemDoFiltroInteiroEOsItensRespeitamOLimite() {
-        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(3, true));
+        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(3, true), clock);
         when(repository.countByStatusIn(any())).thenReturn(40L);
         when(repository.findEmAbertoPorUrgencia(any(), any(), any(), any())).thenReturn(List.of(
                 tarefa("1", TaskStatus.TODO, TaskPriority.MEDIUM),
@@ -91,7 +98,7 @@ class TaskQueryToolsTest {
 
     @Test
     void oLimiteVaiParaOBancoComOPageable() {
-        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(7, true));
+        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(7, true), clock);
         when(repository.countByStatusIn(any())).thenReturn(0L);
         when(repository.findEmAbertoPorUrgencia(any(), any(), any(), any())).thenReturn(List.of());
 
@@ -104,7 +111,7 @@ class TaskQueryToolsTest {
 
     @Test
     void getOverdueTasksUsaPrazoDeHojeComoFronteira() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         when(repository.countByDueDateLessThanAndStatusNot(hoje, TaskStatus.DONE)).thenReturn(1L);
         when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(any(), any(), any()))
                 .thenReturn(List.of(tarefa("Vencida", TaskStatus.TODO, TaskPriority.HIGH)));
@@ -154,7 +161,7 @@ class TaskQueryToolsTest {
 
     @Test
     void getTasksDueSoonUsaJanelaDeHojeAteHojeMaisDias() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         when(repository.countByDueDateBetween(hoje, hoje.plusDays(7))).thenReturn(2L);
         when(repository.findByDueDateBetweenOrderByDueDateAsc(any(), any(), any()))
                 .thenReturn(List.of(tarefa("Quase", TaskStatus.TODO, TaskPriority.MEDIUM)));
@@ -174,6 +181,24 @@ class TaskQueryToolsTest {
                     .isInstanceOf(BusinessRuleException.class)
                     .hasMessageContaining("days deve estar entre 1 e 365");
         }
+    }
+
+    @Test
+    void getOverdueTasksUsaODiaDoFusoConfiguradoNaFronteiraUtc() {
+        // 02h UTC de 09/10/2026 encerram 23h de 08/10 em Sao Paulo: em UTC ja seria
+        // dia 09, mas o fuso configurado (app.timezone) tem de vencer "hoje" = 08/10.
+        Clock fronteira = Clock.fixed(
+                Instant.parse("2026-10-09T02:00:00Z"), ZoneId.of("America/Sao_Paulo"));
+        tools = new TaskQueryTools(repository, new AssistantLimitsProperties(10, true), fronteira);
+        LocalDate diaSaoPaulo = LocalDate.of(2026, 10, 8);
+        when(repository.countByDueDateLessThanAndStatusNot(diaSaoPaulo, TaskStatus.DONE)).thenReturn(1L);
+        when(repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(any(), any(), any()))
+                .thenReturn(List.of(tarefa("Vencida", TaskStatus.TODO, TaskPriority.HIGH)));
+
+        tools.getOverdueTasks();
+
+        verify(repository).findByDueDateLessThanAndStatusNotOrderByDueDateAsc(
+                eq(diaSaoPaulo), eq(TaskStatus.DONE), any(Pageable.class));
     }
 
     @Test

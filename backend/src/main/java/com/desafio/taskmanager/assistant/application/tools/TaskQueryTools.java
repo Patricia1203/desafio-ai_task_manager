@@ -1,5 +1,6 @@
 package com.desafio.taskmanager.assistant.application.tools;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -45,10 +46,12 @@ public class TaskQueryTools {
 
     private final TaskRepository repository;
     private final int maxToolResults;
+    private final Clock clock;
 
-    public TaskQueryTools(TaskRepository repository, AssistantLimitsProperties properties) {
+    public TaskQueryTools(TaskRepository repository, AssistantLimitsProperties properties, Clock clock) {
         this.repository = repository;
         this.maxToolResults = properties.maxToolResults();
+        this.clock = clock;
     }
 
     /** Tarefas em aberto (TODO ou IN_PROGRESS) por urgencia: prazo, prioridade e recencia. */
@@ -60,7 +63,7 @@ public class TaskQueryTools {
 
     /** Tarefas com prazo vencido e ainda nao concluidas, do prazo mais antigo para o mais proximo. */
     public ToolResultPage getOverdueTasks() {
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         return pagina(
                 repository.countByDueDateLessThanAndStatusNot(hoje, TaskStatus.DONE),
                 repository.findByDueDateLessThanAndStatusNotOrderByDueDateAsc(hoje, TaskStatus.DONE, limite()));
@@ -84,7 +87,7 @@ public class TaskQueryTools {
         if (days < 1 || days > MAX_DIAS_JANELA) {
             throw new BusinessRuleException("days deve estar entre 1 e " + MAX_DIAS_JANELA);
         }
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = LocalDate.now(clock);
         LocalDate fim = hoje.plusDays(days);
         return pagina(
                 repository.countByDueDateBetween(hoje, fim),

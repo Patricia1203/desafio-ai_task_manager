@@ -2,7 +2,10 @@ package com.desafio.taskmanager.ai.adapter;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,6 +50,10 @@ class SpringAiAssistantAdapterTest {
     private final FakeChatModelSupport fake = new FakeChatModelSupport();
     private TaskRepository repository;
 
+    /** Meio-dia UTC -> 09h no horario de Sao Paulo, para o grounding nao depender do dia da suite. */
+    private final Clock clock = Clock.fixed(
+            Instant.parse("2026-10-08T12:00:00Z"), ZoneId.of("America/Sao_Paulo"));
+
     @BeforeEach
     void setStubs() {
         repository = mock(TaskRepository.class);
@@ -65,11 +72,11 @@ class SpringAiAssistantAdapterTest {
         ChatClient chatClient = ChatClient.builder(fake.chatModel())
                 .defaultTemplateRenderer(StTemplateRenderer.builder().build())
                 .build();
-        return new SpringAiAssistantAdapter(chatClient, ferramentas(), new AssistantLimitsProperties(3, toolCalling));
+        return new SpringAiAssistantAdapter(chatClient, ferramentas(), new AssistantLimitsProperties(3, toolCalling), clock);
     }
 
     private TaskQueryTools ferramentas() {
-        return new TaskQueryTools(repository, new AssistantLimitsProperties(3, true));
+        return new TaskQueryTools(repository, new AssistantLimitsProperties(3, true), clock);
     }
 
     private static List<AssistantPort.Mensagem> historico() {
@@ -93,7 +100,7 @@ class SpringAiAssistantAdapterTest {
             assertThat(resposta).isEqualTo("Resposta com base nos dados");
             String texto = textoDoPrompt(fake.prompts().get(0));
             assertThat(texto)
-                    .contains("Data de hoje: " + LocalDate.now())
+                    .contains("Data de hoje: " + LocalDate.now(clock))
                     .contains("quais estao pendentes?")
                     .contains("duas tarefas em aberto")
                     .contains("e as vencidas?")
@@ -101,6 +108,25 @@ class SpringAiAssistantAdapterTest {
             assertThat(texto.indexOf("quais estao pendentes?"))
                     .isLessThan(texto.indexOf("duas tarefas em aberto"))
                     .isLessThan(texto.indexOf("e as vencidas?"));
+        }
+
+        @Test
+        @DisplayName("data do grounding segue o fuso configurado na fronteira com UTC")
+        void dataDoGroundingSegueOFusoConfigurado() {
+            // 02h UTC de 09/10/2026 = 23h de 08/10 em Sao Paulo: em UTCja seria dia 09.
+            Clock fronteira = Clock.fixed(
+                    Instant.parse("2026-10-09T02:00:00Z"), ZoneId.of("America/Sao_Paulo"));
+            ChatClient chatClient = ChatClient.builder(fake.chatModel())
+                    .defaultTemplateRenderer(StTemplateRenderer.builder().build())
+                    .build();
+            SpringAiAssistantAdapter adapter = new SpringAiAssistantAdapter(
+                    chatClient, ferramentas(), new AssistantLimitsProperties(3, true), fronteira);
+            fake.respond("Ok");
+
+            adapter.chat(List.of(), "hoje");
+
+            assertThat(textoDoPrompt(fake.prompts().get(0)))
+                    .contains("Data de hoje: 2026-10-08");
         }
 
         @Test

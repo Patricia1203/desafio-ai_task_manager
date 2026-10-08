@@ -37,6 +37,10 @@ server:
     context-path: /api
 
 app:
+  # Fuso do "agora" do sistema (T-F06-09): quem decide o dia de hoje sao o
+  # vencimento (TaskQueryTools) e a data de grounding do assistente. Sem isto
+  # tudo dependeria do fuso da JVM, que muda de maquina para maquina.
+  timezone: ${APP_TIMEZONE:America/Sao_Paulo}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   ai:

@@ -1,6 +1,7 @@
 package com.desafio.taskmanager.ai.adapter;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -50,19 +51,21 @@ public class SpringAiAssistantAdapter implements AssistantPort {
     private final ChatClient chatClient;
     private final TaskQueryTools tools;
     private final boolean toolCalling;
+    private final Clock clock;
     private final JsonMapper json = JsonMapper.builder().build();
 
     public SpringAiAssistantAdapter(
-            ChatClient chatClient, TaskQueryTools tools, AssistantLimitsProperties properties) {
+            ChatClient chatClient, TaskQueryTools tools, AssistantLimitsProperties properties, Clock clock) {
         this.chatClient = chatClient;
         this.tools = tools;
         this.toolCalling = properties.toolCalling();
+        this.clock = clock;
     }
 
     @Override
     public String chat(List<Mensagem> historico, String mensagem) {
         Map<String, Object> params = new HashMap<>();
-        params.put("currentDate", LocalDate.now().toString());
+        params.put("currentDate", LocalDate.now(clock).toString());
         params.put("contextoOpcoes", toolCalling ? "" : contextoOpcoes());
 
         ChatClient.ChatClientRequestSpec requisicao = chatClient.prompt();
