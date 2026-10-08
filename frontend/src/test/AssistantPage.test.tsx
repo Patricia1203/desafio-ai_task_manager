@@ -254,4 +254,36 @@ describe('AssistantPage', () => {
     expect(chat.getByText(/Mande uma mensagem para consultar o assistente/)).toBeInTheDocument();
     expect(enviarMensagem).not.toHaveBeenCalled();
   });
+
+  it('esconde e mostra a aba de historico pelo botao do cabecalho, mantendo o chat', async () => {
+    vi.mocked(listarConversas).mockResolvedValue([
+      {
+        id: '0052e5f4-0000-4000-8000-000000000001',
+        title: 'Conversa antiga',
+        updatedAt: '2026-10-08T10:00:00Z',
+      },
+    ]);
+    render(<AssistantPage />);
+
+    expect(await historico().findByText('Conversa antiga')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ocultar histórico' }));
+
+    expect(
+      screen.queryByRole('navigation', { name: 'Histórico de conversas' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mostrar histórico' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    expect(screen.getByRole('region', { name: 'Conversa' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Mostrar histórico' }));
+
+    expect(await historico().findByText('Conversa antiga')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ocultar histórico' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
 });

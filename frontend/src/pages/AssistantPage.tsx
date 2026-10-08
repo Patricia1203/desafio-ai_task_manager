@@ -41,6 +41,7 @@ export default function AssistantPage() {
   const [conversas, setConversas] = useState<ConversationSummary[]>([]);
   const [ativaId, setAtivaId] = useState<string | null>(null);
   const [carregandoConversa, setCarregandoConversa] = useState(false);
+  const [historicoVisivel, setHistoricoVisivel] = useState(true);
   const proximoId = useRef(1);
 
   const recarregarConversas = useCallback(() => {
@@ -62,13 +63,6 @@ export default function AssistantPage() {
     ]);
   }
 
-  function moverParaTopo(id: string) {
-    setConversas((anteriores) => [
-      ...anteriores.filter((conversa) => conversa.id !== id),
-      ...anteriores.filter((conversa) => conversa.id === id),
-    ]);
-  }
-
   async function abrirConversa(conversa: ConversationSummary) {
     setErro(null);
     setCarregandoConversa(true);
@@ -83,7 +77,6 @@ export default function AssistantPage() {
       );
       setConversationId(perfil.id);
       setAtivaId(perfil.id);
-      moverParaTopo(perfil.id);
     } catch (caught) {
       setErro(messageOf(caught));
     } finally {
@@ -119,41 +112,57 @@ export default function AssistantPage() {
     <section aria-labelledby="assistant-heading" className="assistant">
       <header className="assistant__header">
         <h2 id="assistant-heading">Assistente</h2>
-        <button type="button" onClick={novaConversa} disabled={digitando || mensagens.length === 0}>
-          Nova conversa
-        </button>
+        <div className="assistant__acoes">
+          <button
+            type="button"
+            onClick={() => setHistoricoVisivel((visivel) => !visivel)}
+            aria-expanded={historicoVisivel}
+            aria-controls="assistant-historico"
+          >
+            {historicoVisivel ? 'Ocultar histórico' : 'Mostrar histórico'}
+          </button>
+          <button type="button" onClick={novaConversa} disabled={digitando || mensagens.length === 0}>
+            Nova conversa
+          </button>
+        </div>
       </header>
 
       <div className="assistant__corpo">
-        <nav className="assistant__historico" aria-label="Histórico de conversas">
-          <h3 className="assistant__historico-titulo">Histórico</h3>
-          {conversas.length === 0 ? (
-            <p className="assistant__historico-vazio">Nenhuma conversa salva.</p>
-          ) : (
-            <ol className="assistant__conversas">
-              {conversas.map((conversa) => (
-                <li
-                  key={conversa.id}
-                  className={conversa.id === ativaId ? 'assistant__conversa--ativa' : ''}
-                >
-                  <button
-                    type="button"
-                    onClick={() => abrirConversa(conversa)}
-                    disabled={digitando || carregandoConversa}
-                    aria-current={conversa.id === ativaId ? 'true' : undefined}
+        {historicoVisivel && (
+          <nav
+            className="assistant__historico"
+            id="assistant-historico"
+            aria-label="Histórico de conversas"
+          >
+            <h3 className="assistant__historico-titulo">Histórico</h3>
+            {conversas.length === 0 ? (
+              <p className="assistant__historico-vazio">Nenhuma conversa salva.</p>
+            ) : (
+              <ol className="assistant__conversas">
+                {conversas.map((conversa) => (
+                  <li
+                    key={conversa.id}
+                    className={conversa.id === ativaId ? 'assistant__conversa--ativa' : ''}
                   >
-                    <span className="assistant__conversa-titulo">
-                      {conversa.title || 'Conversa'}
-                    </span>
-                    <span className="assistant__conversa-data">
-                      {formatarData(conversa.updatedAt)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          )}
-        </nav>
+                    <button
+                      type="button"
+                      onClick={() => abrirConversa(conversa)}
+                      disabled={digitando || carregandoConversa}
+                      aria-current={conversa.id === ativaId ? 'true' : undefined}
+                    >
+                      <span className="assistant__conversa-titulo">
+                        {conversa.title || 'Conversa'}
+                      </span>
+                      <span className="assistant__conversa-data">
+                        {formatarData(conversa.updatedAt)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </nav>
+        )}
 
         <ChatWindow mensagens={mensagens} digitando={digitando} erro={erro} onEnviar={enviar} />
       </div>
