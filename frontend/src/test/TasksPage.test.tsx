@@ -96,4 +96,13 @@ describe('TasksPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Mover casa' })).toBeInTheDocument();
   });
+
+  it('clicar em voltar na subtarefa retorna ao detalhe da tarefa pai', async () => {
+    montar();
+
+    await userEvent.click(await screen.findByRole('button', { name: /Contratar empresa/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+
+    expect(await screen.findByRole('heading', { name: 'Mover casa' })).toBeInTheDocument();
+  });
 });

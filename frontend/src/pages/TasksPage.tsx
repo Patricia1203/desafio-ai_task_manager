@@ -120,7 +120,16 @@ useEffect(() => {
 }
 
 function voltar() {
-  setModo(modo === 'editar' && selecionada ? 'detalhe' : 'lista');
+  if (modo === 'editar' && selecionada) {
+    setModo('detalhe');
+    return;
+  }
+  if (modo === 'detalhe' && selecionada?.parentId && paiDaSelecionada) {
+    setSelecionada(paiDaSelecionada);
+    setModo('detalhe');
+    return;
+  }
+  setModo('lista');
 }
 
   async function salvar(input: TaskInput) {
