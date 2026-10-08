@@ -10,11 +10,12 @@ package com.desafio.taskmanager.task.application.dto;
  * <p>Campos em ingles desde a revisao F06 (documentacao do desafio exige
  * ingles); os rotulos em portugues ficam so na UI.
  *
- * @param total        tarefas de topo e subtarefas
- * @param pending      status TODO
- * @param inProgress   status IN_PROGRESS
- * @param done         status DONE
- * @param highPriority tarefas com prioridade HIGH
+ * @param total        itens finais: toda linha que nao tem subtarefa (se a
+ *                     tarefa tem filhas, quem conta sao as filhas)
+ * @param pending      status TODO entre os itens finais
+ * @param inProgress   status IN_PROGRESS entre os itens finais
+ * @param done         status DONE entre os itens finais
+ * @param highPriority itens finais com prioridade HIGH ainda nao concluidos
  */
 public record TaskSummary(
         long total,

@@ -136,14 +136,18 @@ public class TaskService {
         repository.delete(task);
     }
 
-    /** RF-20. Indicadores do dashboard, contados direto no banco. */
+    /**
+     * RF-20. Indicadores do dashboard, contados direto no banco sobre <b>itens
+     * finais</b> (tarefa com subtarefas nao conta; contam as subtarefas de menor
+     * nivel). Alta prioridade conta apenas as que ainda nao foram concluidas.
+     */
     public TaskSummary summary() {
         return new TaskSummary(
-                repository.countAll(),
-                repository.countByStatusValue(TaskStatus.TODO),
-                repository.countByStatusValue(TaskStatus.IN_PROGRESS),
-                repository.countByStatusValue(TaskStatus.DONE),
-                repository.countByPriorityValue(TaskPriority.HIGH));
+                repository.countLeaves(),
+                repository.countLeavesByStatusValue(TaskStatus.TODO),
+                repository.countLeavesByStatusValue(TaskStatus.IN_PROGRESS),
+                repository.countLeavesByStatusValue(TaskStatus.DONE),
+                repository.countLeavesByPriorityValueAndNotDone(TaskPriority.HIGH, TaskStatus.DONE));
     }
 
     /** O status inicial e da entidade; o pai so existe na variante de subtarefa. */

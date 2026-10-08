@@ -91,14 +91,18 @@ public class TaskQueryTools {
                 repository.findByDueDateBetweenOrderByDueDateAsc(hoje, fim, limite()));
     }
 
-    /** Indicadores, mesmos numeros do dashboard (RF-20) para o assistente responder com base. */
+    /**
+     * Indicadores, mesmos numeros do dashboard (RF-20) para o assistente responder
+     * com base: itens finais (tarefa com subtarefa nao conta) e alta prioridade
+     * so com as ainda nao concluidas.
+     */
     public TaskSummary getTaskSummary() {
         return new TaskSummary(
-                repository.countAll(),
-                repository.countByStatusValue(TaskStatus.TODO),
-                repository.countByStatusValue(TaskStatus.IN_PROGRESS),
-                repository.countByStatusValue(TaskStatus.DONE),
-                repository.countByPriorityValue(TaskPriority.HIGH));
+                repository.countLeaves(),
+                repository.countLeavesByStatusValue(TaskStatus.TODO),
+                repository.countLeavesByStatusValue(TaskStatus.IN_PROGRESS),
+                repository.countLeavesByStatusValue(TaskStatus.DONE),
+                repository.countLeavesByPriorityValueAndNotDone(TaskPriority.HIGH, TaskStatus.DONE));
     }
 
     private Pageable limite() {

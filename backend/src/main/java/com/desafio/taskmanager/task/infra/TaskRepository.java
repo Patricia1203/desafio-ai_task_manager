@@ -91,18 +91,41 @@ public interface TaskRepository
 
     Page<Task> findByStatus(TaskStatus status, Pageable pageable);
 
-    @Query("select count(t) from Task t")
-    long countAll();
-
-    @Query("select count(t) from Task t where t.status = :status")
-    long countByStatusValue(@Param("status") TaskStatus status);
-
     @Query("select count(t) from Task t where t.priority = :priority")
     long countByPriorityValue(@Param("priority") TaskPriority priority);
 
-    @Query("select count(t) from Task t where t.priority = :priority and t.status <> :done")
-    long countByPriorityValueAndNotDone(@Param("priority") TaskPriority priority,
-                                        @Param("done") TaskStatus done);
+    /**
+     * Itens finais do dashboard: uma tarefa que tem subtarefas nao conta, contam
+     * as de menor nivel. Assim o KPI reflete "o que falta trabalhar" em vez de
+     * contar pai e filhas como linhas independentes.
+     */
+    @Query("""
+            select count(t) from Task t
+            where not exists (select 1 from Task s where s.parent = t)
+            """)
+    long countLeaves();
+
+    /**
+     * Itens finais por status (T-F11-XX). Mesmo criterio do {@link #countLeaves()},
+     * somado ao status informado.
+     */
+    @Query("""
+            select count(t) from Task t
+            where not exists (select 1 from Task s where s.parent = t) and t.status = :status
+            """)
+    long countLeavesByStatusValue(@Param("status") TaskStatus status);
+
+    /**
+     * Itens finais de uma prioridade ainda nao concluidos (T-F11-XX). O KPI de
+     * alta prioridade conta o que resta fazer, nao o historico todo.
+     */
+    @Query("""
+            select count(t) from Task t
+            where not exists (select 1 from Task s where s.parent = t)
+              and t.priority = :priority and t.status <> :done
+            """)
+    long countLeavesByPriorityValueAndNotDone(@Param("priority") TaskPriority priority,
+                                              @Param("done") TaskStatus done);
 
     @Query("select count(t) from Task t where t.parent is not null")
     long countSubtasks();

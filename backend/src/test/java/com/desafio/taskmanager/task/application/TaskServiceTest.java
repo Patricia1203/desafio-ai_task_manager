@@ -397,6 +397,27 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(summary.highPriority()).isLessThanOrEqualTo(summary.total());
     }
 
+    @Test
+    void summaryContaSomenteeItensFinaisEAltaPrioridadeNaoConcluida() {
+        Task pai = criar("Pai com filhas", null, TaskPriority.HIGH, null);
+        criarSubtask(pai.getId(), "Filha 1");
+        criarSubtask(pai.getId(), "Filha 2");
+        service.changeStatus(pai.getId(), TaskStatus.DONE);
+        Task altaConcluida = criar("Alta concluida", null, TaskPriority.HIGH, null);
+        service.changeStatus(altaConcluida.getId(), TaskStatus.DONE);
+        Task simples = criar("Simples", null, TaskPriority.HIGH, null);
+
+        // Pai nao conta (tem filhas); contam Filha1, Filha2, altaConcluida e Simples.
+        // Alta prioridade so a nao concluida: apenas Simples.
+        TaskSummary summary = service.summary();
+
+        assertThat(summary.total()).isEqualTo(4);
+        assertThat(summary.pending()).isEqualTo(3);
+        assertThat(summary.inProgress()).isZero();
+        assertThat(summary.done()).isEqualTo(1);
+        assertThat(summary.highPriority()).isEqualTo(1);
+    }
+
     // --- lista so com tarefas-raiz (T-F07-01) ---
 
     @Test

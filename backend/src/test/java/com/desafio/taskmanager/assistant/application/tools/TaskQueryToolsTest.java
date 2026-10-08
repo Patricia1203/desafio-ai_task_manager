@@ -178,11 +178,12 @@ class TaskQueryToolsTest {
 
     @Test
     void getTaskSummaryMontaAsContagens() {
-        when(repository.countAll()).thenReturn(4L);
-        when(repository.countByStatusValue(TaskStatus.TODO)).thenReturn(2L);
-        when(repository.countByStatusValue(TaskStatus.IN_PROGRESS)).thenReturn(1L);
-        when(repository.countByStatusValue(TaskStatus.DONE)).thenReturn(1L);
-        when(repository.countByPriorityValue(TaskPriority.HIGH)).thenReturn(2L);
+        when(repository.countLeaves()).thenReturn(4L);
+        when(repository.countLeavesByStatusValue(TaskStatus.TODO)).thenReturn(2L);
+        when(repository.countLeavesByStatusValue(TaskStatus.IN_PROGRESS)).thenReturn(1L);
+        when(repository.countLeavesByStatusValue(TaskStatus.DONE)).thenReturn(1L);
+        when(repository.countLeavesByPriorityValueAndNotDone(TaskPriority.HIGH, TaskStatus.DONE))
+                .thenReturn(2L);
 
         assertThat(tools.getTaskSummary()).isEqualTo(
                 new TaskSummary(4L, 2L, 1L, 1L, 2L));
@@ -200,11 +201,12 @@ class TaskQueryToolsTest {
         when(repository.countByPriorityValue(any())).thenReturn(0L);
         when(repository.findPorPrioridadePorUrgencia(any(), any(), any(), any())).thenReturn(List.of());
         when(repository.findById(any())).thenReturn(Optional.empty());
-        when(repository.countAll()).thenReturn(0L);
-        when(repository.countByStatusValue(eq(TaskStatus.TODO))).thenReturn(0L);
-        when(repository.countByStatusValue(eq(TaskStatus.IN_PROGRESS))).thenReturn(0L);
-        when(repository.countByStatusValue(eq(TaskStatus.DONE))).thenReturn(0L);
-        when(repository.countByPriorityValue(eq(TaskPriority.HIGH))).thenReturn(0L);
+        when(repository.countLeaves()).thenReturn(0L);
+        when(repository.countLeavesByStatusValue(eq(TaskStatus.TODO))).thenReturn(0L);
+        when(repository.countLeavesByStatusValue(eq(TaskStatus.IN_PROGRESS))).thenReturn(0L);
+        when(repository.countLeavesByStatusValue(eq(TaskStatus.DONE))).thenReturn(0L);
+        when(repository.countLeavesByPriorityValueAndNotDone(eq(TaskPriority.HIGH), eq(TaskStatus.DONE)))
+                .thenReturn(0L);
 
         tools.getPendingTasks();
         tools.getOverdueTasks();

@@ -55,8 +55,9 @@ class SpringAiAssistantAdapterTest {
                 .thenReturn(List.of());
         when(repository.countByStatusIn(any())).thenReturn(0L);
         when(repository.countByDueDateLessThanAndStatusNot(any(), any())).thenReturn(0L);
-        when(repository.countAll()).thenReturn(0L);
-        when(repository.countByStatusValue(any())).thenReturn(0L);
+        when(repository.countLeaves()).thenReturn(0L);
+        when(repository.countLeavesByStatusValue(any())).thenReturn(0L);
+        when(repository.countLeavesByPriorityValueAndNotDone(any(), any())).thenReturn(0L);
         when(repository.countByPriorityValue(any())).thenReturn(0L);
     }
 

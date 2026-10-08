@@ -242,12 +242,28 @@ class TaskRepositoryTest extends PostgresIntegrationTest {
 
         repository.saveAndFlush(nova("D", TaskStatus.DONE));
 
-        assertThat(repository.countAll()).isEqualTo(4);
-        assertThat(repository.countByStatusValue(TaskStatus.TODO)).isEqualTo(3);
-        assertThat(repository.countByStatusValue(TaskStatus.DONE)).isEqualTo(1);
-        assertThat(repository.countByPriorityValue(TaskPriority.HIGH)).isEqualTo(2);
-        assertThat(repository.countByPriorityValueAndNotDone(TaskPriority.HIGH, TaskStatus.DONE))
+        assertThat(repository.countLeaves()).isEqualTo(4);
+        assertThat(repository.countLeavesByStatusValue(TaskStatus.TODO)).isEqualTo(3);
+        assertThat(repository.countLeavesByStatusValue(TaskStatus.DONE)).isEqualTo(1);
+        assertThat(repository.countLeavesByPriorityValueAndNotDone(TaskPriority.HIGH, TaskStatus.DONE))
                 .isEqualTo(2);
+    }
+
+    @Test
+    void summaryContaSomenteeItensFinaisELeAFilhaSemNivel() {
+        Task pai = repository.saveAndFlush(nova("Pai", TaskStatus.DONE));
+        Task filha = repository.saveAndFlush(new Task("Filha", null, null, null, pai));
+        repository.saveAndFlush(new Task("Neta", null, null, null, filha));
+        repository.saveAndFlush(new Task("Solta", null, TaskPriority.HIGH, null, null));
+
+        // Pai e Filha nao contam (tem filhos); contam Neta e Solta.
+        assertThat(repository.countLeaves()).isEqualTo(2);
+        assertThat(repository.countLeavesByStatusValue(TaskStatus.TODO)).isEqualTo(2);
+        assertThat(repository.countLeavesByStatusValue(TaskStatus.DONE)).isZero();
+
+        // Solta (HIGH, TOD) e a unica folha de alta prioridade em aberto.
+        assertThat(repository.countLeavesByPriorityValueAndNotDone(TaskPriority.HIGH, TaskStatus.DONE))
+                .isEqualTo(1);
     }
 
     @Test
