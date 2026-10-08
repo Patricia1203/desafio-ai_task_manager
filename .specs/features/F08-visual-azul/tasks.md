@@ -58,3 +58,12 @@
 - **O que fazer:** **um único commit** `docs: ...` cobrindo toda a F08 com apenas os pontos importantes (visual seguindo a prévia; sidebar/mobile; dashboard rico; prazo formatado; núcleo azul-céu da IA/assistente; fonte Nunito; gates finais). Sem commits de docs por task.
 - **Pronto quando:** um só commit de docs detalha a F08 em poucas linhas; STATE/TRACEABILITY/tasks.md coerentes.
 - **Gate:** `git log --oneline` com 1 commit `docs:` referente à F08.
+
+### T-F08-07 — Card do formulário de criar/editar centralizado
+- **Status:** done (commit `6ead194`, 2026-10-08)
+- **Reqs:** RF-21, RF-22
+- **Depends on:** T-F08-01
+- **Arquivos (alterar):** somente `frontend/src/index.css` (regra `.task-form`)
+- **O que fazer:** o card de 560px fica colado à esquerda deixando um vazio grande à direita. Centralizar o card com `width: 100%; max-width: 560px; margin-inline: auto`, mantendo o tamanho compacto da prévia mas simétrico na tela (em telas ≤760px continua ocupando toda a largura, sem efeito).
+- **Pronto quando:** o formulário de criar/editar aparece centralizado; sem alteração de comportamento/testes.
+- **Gate:** `npx vitest run` verde; `npx oxlint` limpo; `npx tsc -b && npx vite build` OK.
