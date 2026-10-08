@@ -10,3 +10,6 @@ node_modules/
 
 # Enunciado do desafio: fonte de requisitos, mas nao vai para o git (decisao do usuario)
 Desafio de Programa*.pdf
+
+# Previa do frontend: mockup local, nao vai para o git (decisao do usuario)
+Prévia*.html
