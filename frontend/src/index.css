@@ -528,7 +528,7 @@ textarea::placeholder {
   color: var(--color-accent);
 }
 
-.dashboard__card:nth-child(5) .dashboard__valor {
+.dashboard__card--perigo .dashboard__valor {
   color: var(--color-danger);
 }
 
@@ -536,6 +536,12 @@ textarea::placeholder {
   margin-top: var(--space-1);
   font-size: 0.875rem;
   font-weight: 600;
+  color: var(--color-muted);
+}
+
+.dashboard__detalhe {
+  margin-top: var(--space-2);
+  font-size: 0.75rem;
   color: var(--color-muted);
 }
 

@@ -77,6 +77,16 @@ export default function DashboardPage() {
   const abertas = summary ? summary.pending + summary.inProgress : 0;
   const concluidas = summary?.done ?? 0;
   const pct = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+  const pctDe = (parte: number, base: number) => (base > 0 ? Math.round((parte / base) * 100) : 0);
+  const detalhes: Record<keyof TaskSummary, string> = summary
+    ? {
+        total: `${pct}% concluídas`,
+        pending: `${summary.pending} de ${total} · ${pctDe(summary.pending, total)}%`,
+        inProgress: `${summary.inProgress} de ${total} · ${pctDe(summary.inProgress, total)}%`,
+        done: `${summary.done} de ${total} · ${pctDe(summary.done, total)}%`,
+        highPriority: `${summary.highPriority} de ${total} · ${pctDe(summary.highPriority, total)}%`,
+      }
+    : { total: '', pending: '', inProgress: '', done: '', highPriority: '' };
 
   return (
     <section aria-labelledby="dashboard-heading">
@@ -119,12 +129,17 @@ export default function DashboardPage() {
             </header>
 
             <ul className="dashboard__indicadores">
-              {INDICADORES.map(({ chave, rotulo }) => (
-                <li key={chave} className="dashboard__card">
-                  <span className="dashboard__valor">{summary[chave]}</span>
-                  <span className="dashboard__rotulo">{rotulo}</span>
-                </li>
-              ))}
+              {INDICADORES.map(({ chave, rotulo }) => {
+                const valor = summary[chave];
+                const perigo = chave === 'highPriority' && valor >= 1;
+                return (
+                  <li key={chave} className={`dashboard__card${perigo ? ' dashboard__card--perigo' : ''}`}>
+                    <span className="dashboard__valor">{valor}</span>
+                    <span className="dashboard__rotulo">{rotulo}</span>
+                    <span className="dashboard__detalhe">{detalhes[chave]}</span>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="dashboard__colunas">

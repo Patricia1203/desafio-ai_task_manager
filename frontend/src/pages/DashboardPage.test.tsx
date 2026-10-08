@@ -102,6 +102,15 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Concluídas').closest('li')).toHaveTextContent('4');
     expect(screen.getByText('Alta prioridade').closest('li')).toHaveTextContent('2');
 
+    expect(screen.getByText('33% concluídas')).toBeInTheDocument();
+    expect(screen.getByText('5 de 12 · 42%')).toBeInTheDocument();
+    expect(screen.getByText('3 de 12 · 25%')).toBeInTheDocument();
+    expect(screen.getByText('4 de 12 · 33%')).toBeInTheDocument();
+    expect(screen.getByText('2 de 12 · 17%')).toBeInTheDocument();
+
+    expect(screen.getByText('Alta prioridade').closest('li')).toHaveClass('dashboard__card--perigo');
+    expect(screen.getByText('Total de tarefas').closest('li')).not.toHaveClass('dashboard__card--perigo');
+
     expect(screen.getByText(/Você tem 8 tarefas em aberto, 2 com alta prioridade\. 1 está atrasada\./)).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Progresso geral' })).toHaveAttribute(
       'aria-valuenow',
@@ -125,6 +134,25 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Definir roadmap')).toBeInTheDocument();
     expect(screen.getByText('Atrasada · 01/10/2026')).toBeInTheDocument();
     expect(screen.getByText('Revisar contrato')).toBeInTheDocument();
+  });
+
+  it('alta prioridade zerada nao fica vermelha nos KPIs', async () => {
+    vi.mocked(getSummary).mockResolvedValue(
+      resumo({ total: 4, pending: 2, inProgress: 1, done: 1, highPriority: 0 }),
+    );
+    vi.mocked(listTasks).mockResolvedValue(pagina(TAREFAS));
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Alta prioridade')).toBeInTheDocument();
+    expect(screen.getByText('Alta prioridade').closest('li')).not.toHaveClass(
+      'dashboard__card--perigo',
+    );
+    expect(screen.getByText('0 de 4 · 0%')).toBeInTheDocument();
+    expect(screen.getByText('2 de 4 · 50%')).toBeInTheDocument();
   });
 
   it('mostra o erro quando o resumo falha e permite tentar de novo', async () => {
