@@ -2,11 +2,12 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getSummary, listTasks } from '../api/tasks';
+import { getSubtasks, getSummary, listTasks } from '../api/tasks';
 import type { Task, TaskSummary } from '../types/task';
 import DashboardPage from './DashboardPage';
 
 vi.mock('../api/tasks', () => ({
+  getSubtasks: vi.fn(),
   getSummary: vi.fn(),
   listTasks: vi.fn(),
 }));
@@ -162,6 +163,66 @@ describe('DashboardPage', () => {
     expect(screen.getByText('2 de 4 pendentes · 50% não pendentes')).toBeInTheDocument();
     expect(screen.getByText('1 de 4 em andamento · 75% fora de andamento')).toBeInTheDocument();
     expect(screen.getByText('1 de 4 concluídas · 75% não concluídas')).toBeInTheDocument();
+  });
+
+  it('expande a raiz e lista as subtarefas recuadas com o tempo estimado', async () => {
+    const pai: Task = {
+      id: '4',
+      title: 'Mover casa',
+      description: null,
+      status: 'TODO',
+      priority: 'MEDIUM',
+      dueDate: '2026-10-15',
+      parentId: null,
+      createdAt: '2026-10-01T10:00:00Z',
+      updatedAt: '2026-10-01T10:00:00Z',
+      subtaskCount: 1,
+      estimatedTime: 1,
+      estimatedUnit: 'HOURS',
+    };
+    const filha: Task = {
+      ...pai,
+      id: '4a',
+      title: 'Contratar empresa',
+      parentId: '4',
+      subtaskCount: 0,
+      estimatedTime: 2,
+      estimatedUnit: 'DAYS',
+    };
+    vi.mocked(getSummary).mockResolvedValue(
+      resumo({ total: 4, pending: 3, inProgress: 1, done: 0, highPriority: 0 }),
+    );
+    vi.mocked(listTasks).mockResolvedValue(pagina([...TAREFAS, pai]));
+    vi.mocked(getSubtasks).mockResolvedValue([filha]);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
+
+    const bloco = await screen.findByLabelText('Próximos prazos');
+
+    expect(within(bloco).getByText('1 hora')).toBeInTheDocument();
+    expect(within(bloco).queryByText('Contratar empresa')).not.toBeInTheDocument();
+
+    await userEvent.click(
+      within(bloco).getByRole('button', { name: 'Ver subtarefas de Mover casa' }),
+    );
+
+    expect(getSubtasks).toHaveBeenCalledWith(pai.id);
+    expect(await within(bloco).findByText('Contratar empresa')).toBeInTheDocument();
+    expect(within(bloco).getByText('2 dias')).toBeInTheDocument();
+    expect(within(bloco).getByText('Contratar empresa').closest('ul')).toHaveClass(
+      'dashboard__prazos--nivel',
+    );
+    expect(
+      within(bloco).getByRole('button', { name: 'Recolher subtarefas de Mover casa' }),
+    ).toHaveAttribute('aria-expanded', 'true');
+
+    await userEvent.click(
+      within(bloco).getByRole('button', { name: 'Recolher subtarefas de Mover casa' }),
+    );
+    expect(within(bloco).queryByText('Contratar empresa')).not.toBeInTheDocument();
   });
 
   it('mostra o erro quando o resumo falha e permite tentar de novo', async () => {

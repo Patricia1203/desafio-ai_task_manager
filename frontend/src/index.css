@@ -664,21 +664,63 @@ textarea::placeholder {
   padding: 0;
 }
 
-.dashboard__prazos li {
+.dashboard__prazo {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dashboard__prazo:last-child {
+  border-bottom: 0;
+}
+
+.dashboard__prazo-linha {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
   min-height: 48px;
-  border-bottom: 1px solid var(--color-border);
 }
 
-.dashboard__prazos li:last-child {
-  border-bottom: 0;
+.dashboard__prazo-linha > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dashboard__prazos strong {
   font-weight: 700;
+}
+
+.dashboard__prazo-toggle {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dashboard__prazo-toggle:hover {
+  color: var(--color-text);
+}
+
+.dashboard__prazo-tempo {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.dashboard__prazos--nivel {
+  padding-left: 1.25rem;
+  border-left: 2px solid var(--color-border);
+}
+
+.dashboard__prazo-filhos .async-state__empty {
+  margin: 0;
+  padding: var(--space-2) 0 var(--space-2) 1.25rem;
 }
 
 .dashboard__data {

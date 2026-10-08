@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import type { Task, TaskPriority, TaskSummary } from '../types/task';
 import { getSummary, listTasks } from '../api/tasks';
 import AsyncState from '../components/common/AsyncState';
-import { dataHojeLocal, formatarDataBR } from '../utils/date';
+import PrazoLinha from '../components/dashboard/PrazoLinha';
+import { dataHojeLocal } from '../utils/date';
 
 const INDICADORES: {
   chave: keyof TaskSummary;
@@ -225,18 +226,9 @@ export default function DashboardPage() {
                 <h3>Próximos prazos</h3>
                 {proximosPrazos.length > 0 ? (
                   <ul className="dashboard__prazos">
-                    {proximosPrazos.map((tarefa) => {
-                      const atrasada = tarefa.dueDate !== null && tarefa.dueDate < hoje;
-                      return (
-                        <li key={tarefa.id}>
-                          <strong>{tarefa.title}</strong>
-                          <span className={`dashboard__data${atrasada ? ' dashboard__data--atrasada' : ''}`}>
-                            {atrasada ? 'Atrasada · ' : ''}
-                            {formatarDataBR(tarefa.dueDate)}
-                          </span>
-                        </li>
-                      );
-                    })}
+                    {proximosPrazos.map((tarefa) => (
+                      <PrazoLinha key={tarefa.id} tarefa={tarefa} hoje={hoje} />
+                    ))}
                   </ul>
                 ) : (
                   <p className="async-state__empty">Nenhum prazo próximo.</p>
