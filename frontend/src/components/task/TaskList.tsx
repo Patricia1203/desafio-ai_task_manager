@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Task } from '../../types/task';
 import { PRIORITY_LABELS, STATUS_LABELS } from '../../types/task';
+import { formatarDataBR } from '../../utils/date';
 import AsyncState from '../common/AsyncState';
 
 interface TaskListProps {
@@ -50,7 +51,7 @@ export default function TaskList({ tasks, loading, error, onRetry, onSelect }: T
                   <span className={`badge badge--${task.status.toLowerCase()}`}>
                     {STATUS_LABELS[task.status]}
                   </span>
-                  <span className="badge badge--prioridade">
+                  <span className={`badge badge--prioridade badge--prioridade-${task.priority.toLowerCase()}`}>
                     {PRIORITY_LABELS[task.priority]}
                   </span>
                   {task.subtaskCount > 0 && (
@@ -58,7 +59,9 @@ export default function TaskList({ tasks, loading, error, onRetry, onSelect }: T
                       {task.subtaskCount} {task.subtaskCount === 1 ? 'subtarefa' : 'subtarefas'}
                     </span>
                   )}
-                  {task.dueDate && <span className="task-list__prazo">Prazo: {task.dueDate}</span>}
+                  {task.dueDate && (
+                    <span className="task-list__prazo">Prazo: {formatarDataBR(task.dueDate)}</span>
+                  )}
                 </span>
               </button>
             </li>

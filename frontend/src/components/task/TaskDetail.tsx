@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Task, TaskStatus } from '../../types/task';
 import { PRIORITY_LABELS, STATUS_LABELS } from '../../types/task';
 import { changeStatus, deleteTask, getSubtasks, getTask } from '../../api/tasks';
+import { formatarDataBR } from '../../utils/date';
 import StatusSelect from './StatusSelect';
 
 interface TaskDetailProps {
@@ -198,11 +199,13 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
                           <span className={`badge badge--${subtask.status.toLowerCase()}`}>
                             {STATUS_LABELS[subtask.status]}
                           </span>
-                          <span className="badge badge--prioridade">
+                          <span className={`badge badge--prioridade badge--prioridade-${subtask.priority.toLowerCase()}`}>
                             {PRIORITY_LABELS[subtask.priority]}
                           </span>
                           {subtask.dueDate && (
-                            <span className="task-list__prazo">Prazo: {subtask.dueDate}</span>
+                            <span className="task-list__prazo">
+                              Prazo: {formatarDataBR(subtask.dueDate)}
+                            </span>
                           )}
                         </span>
                       </button>
