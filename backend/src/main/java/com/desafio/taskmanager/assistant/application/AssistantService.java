@@ -3,8 +3,12 @@ package com.desafio.taskmanager.assistant.application;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
+import com.desafio.taskmanager.assistant.api.dto.ConversationDetail;
+import com.desafio.taskmanager.assistant.api.dto.ConversationMessage;
+import com.desafio.taskmanager.assistant.api.dto.ConversationSummary;
 import com.desafio.taskmanager.assistant.domain.ChatConversation;
 import com.desafio.taskmanager.assistant.domain.ChatMessage;
 import com.desafio.taskmanager.assistant.domain.ChatRole;
@@ -46,6 +50,11 @@ import org.springframework.stereotype.Service;
  * <p>O service fala com {@link AssistantPort} (a porta da feature) e com os
  * dois repositorios de chat; nao importa Spring AI - quem conhece o provedor
  * e so {@code ai.adapter} (RNF-14).
+ *
+ * <p>F10: o mesmo service expoe o historico — {@link #listarConversas()} (a
+ * sidebar com titulo e ultima atividade, da mais recente para a mais antiga)
+ * e {@link #conversa(UUID)} (a conversa inteira para retomar). O titulo nasce
+ * da primeira mensagem do usuario em {@code ChatTurnWriter#gravarTurno}.
  */
 @Service
 public class AssistantService {
@@ -105,5 +114,31 @@ public class AssistantService {
 
     /** Resultado de um turno: a conversa (nova ou retomada) e a resposta do assistente. */
     public record RespostaChat(UUID conversationId, String resposta) {
+    }
+
+    /** F10. O historico de conversas: id, titulo e ultima atividade, do mais recente para o mais antigo. */
+    public List<ConversationSummary> listarConversas() {
+        return conversas.findAllByOrderByUpdatedAtDesc().stream()
+                .map(conversa -> new ConversationSummary(
+                        conversa.getId(), tituloOuFallback(conversa), conversa.getUpdatedAt()))
+                .toList();
+    }
+
+    /** F10. Perfil de uma conversa para restaurar: resumo + mensagens na ordem cronologica; 404 se nao existe. */
+    public ConversationDetail conversa(UUID conversationId) {
+        ChatConversation conversa = conversas.findById(conversationId)
+                .orElseThrow(() -> ResourceNotFoundException.of("conversa", conversationId));
+        List<ConversationMessage> linhas = mensagens.historicoCompleto(conversationId).stream()
+                .map(linha -> new ConversationMessage(
+                        linha.getRole().name().toLowerCase(Locale.ROOT), linha.getContent()))
+                .toList();
+        return new ConversationDetail(
+                conversa.getId(), tituloOuFallback(conversa), conversa.getUpdatedAt(), linhas);
+    }
+
+    private static String tituloOuFallback(ChatConversation conversa) {
+        return conversa.getTitle() == null || conversa.getTitle().isBlank()
+                ? "Conversa"
+                : conversa.getTitle();
     }
 }

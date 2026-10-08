@@ -30,4 +30,16 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             """)
     List<ChatMessage> ultimasMensagens(
             @Param("conversationId") UUID conversationId, Pageable pageable);
+
+    /**
+     * F10: a conversa inteira na ordem cronologica, para restaura-la no
+     * frontend ao escolher uma conversa do historico. O {@code id} e o
+     * desempate para mensagens gravadas no mesmo instante.
+     */
+    @Query("""
+            select m from ChatMessage m
+            where m.conversationId = :conversationId
+            order by m.createdAt asc, m.id asc
+            """)
+    List<ChatMessage> historicoCompleto(@Param("conversationId") UUID conversationId);
 }

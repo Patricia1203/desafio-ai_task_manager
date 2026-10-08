@@ -6,6 +6,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import com.desafio.taskmanager.assistant.api.dto.ConversationDetail;
+import com.desafio.taskmanager.assistant.api.dto.ConversationMessage;
+import com.desafio.taskmanager.assistant.api.dto.ConversationSummary;
 import com.desafio.taskmanager.assistant.domain.ChatConversation;
 import com.desafio.taskmanager.assistant.domain.ChatMessage;
 import com.desafio.taskmanager.assistant.domain.ChatRole;
@@ -228,6 +231,110 @@ class AssistantServiceTest {
                 .isSameAs(erro);
 
         verify(mensagens, never()).save(any(ChatMessage.class));
+    }
+
+    // --- historico (F10): titulo, atividade e listagem ---
+
+    @Test
+    void conversaNovaDerivaOTituloDaPrimeiraMensagemEViraAActividade() {
+        AssistantService.RespostaChat resultado = service.chat(null, "Quais tarefas estao pendentes?");
+
+        ArgumentCaptor<ChatConversation> captor = ArgumentCaptor.forClass(ChatConversation.class);
+        verify(conversas).save(captor.capture());
+        ChatConversation gravada = captor.getValue();
+
+        assertThat(gravada.getTitle()).isEqualTo("Quais tarefas estao pendentes?");
+        assertThat(gravada.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void tituloColapsaEspacosECortaEm200CaracteresComReticencias() {
+        String longo = "Comeco   com espacos\nque devem colapsar\n" + "a".repeat(220);
+        String primeiro = "Curta";
+
+        // Primeira: curta. Segunda: longa -> cortada e com espacos colapsados.
+        service.chat(null, primeiro);
+        service.chat(null, longo);
+
+        ArgumentCaptor<ChatConversation> captor = ArgumentCaptor.forClass(ChatConversation.class);
+        verify(conversas, times(2)).save(captor.capture());
+        ChatConversation primeiroGravado = captor.getAllValues().get(0);
+        ChatConversation segundoGravado = captor.getAllValues().get(1);
+
+        assertThat(primeiroGravado.getTitle()).isEqualTo("Curta");
+        assertThat(segundoGravado.getTitle()).endsWith("\u2026");
+        assertThat(segundoGravado.getTitle().length()).isLessThanOrEqualTo(200);
+        assertThat(segundoGravado.getTitle()).doesNotContain("  ").doesNotContain("\n");
+    }
+
+    @Test
+    void conversaRetomadaNaoSobrescreveOTituloMasViraAActividade() {
+        UUID id = UUID.randomUUID();
+        ChatConversation conversa = ChatConversation.nova();
+        conversa.defineTituloPadrao("Titulo definido na primeira vez");
+        when(conversas.findById(id)).thenReturn(Optional.of(conversa));
+        when(mensagens.ultimasMensagens(any(), any())).thenReturn(List.of());
+
+        service.chat(id, "nova mensagem desta conversa");
+
+        verify(conversas).save(conversa);
+        assertThat(conversa.getTitle()).isEqualTo("Titulo definido na primeira vez");
+        assertThat(conversa.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void listarConversasDevolveOSumarioComTituloEAtividade() {
+        ChatConversation primeira = ChatConversation.nova();
+        primeira.defineTituloPadrao("Quais tarefas estao pendentes?");
+        ChatConversation segunda = ChatConversation.nova();
+        segunda.defineTituloPadrao("Planejar a semana");
+        when(conversas.findAllByOrderByUpdatedAtDesc()).thenReturn(List.of(primeira, segunda));
+
+        List<ConversationSummary> historico = service.listarConversas();
+
+        assertThat(historico).hasSize(2);
+        assertThat(historico.get(0).id()).isEqualTo(primeira.getId());
+        assertThat(historico.get(0).title()).isEqualTo("Quais tarefas estao pendentes?");
+        assertThat(historico.get(0).updatedAt()).isEqualTo(primeira.getUpdatedAt());
+        assertThat(historico.get(1).title()).isEqualTo("Planejar a semana");
+    }
+
+    @Test
+    void listarConversasTemFallbackDeTitulo() {
+        when(conversas.findAllByOrderByUpdatedAtDesc()).thenReturn(List.of(ChatConversation.nova()));
+
+        List<ConversationSummary> historico = service.listarConversas();
+
+        assertThat(historico.get(0).title()).isEqualTo("Conversa");
+    }
+
+    @Test
+    void conversaRetornaMensagensEmOrdemCronologicaComRoleMinusculo() {
+        UUID id = UUID.randomUUID();
+        ChatConversation conversa = ChatConversation.nova();
+        conversa.defineTituloPadrao("O que tenho para hoje?");
+        when(conversas.findById(id)).thenReturn(Optional.of(conversa));
+        when(mensagens.historicoCompleto(id)).thenReturn(List.of(
+                new ChatMessage(id, ChatRole.USER, "O que tenho para hoje?"),
+                new ChatMessage(id, ChatRole.ASSISTANT, "Voce tem uma tarefa vencida.")));
+
+        ConversationDetail perfil = service.conversa(id);
+
+        assertThat(perfil.id()).isEqualTo(conversa.getId());
+        assertThat(perfil.title()).isEqualTo("O que tenho para hoje?");
+        assertThat(perfil.messages()).extracting(ConversationMessage::role)
+                .containsExactly("user", "assistant");
+        assertThat(perfil.messages()).extracting(ConversationMessage::content)
+                .containsExactly("O que tenho para hoje?", "Voce tem uma tarefa vencida.");
+    }
+
+    @Test
+    void conversaInexistenteNoPerfilLanca404() {
+        UUID id = UUID.randomUUID();
+        when(conversas.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.conversa(id))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     /** Porta fake: guarda o historico e a mensagem recebidos; roteia resposta ou falha. */

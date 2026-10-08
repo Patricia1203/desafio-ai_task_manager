@@ -1,7 +1,12 @@
 package com.desafio.taskmanager.assistant.api;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
+import com.desafio.taskmanager.assistant.api.dto.ConversationDetail;
+import com.desafio.taskmanager.assistant.api.dto.ConversationMessage;
+import com.desafio.taskmanager.assistant.api.dto.ConversationSummary;
 import com.desafio.taskmanager.assistant.application.AssistantService;
 import com.desafio.taskmanager.common.error.GlobalExceptionHandler;
 import com.desafio.taskmanager.common.error.InvalidLlmResponseException;
@@ -19,9 +24,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -115,6 +122,56 @@ class AssistantControllerTest {
                         .content("""
                                 {"conversationId":"%s","message":"oi"}
                                 """.formatted(ID)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type", containsString("nao-encontrado")))
+                .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
+    }
+
+    // --- GET /assistant/conversations (F10) ---
+
+    @Test
+    void conversationsRetorna200ComOsResumosDoMaisRecenteParaOMaisAntigo() throws Exception {
+        when(service.listarConversas()).thenReturn(List.of(
+                new ConversationSummary(UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                        "Quais tarefas estao pendentes?", Instant.parse("2026-10-08T10:00:00Z")),
+                new ConversationSummary(UUID.fromString("33333333-3333-3333-3333-333333333333"),
+                        "Planejar a semana", Instant.parse("2026-10-07T09:00:00Z"))));
+
+        mockMvc.perform(get("/assistant/conversations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value("22222222-2222-2222-2222-222222222222"))
+                .andExpect(jsonPath("$[0].title").value("Quais tarefas estao pendentes?"))
+                .andExpect(jsonPath("$[0].updatedAt").value("2026-10-08T10:00:00Z"))
+                .andExpect(jsonPath("$[1].title").value("Planejar a semana"));
+    }
+
+    @Test
+    void conversationRetorna200ComAMensagensEmOrdem() throws Exception {
+        ConversationMessage usuario = new ConversationMessage("user", "O que tenho para hoje?");
+        ConversationMessage assistente = new ConversationMessage("assistant", "Voce tem uma tarefa vencida.");
+        when(service.conversa(ID)).thenReturn(new ConversationDetail(
+                ID, "O que tenho para hoje?", Instant.parse("2026-10-08T11:00:00Z"),
+                List.of(usuario, assistente)));
+
+        mockMvc.perform(get("/assistant/conversations/{id}", ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(ID.toString()))
+                .andExpect(jsonPath("$.title").value("O que tenho para hoje?"))
+                .andExpect(jsonPath("$.updatedAt").value("2026-10-08T11:00:00Z"))
+                .andExpect(jsonPath("$.messages", hasSize(2)))
+                .andExpect(jsonPath("$.messages[0].role").value("user"))
+                .andExpect(jsonPath("$.messages[0].content").value("O que tenho para hoje?"))
+                .andExpect(jsonPath("$.messages[1].role").value("assistant"))
+                .andExpect(jsonPath("$.messages[1].content").value("Voce tem uma tarefa vencida."));
+    }
+
+    @Test
+    void conversationInexistenteRetorna404() throws Exception {
+        when(service.conversa(ID))
+                .thenThrow(ResourceNotFoundException.of("conversa", ID));
+
+        mockMvc.perform(get("/assistant/conversations/{id}", ID))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type", containsString("nao-encontrado")))
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));

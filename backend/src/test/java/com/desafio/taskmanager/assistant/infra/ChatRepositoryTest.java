@@ -49,6 +49,8 @@ class ChatRepositoryTest extends PostgresIntegrationTest {
     @Test
     void gravaELeConversaComMensagens() {
         ChatConversation conversa = conversations.saveAndFlush(ChatConversation.nova());
+        conversa.defineTituloPadrao("Quais tarefas estao pendentes?");
+        conversations.saveAndFlush(conversa);
         messages.saveAndFlush(new ChatMessage(conversa.getId(), ChatRole.USER, "Quais tarefas estao pendentes?"));
         messages.saveAndFlush(new ChatMessage(conversa.getId(), ChatRole.ASSISTANT, "Nenhuma tarefa encontrada."));
 
@@ -62,6 +64,8 @@ class ChatRepositoryTest extends PostgresIntegrationTest {
         assertThat(encontradas.get(1).getRole()).isEqualTo(ChatRole.USER);
         assertThat(encontradas.get(1).getContent()).isEqualTo("Quais tarefas estao pendentes?");
         assertThat(conversa.getCreatedAt()).isNotNull();
+        assertThat(conversations.findById(conversa.getId()).orElseThrow().getTitle())
+                .isEqualTo("Quais tarefas estao pendentes?");
     }
 
     @Test
@@ -116,6 +120,33 @@ class ChatRepositoryTest extends PostgresIntegrationTest {
                 messages.ultimasMensagens(primeira.getId(), PageRequest.of(0, 20));
 
         assertThat(soPrimeira).extracting(ChatMessage::getContent).containsExactly("Da primeira");
+    }
+
+    @Test
+    void listaConversasDaMaisRecenteParaAMaisAntigaPelaAtividade() {
+        ChatConversation antiga = conversations.saveAndFlush(ChatConversation.nova());
+        ChatConversation recente = conversations.saveAndFlush(ChatConversation.nova());
+        recente.toca();
+        conversations.saveAndFlush(recente);
+
+        List<ChatConversation> historico = conversations.findAllByOrderByUpdatedAtDesc();
+
+        assertThat(historico).extracting(ChatConversation::getId)
+                .containsExactly(recente.getId(), antiga.getId());
+    }
+
+    @Test
+    void historicoCompletoVemEmOrdemCronologica() {
+        ChatConversation conversa = conversations.saveAndFlush(ChatConversation.nova());
+        UUID id = conversa.getId();
+        messages.saveAndFlush(new ChatMessage(id, ChatRole.USER, "Primeira"));
+        messages.saveAndFlush(new ChatMessage(id, ChatRole.ASSISTANT, "Segunda"));
+        messages.saveAndFlush(new ChatMessage(id, ChatRole.USER, "Terceira"));
+
+        List<ChatMessage> completo = messages.historicoCompleto(id);
+
+        assertThat(completo).extracting(ChatMessage::getContent)
+                .containsExactly("Primeira", "Segunda", "Terceira");
     }
 
     @Test
