@@ -78,13 +78,15 @@ export default function DashboardPage() {
   const concluidas = summary?.done ?? 0;
   const pct = total > 0 ? Math.round((concluidas / total) * 100) : 0;
   const pctDe = (parte: number, base: number) => (base > 0 ? Math.round((parte / base) * 100) : 0);
+  const detalheDe = (valor: number, base: number) =>
+    valor === 0 ? '0%' : `${valor} de ${base} · ${pctDe(valor, base)}%`;
   const detalhes: Record<keyof TaskSummary, string> = summary
     ? {
         total: `${pct}% concluídas`,
-        pending: `${summary.pending} de ${total} · ${pctDe(summary.pending, total)}%`,
-        inProgress: `${summary.inProgress} de ${total} · ${pctDe(summary.inProgress, total)}%`,
-        done: `${summary.done} de ${total} · ${pctDe(summary.done, total)}%`,
-        highPriority: `${summary.highPriority} de ${total} · ${pctDe(summary.highPriority, total)}%`,
+        pending: detalheDe(summary.pending, total),
+        inProgress: detalheDe(summary.inProgress, total),
+        done: detalheDe(summary.done, total),
+        highPriority: detalheDe(summary.highPriority, total),
       }
     : { total: '', pending: '', inProgress: '', done: '', highPriority: '' };
 

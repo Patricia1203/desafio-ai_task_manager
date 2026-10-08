@@ -151,8 +151,10 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Alta prioridade').closest('li')).not.toHaveClass(
       'dashboard__card--perigo',
     );
-    expect(screen.getByText('0 de 4 · 0%')).toBeInTheDocument();
+    expect(screen.getByText('Alta prioridade').closest('li')).toHaveTextContent('0%');
+    expect(screen.getByText('Alta prioridade').closest('li')).not.toHaveTextContent('de 4');
     expect(screen.getByText('2 de 4 · 50%')).toBeInTheDocument();
+    expect(screen.getAllByText('1 de 4 · 25%')).toHaveLength(2);
   });
 
   it('mostra o erro quando o resumo falha e permite tentar de novo', async () => {
