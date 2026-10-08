@@ -74,7 +74,9 @@ tool calling) está em [`docs/architecture.md`](docs/architecture.md).
   modelo de 7b em CPU passa de um minuto na primeira chamada), `AI_MAX_RETRIES`
   (tentativas extras quando a resposta é inválida), `ASSISTANT_TOOL_CALLING`
   (liga/desliga o registro das ferramentas do assistente; desligado, injeta um
-  contexto pré-montado no prompt como fallback).
+  contexto pré-montado no prompt como fallback) e `ASSISTANT_MAX_TOOL_RESULTS`
+  (teto de resultados por consulta somente-leitura do assistente, padrão `10`).
+  A imagem do Ollama é fixada em `ollama/ollama:0.40.1`, não em `latest`.
 - **Como rodar:** `docker compose up --build` já levanta o Ollama e o one-shot
   `ollama-pull` baixa o `$AI_MODEL` no volume `ollama-data` antes de liberar o
   backend. Rodando o backend fora do Docker, use `scripts/ollama-pull.sh` (exige
