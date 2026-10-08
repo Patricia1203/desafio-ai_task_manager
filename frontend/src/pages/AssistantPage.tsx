@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { buscarConversa, enviarMensagem, listarConversas } from '../api/assistant';
+import { buscarConversa, buscarMensagens, enviarMensagem, listarConversas } from '../api/assistant';
 import type { ChatMessage, ChatRole, ConversationSummary } from '../types/assistant';
 import ChatWindow from '../components/assistant/ChatWindow';
+
+const CHAVE_CONVERSA = 'task.assistant.conversationId';
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : 'Erro inesperado.';
@@ -35,12 +37,16 @@ function formatarData(iso: string): string {
 
 export default function AssistantPage() {
   const [mensagens, setMensagens] = useState<ChatMessage[]>([]);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(
+    () => sessionStorage.getItem(CHAVE_CONVERSA),
+  );
   const [digitando, setDigitando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [conversas, setConversas] = useState<ConversationSummary[]>([]);
   const [ativaId, setAtivaId] = useState<string | null>(null);
-  const [carregandoConversa, setCarregandoConversa] = useState(false);
+  const [carregandoConversa, setCarregandoConversa] = useState<boolean>(
+    () => sessionStorage.getItem(CHAVE_CONVERSA) !== null,
+  );
   const [historicoVisivel, setHistoricoVisivel] = useState(true);
   const proximoId = useRef(1);
 
@@ -56,11 +62,47 @@ export default function AssistantPage() {
     recarregarConversas();
   }, [recarregarConversas]);
 
+  useEffect(() => {
+    const salva = sessionStorage.getItem(CHAVE_CONVERSA);
+    if (salva === null) {
+      return;
+    }
+    buscarMensagens(salva)
+      .then((linhas) => {
+        setMensagens(
+          linhas.map((linha) => ({
+            id: `msg-${proximoId.current++}`,
+            role: linha.role,
+            text: linha.content,
+          })),
+        );
+        setConversationId(salva);
+        setAtivaId(salva);
+      })
+      .catch(() => {
+        // A conversa salva nao existe mais (404): recomeca sem ela gravada.
+        sessionStorage.removeItem(CHAVE_CONVERSA);
+        setConversationId(null);
+        setAtivaId(null);
+      })
+      .finally(() => setCarregandoConversa(false));
+  }, []);
+
   function adicionarMensagem(role: ChatRole, text: string) {
     setMensagens((anteriores) => [
       ...anteriores,
       { id: `msg-${proximoId.current++}`, role, text },
     ]);
+  }
+
+  function persistirConversa(id: string | null) {
+    setConversationId(id);
+    setAtivaId(id);
+    if (id === null) {
+      sessionStorage.removeItem(CHAVE_CONVERSA);
+    } else {
+      sessionStorage.setItem(CHAVE_CONVERSA, id);
+    }
   }
 
   async function abrirConversa(conversa: ConversationSummary) {
@@ -75,8 +117,7 @@ export default function AssistantPage() {
           text: linha.content,
         })),
       );
-      setConversationId(perfil.id);
-      setAtivaId(perfil.id);
+      persistirConversa(perfil.id);
     } catch (caught) {
       setErro(messageOf(caught));
     } finally {
@@ -90,8 +131,7 @@ export default function AssistantPage() {
     setDigitando(true);
     try {
       const reply = await enviarMensagem(conversationId, texto);
-      setConversationId(reply.conversationId);
-      setAtivaId(reply.conversationId);
+      persistirConversa(reply.conversationId);
       adicionarMensagem('assistant', responseText(reply.response));
       recarregarConversas();
     } catch (caught) {
@@ -103,8 +143,7 @@ export default function AssistantPage() {
 
   function novaConversa() {
     setMensagens([]);
-    setConversationId(null);
-    setAtivaId(null);
+    persistirConversa(null);
     setErro(null);
   }
 

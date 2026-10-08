@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import com.desafio.taskmanager.assistant.api.dto.ChatMessageResponse;
 import com.desafio.taskmanager.assistant.api.dto.ConversationDetail;
 import com.desafio.taskmanager.assistant.api.dto.ConversationMessage;
 import com.desafio.taskmanager.assistant.api.dto.ConversationSummary;
@@ -134,6 +135,19 @@ public class AssistantService {
                 .toList();
         return new ConversationDetail(
                 conversa.getId(), tituloOuFallback(conversa), conversa.getUpdatedAt(), linhas);
+    }
+
+    /** T-F06-10. As mensagens de uma conversa na ordem cronologica, com id e timestamp; 404 se a conversa nao existe. */
+    public List<ChatMessageResponse> mensagensDaConversa(UUID conversationId) {
+        conversas.findById(conversationId)
+                .orElseThrow(() -> ResourceNotFoundException.of("conversa", conversationId));
+        return mensagens.historicoCompleto(conversationId).stream()
+                .map(linha -> new ChatMessageResponse(
+                        linha.getId(),
+                        linha.getRole().name().toLowerCase(Locale.ROOT),
+                        linha.getContent(),
+                        linha.getCreatedAt()))
+                .toList();
     }
 
     private static String tituloOuFallback(ChatConversation conversa) {

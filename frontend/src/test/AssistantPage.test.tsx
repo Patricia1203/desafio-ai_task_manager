@@ -1,13 +1,19 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buscarConversa, enviarMensagem, listarConversas } from '../api/assistant';
+import {
+  buscarConversa,
+  buscarMensagens,
+  enviarMensagem,
+  listarConversas,
+} from '../api/assistant';
 import AssistantPage from '../pages/AssistantPage';
 
 vi.mock('../api/assistant', () => ({
   enviarMensagem: vi.fn(),
   listarConversas: vi.fn(),
   buscarConversa: vi.fn(),
+  buscarMensagens: vi.fn(),
 }));
 
 function historico() {
@@ -21,6 +27,7 @@ function janela() {
 describe('AssistantPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
     vi.mocked(listarConversas).mockResolvedValue([]);
     vi.mocked(buscarConversa).mockResolvedValue({
       id: '00000000-0000-4000-8000-000000000000',
@@ -28,6 +35,7 @@ describe('AssistantPage', () => {
       updatedAt: '2026-10-08T10:00:00Z',
       messages: [],
     });
+    vi.mocked(buscarMensagens).mockResolvedValue([]);
   });
 
   it('renderiza o cabecalho e o estado vazio', () => {
@@ -253,6 +261,60 @@ describe('AssistantPage', () => {
     expect(await chat.findByRole('alert')).toHaveTextContent('Conversa nao encontrada');
     expect(chat.getByText(/Mande uma mensagem para consultar o assistente/)).toBeInTheDocument();
     expect(enviarMensagem).not.toHaveBeenCalled();
+  });
+
+  it('salva o conversationId no sessionStorage e a nova conversa limpa', async () => {
+    const id = '0052e5f4-0000-4000-8000-000000000001';
+    vi.mocked(enviarMensagem).mockResolvedValue({
+      conversationId: id,
+      response: 'Resposta.',
+    });
+    render(<AssistantPage />);
+
+    await userEvent.type(screen.getByLabelText('Sua mensagem'), 'oi');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+    await screen.findByText('Resposta.');
+
+    expect(sessionStorage.getItem('task.assistant.conversationId')).toBe(id);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Nova conversa' }));
+
+    expect(sessionStorage.getItem('task.assistant.conversationId')).toBeNull();
+  });
+
+  it('restaura a conversa em andamento do sessionStorage no mount', async () => {
+    const id = '0052e5f4-0000-4000-8000-000000000001';
+    sessionStorage.setItem('task.assistant.conversationId', id);
+    vi.mocked(buscarMensagens).mockResolvedValue([
+      { id: 1, role: 'user', content: 'O que tenho para hoje?', createdAt: '2026-10-08T10:00:00Z' },
+      { id: 2, role: 'assistant', content: 'Voce tem uma tarefa vencida.', createdAt: '2026-10-08T10:00:05Z' },
+    ]);
+    vi.mocked(enviarMensagem).mockResolvedValue({
+      conversationId: id,
+      response: 'Mais alguma coisa?',
+    });
+    render(<AssistantPage />);
+
+    expect(buscarMensagens).toHaveBeenCalledWith(id);
+    const chat = janela();
+    expect(await chat.findByText('O que tenho para hoje?')).toBeInTheDocument();
+    expect(chat.getByText('Voce tem uma tarefa vencida.')).toBeInTheDocument();
+
+    await userEvent.type(chat.getByLabelText('Sua mensagem'), 'e depois?{Enter}');
+
+    expect(enviarMensagem).toHaveBeenCalledWith(id, 'e depois?');
+    expect(await chat.findByText('Mais alguma coisa?')).toBeInTheDocument();
+  });
+
+  it('conversa salva que nao existe mais limpa o sessionStorage e recomeca vazio', async () => {
+    sessionStorage.setItem('task.assistant.conversationId', '0052e5f4-0000-4000-8000-000000000099');
+    vi.mocked(buscarMensagens).mockRejectedValue(new Error('Conversa nao encontrada'));
+    render(<AssistantPage />);
+
+    const chat = janela();
+    expect(await chat.findByText(/Mande uma mensagem para consultar o assistente/)).toBeInTheDocument();
+    expect(sessionStorage.getItem('task.assistant.conversationId')).toBeNull();
+    expect(buscarMensagens).toHaveBeenCalledTimes(1);
   });
 
   it('esconde e mostra a aba de historico pelo botao do cabecalho, mantendo o chat', async () => {

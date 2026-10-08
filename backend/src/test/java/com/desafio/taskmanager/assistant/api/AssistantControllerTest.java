@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import com.desafio.taskmanager.assistant.api.dto.ChatMessageResponse;
 import com.desafio.taskmanager.assistant.api.dto.ConversationDetail;
 import com.desafio.taskmanager.assistant.api.dto.ConversationMessage;
 import com.desafio.taskmanager.assistant.api.dto.ConversationSummary;
@@ -172,6 +173,39 @@ class AssistantControllerTest {
                 .thenThrow(ResourceNotFoundException.of("conversa", ID));
 
         mockMvc.perform(get("/assistant/conversations/{id}", ID))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type", containsString("nao-encontrado")))
+                .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
+    }
+
+    // --- GET /assistant/conversations/{id}/messages (T-F06-10) ---
+
+    @Test
+    void messagesRetorna200ComIdRoleConteudoECreatedAtEmOrdem() throws Exception {
+        when(service.mensagensDaConversa(ID)).thenReturn(List.of(
+                new ChatMessageResponse(10L, "user", "O que tenho para hoje?",
+                        Instant.parse("2026-10-08T10:00:00Z")),
+                new ChatMessageResponse(11L, "assistant", "Voce tem uma tarefa vencida.",
+                        Instant.parse("2026-10-08T10:00:05Z"))));
+
+        mockMvc.perform(get("/assistant/conversations/{id}/messages", ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(10))
+                .andExpect(jsonPath("$[0].role").value("user"))
+                .andExpect(jsonPath("$[0].content").value("O que tenho para hoje?"))
+                .andExpect(jsonPath("$[0].createdAt").value("2026-10-08T10:00:00Z"))
+                .andExpect(jsonPath("$[1].id").value(11))
+                .andExpect(jsonPath("$[1].role").value("assistant"))
+                .andExpect(jsonPath("$[1].createdAt").value("2026-10-08T10:00:05Z"));
+    }
+
+    @Test
+    void messagesDeConversaInexistenteRetorna404() throws Exception {
+        when(service.mensagensDaConversa(ID))
+                .thenThrow(ResourceNotFoundException.of("conversa", ID));
+
+        mockMvc.perform(get("/assistant/conversations/{id}/messages", ID))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type", containsString("nao-encontrado")))
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));

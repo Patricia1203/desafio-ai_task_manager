@@ -3,6 +3,7 @@ package com.desafio.taskmanager.assistant.api;
 import java.util.List;
 import java.util.UUID;
 
+import com.desafio.taskmanager.assistant.api.dto.ChatMessageResponse;
 import com.desafio.taskmanager.assistant.api.dto.ChatRequest;
 import com.desafio.taskmanager.assistant.api.dto.ChatResponse;
 import com.desafio.taskmanager.assistant.api.dto.ConversationDetail;
@@ -57,5 +58,11 @@ public class AssistantController {
     @GetMapping("/conversations/{id}")
     public ConversationDetail conversation(@PathVariable UUID id) {
         return service.conversa(id);
+    }
+
+    /** T-F06-10. 200 com as mensagens da conversa em ordem cronologica; 404 se o conversationId nao existe. */
+    @GetMapping("/conversations/{id}/messages")
+    public List<ChatMessageResponse> messages(@PathVariable UUID id) {
+        return service.mensagensDaConversa(id);
     }
 }

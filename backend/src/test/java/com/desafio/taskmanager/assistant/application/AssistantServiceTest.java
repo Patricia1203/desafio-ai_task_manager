@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import com.desafio.taskmanager.assistant.api.dto.ChatMessageResponse;
 import com.desafio.taskmanager.assistant.api.dto.ConversationDetail;
 import com.desafio.taskmanager.assistant.api.dto.ConversationMessage;
 import com.desafio.taskmanager.assistant.api.dto.ConversationSummary;
@@ -334,6 +335,36 @@ class AssistantServiceTest {
         when(conversas.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.conversa(id))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // --- mensagens da conversa (T-F06-10) ---
+
+    @Test
+    void mensagensDaConversaDevolveRoleConteudoECreatedAtEmOrdemCronologica() {
+        UUID id = UUID.randomUUID();
+        ChatConversation conversa = ChatConversation.nova();
+        when(conversas.findById(id)).thenReturn(Optional.of(conversa));
+        when(mensagens.historicoCompleto(id)).thenReturn(List.of(
+                new ChatMessage(id, ChatRole.USER, "O que tenho para hoje?"),
+                new ChatMessage(id, ChatRole.ASSISTANT, "Voce tem uma tarefa vencida.")));
+
+        List<ChatMessageResponse> linhas = service.mensagensDaConversa(id);
+
+        assertThat(linhas).extracting(ChatMessageResponse::role)
+                .containsExactly("user", "assistant");
+        assertThat(linhas).extracting(ChatMessageResponse::content)
+                .containsExactly("O que tenho para hoje?", "Voce tem uma tarefa vencida.");
+        assertThat(linhas).extracting(ChatMessageResponse::createdAt)
+                .allSatisfy(createdAt -> assertThat(createdAt).isNotNull());
+    }
+
+    @Test
+    void mensagensDeConversaInexistenteLanca404() {
+        UUID id = UUID.randomUUID();
+        when(conversas.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.mensagensDaConversa(id))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

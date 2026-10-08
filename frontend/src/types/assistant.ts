@@ -29,3 +29,11 @@ export interface ConversationMessage {
 export interface ConversationDetail extends ConversationSummary {
   messages: ConversationMessage[];
 }
+
+/** Mensagem vinda de GET /assistant/conversations/{id}/messages (T-F06-10): id e createdAt reais da conversa salva. */
+export interface StoredConversationMessage {
+  id: number;
+  role: ChatRole;
+  content: string;
+  createdAt: string;
+}
