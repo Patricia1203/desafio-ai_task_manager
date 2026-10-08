@@ -59,6 +59,15 @@
 - **Pronto quando:** um só commit de docs detalha a F08 em poucas linhas; STATE/TRACEABILITY/tasks.md coerentes.
 - **Gate:** `git log --oneline` com 1 commit `docs:` referente à F08.
 
+### T-F08-09 — Card de criar/editar mais largo (vazio proporcional menor)
+- **Status:** done (commit `66fa92c`, 2026-10-08)
+- **Reqs:** RF-21, RF-22
+- **Depends on:** T-F08-07
+- **Arquivos (alterar):** somente `frontend/src/index.css` (regra `.task-form`)
+- **O que fazer:** o card centralizado de 560px ainda deixa muito vazio nas laterais. Aumentar proporcionalmente para os lados: `max-width: 820px` (mantendo `width: 100%` e `margin-inline: auto`), reduzindo o vazio de cada lado para ~12% da seção em 1440px e ~7% em 1280px; em telas menores continua preenchendo a largura disponível.
+- **Pronto quando:** formulário de criar/editar ocupa ~76% da seção em desktop com margens laterais simétricas e pequenas.
+- **Gate:** `npx vitest run` verde; `npx oxlint` limpo; `npx tsc -b && npx vite build` OK.
+
 ### T-F08-07 — Card do formulário de criar/editar centralizado
 - **Status:** done (commit `6ead194`, 2026-10-08)
 - **Reqs:** RF-21, RF-22
