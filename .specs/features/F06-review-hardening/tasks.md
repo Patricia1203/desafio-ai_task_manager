@@ -90,7 +90,7 @@
 - **Commit (rascunho):** `update: Timeout padrao do LLM para 180s`
 
 ### T-F06-09 — Clock com fuso configurável para datas "hoje"
-- **Status:** pending
+- **Status:** done (commit `230ad22`, 2026-10-08)
 - **Reqs:** RF-16, RF-19, RNF-12 (se confirmado; ver T-F06-01)
 - **Depende de:** —
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/common/config/ (novo ClockConfig + propriedade `app.timezone`), backend/src/main/java/com/desafio/taskmanager/assistant/application/tools/TaskQueryTools.java, backend/src/main/java/com/desafio/taskmanager/ai/adapter/SpringAiAssistantAdapter.java, backend/src/main/resources/application.yml, backend/src/test/java/.../assistant/application/tools/TaskQueryToolsTest.java, .../ai/adapter/SpringAiAssistantAdapterTest.java
@@ -101,7 +101,7 @@
 - **Commit (rascunho):** `update: Fuso configuravel via Clock para datas de negocio`
 
 ### T-F06-10 — GET de mensagens da conversa e restauração da conversa na UI
-- **Status:** pending
+- **Status:** done (commit `f4dcaba`, 2026-10-08)
 - **Reqs:** RF-17, RF-18, RF-22, ERR-01
 - **Depende de:** —
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/assistant/api/AssistantController.java, backend/src/main/java/com/desafio/taskmanager/assistant/api/dto/ChatMessageResponse.java (novo), backend/src/main/java/com/desafio/taskmanager/assistant/application/AssistantService.java, backend/src/test/java/.../assistant/api/AssistantControllerTest.java, .../assistant/application/AssistantServiceTest.java, frontend/src/pages/AssistantPage.tsx, frontend/src/api/assistant.ts, frontend/src/test/AssistantPage.test.tsx
@@ -112,7 +112,7 @@
 - **Commit (rascunho):** `add: Endpoint de mensagens da conversa e restauracao na UI`
 
 ### T-F06-11 — Hardening de prompt injection com delimitadores
-- **Status:** pending
+- **Status:** done (commit `8d4172d`, 2026-10-08)
 - **Reqs:** RNF-10, RNF-15, TST-03
 - **Depende de:** —
 - **Arquivos (criar/alterar):** backend/src/main/resources/prompts/task-improve.st, task-analyze.st, task-decompose.st, assistant-system.st, backend/src/main/java/com/desafio/taskmanager/ai/adapter/SpringAiAssistantAdapter.java (fallback `contextoOpcoes`), backend/src/test/java/.../ai/PromptsTest.java, .../ai/adapter/SpringAiAssistantAdapterTest.java
@@ -123,7 +123,7 @@
 - **Commit (rascunho):** `update: Delimitadores de conteudo nos prompts contra injecao`
 
 ### T-F06-12 — Configuração: compose repassa variáveis; .env.example alinhado; imagem ollama fixada
-- **Status:** pending
+- **Status:** done (commit `b20540f`, 2026-10-08)
 - **Reqs:** RNF-04, RNF-12 (se confirmado; ver T-F06-01), RNF-21
 - **Depende de:** —
 - **Arquivos (criar/alterar):** docker-compose.yml, .env.example, README.md (seção Configuração do LLM)
@@ -133,7 +133,7 @@
 - **Commit (rascunho):** `configure: Compose repassa variaveis do assistente e fixa imagem do ollama`
 
 ### T-F06-13 — Documentação e processo (README, Maven, desafio.pdf, convenção de commits)
-- **Status:** pending
+- **Status:** done (2026-10-08; hash confirmado na verificação final da F06)
 - **Reqs:** DOC-01, RNF-04
 - **Depende de:** decisão do usuário (começo de execução) — não é bloqueante de código
 - **Arquivos (criar/alterar):** README.md, .agent/rules/commit-convention.md, .specs/project/STATE.md, docs/ (decisão sobre desafio.pdf)

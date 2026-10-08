@@ -15,9 +15,9 @@ retry. Há ainda um assistente conversacional por conversa, com grounding nas
 ferramentas do próprio sistema (nada de escrita descontrolada: as ferramentas são
 somente-leitura).
 
-O contrato JSON é em português (RF-24), o envelope de erro segue a RFC 7807
-(`ProblemDetail`), e toda resposta de erro leva `traceId` e `timestamp` para
-correlação com o log.
+O contrato JSON da API é em inglês (decisão da revisão da F06; rótulos da
+interface em português), o envelope de erro segue a RFC 7807 (`ProblemDetail`),
+e toda resposta de erro leva `traceId` e `timestamp` para correlação com o log.
 
 ## Tecnologias
 
@@ -88,48 +88,62 @@ tool calling) está em [`docs/architecture.md`](docs/architecture.md).
 
 ## Execução
 
-Pré-requisito: Docker com o plugin Compose.
+**Stack completo (Docker):**
 
 ```bash
 cp .env.example .env   # ajuste se necessario (defaults ja funcionam)
 docker compose up --build
 ```
 
-- Frontend: http://localhost:8081
-- API: http://localhost:8080/api (healthcheck em `/api/health`)
-- Na primeira subida o `ollama-pull` baixa o `qwen2.5:7b` (~4,7 GB), pode demorar.
+Pré-requisito: Docker com o plugin Compose. Frontend em http://localhost:8081;
+API em http://localhost:8080/api (healthcheck em `/api/health`). Na primeira
+subida o `ollama-pull` baixa o `qwen2.5:7b` (~4,7 GB), pode demorar.
 
-**Sem Docker** (dev):
+**Dev rápido (Docker)** — o frontend roda com hot-reload e o `predev` levanta o
+backend em background:
 
 ```bash
-# frontend: o `npm run dev` ja levanta o stack em background (requer Docker)
-npm install
-npm run dev
+cd frontend && npm install && npm run dev
 ```
 
-O `npm run dev` do frontend roda um `predev` que executa
+O `npm run dev` executa um `predev` que roda
 `docker compose -f ../docker-compose.yml up -d backend` — este sobe também o
 Postgres, o Ollama e o `ollama-pull` via `depends_on` (a primeira vez baixa o
 modelo e pode demorar). O Vite abre na hora (http://localhost:5173) e a API
 fica healthy em ~30s. Para parar o stack: `npm run stack:stop`; para remover os
 containers: `npm run stack:down`.
 
+**Backend local (sem Docker)** — requer Postgres e Ollama acessíveis (suba-os
+com `docker compose up -d postgres ollama` ou rode na máquina host):
+
 ```bash
-# backend isolado (Java 21 + Maven): requer Postgres e Ollama acessiveis
-mvn spring-boot:run
+cd backend && mvn spring-boot:run   # Maven 3.9+ (comando `mvn` via MAVEN_HOME ou PATH)
 ```
 
 **Testes:**
 
 ```bash
-cd backend && mvn -q test            # 227 testes, 0 falhas
+cd backend && mvn -q test            # 328 testes, 0 falhas (Maven 3.9+ via MAVEN_HOME ou PATH)
 cd frontend && npm run lint && npm run test && npm run build
 ```
 
 ## Recursos de IA
 
-**Prompts** versionados em `backend/src/main/resources/prompts/` (StringTemplate):
-`task-improve.st`, `task-analyze.st`, `task-decompose.st` e `assistant-system.st`.
+**Prompts** versionados em `backend/src/main/resources/prompts/` (StringTemplate,
+valores em `{chaves}`; o conteúdo de tarefa/mensagem entra em delimitadores
+`<tarefa>...</tarefa>`/`<dados>...</dados>` marcados como **dado, nunca
+instrução**):
+
+- `task-improve.st` — papel de editor: reescreve título e descrição da tarefa
+  para uso real; responde JSON `{title, description}`.
+- `task-analyze.st` — papel de analista: sugere prioridade, complexidade, horas
+  e justificativa; responde JSON `{priority, complexity, estimatedHours, reason}`
+  (enums em inglês).
+- `task-decompose.st` — papel de planejador: divide a tarefa em subtarefas
+  independentes (1..10, título ≤ 200); responde JSON `{subtasks[]}`.
+- `assistant-system.st` — grounding do assistente conversacional: data atual
+  injetada pelo backend, "responda apenas com dados das ferramentas", recusa
+  assuntos fora de tarefas e o retrato de dados do fallback.
 
 **Funcionalidades:**
 
@@ -183,12 +197,12 @@ com `message.tool_calls` reais; se o modelo não suportar tool calling, o toggle
   (RFC 7807 — `type/status/title/detail` + `traceId`/`timestamp`), sem stack trace
   no corpo.
 - `context-path: /api` no servidor; CORS fechado por lista explícita de origens.
-- Regras de domínio: `DONE` é terminal (reabrir passa por `TODO`); excluir
-  um pai remove as subtarefas em cascata (a UI confirma listando as filhas).
+- Regras de domínio: `DONE` é terminal (reabrir exige voltar ao status inicial);
+  excluir um pai remove as subtarefas em cascata (a UI confirma listando as filhas).
 - `TraceIdFilter` gera 16 hex na primeira fronteira (header `X-Trace-Id` + MDC); o
   `ProblemDetail` de toda resposta de erro — inclusive os 502/503 de IA — herda
   `traceId` e `timestamp`.
-- Ia valida sempre: `max-title-length`/`max-text-length`/`max-horas` espelham os
+- A IA valida sempre: `max-title-length`/`max-text-length`/`max-horas` espelham os
   limites do banco nos prompts e no Bean Validation.
 - Testes de IA usam um `ChatModel` falso roteirizado (sem LLM real no build
   `excludedGroups=llm`); o resultado é validado por um fake que provaria o contrato
