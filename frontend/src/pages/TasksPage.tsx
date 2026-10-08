@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Task, TaskInput, TaskStatus } from '../types/task';
 import { STATUS_LABELS, STATUS_OPTIONS } from '../types/task';
 import { createTask, listTasks, updateTask } from '../api/tasks';
@@ -57,6 +58,10 @@ export default function TasksPage() {
     setModo('detalhe');
   }
 
+  function voltar() {
+    setModo(modo === 'editar' && selecionada ? 'detalhe' : 'lista');
+  }
+
   async function salvar(input: TaskInput) {
     setSubmitting(true);
     setFormError(null);
@@ -90,8 +95,35 @@ export default function TasksPage() {
     );
   }
 
+  const subModo =
+    modo === 'criar'
+      ? 'Nova tarefa'
+      : modo === 'editar'
+        ? 'Editar tarefa'
+        : modo === 'detalhe' && selecionada
+          ? selecionada.title
+          : null;
+
   return (
     <section aria-labelledby="tasks-heading">
+      <nav className="breadcrumb" aria-label="Trilha de navegação">
+        <Link to="/">Dashboard</Link>
+        <span className="breadcrumb__sep" aria-hidden="true">
+          /
+        </span>
+        {subModo ? (
+          <>
+            <Link to="/tasks">Tarefas</Link>
+            <span className="breadcrumb__sep" aria-hidden="true">
+              /
+            </span>
+            <span aria-current="page">{subModo}</span>
+          </>
+        ) : (
+          <span aria-current="page">Tarefas</span>
+        )}
+      </nav>
+
       <header className="tasks__header">
         <h2 id="tasks-heading">Tarefas</h2>
         {modo === 'lista' && (
@@ -100,6 +132,12 @@ export default function TasksPage() {
           </button>
         )}
       </header>
+
+      {(modo === 'criar' || modo === 'editar') && (
+        <button type="button" className="tasks__voltar" onClick={voltar}>
+          Voltar
+        </button>
+      )}
 
       {modo === 'lista' && (
         <>
@@ -141,7 +179,7 @@ export default function TasksPage() {
           task={modo === 'editar' ? selecionada : null}
           submitting={submitting}
           onSubmit={salvar}
-          onCancel={() => setModo(selecionada && modo === 'editar' ? 'detalhe' : 'lista')}
+          onCancel={voltar}
           error={formError}
         />
       )}
