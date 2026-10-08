@@ -217,3 +217,146 @@ textarea::placeholder {
   color: var(--color-success);
   background: #dcf5ea;
 }
+
+.app {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.app__header {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-5);
+  padding: var(--space-4) 0;
+  background: var(--navy);
+  border-right: 1px solid var(--navy-line);
+}
+
+.app__header :focus-visible {
+  outline-color: var(--sky);
+}
+
+.app__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-4);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--navy-text);
+}
+
+.app__title::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background: var(--sky);
+  transform: skewX(-12deg);
+}
+
+.app__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.app__nav a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  color: var(--navy-muted);
+  text-decoration: none;
+  font-weight: 600;
+  border-left: 4px solid transparent;
+}
+
+.app__nav a:hover {
+  color: var(--navy-text);
+  background: var(--navy-2);
+}
+
+.app__nav a.active {
+  color: var(--navy-text);
+  background: var(--navy-2);
+  font-weight: 800;
+  border-left-color: var(--sky);
+}
+
+.app__main {
+  width: 100%;
+  max-width: 1180px;
+  padding: var(--space-5) var(--space-6) 4rem;
+}
+
+.app__main h2 {
+  margin: 0 0 var(--space-4);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.tasks__header h2,
+.assistant__header h2 {
+  margin: 0;
+}
+
+@media (max-width: 1000px) {
+  .app__main {
+    padding: var(--space-4) var(--space-4) 4rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app__header {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    height: auto;
+    flex-direction: row;
+    gap: 0;
+    padding: 0 0 env(safe-area-inset-bottom, 0);
+    border-right: 0;
+    border-top: 1px solid var(--navy-line);
+  }
+
+  .app__title {
+    display: none;
+  }
+
+  .app__nav {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .app__nav a {
+    flex: 1;
+    justify-content: center;
+    padding: 0 var(--space-2);
+    font-size: 0.875rem;
+    border-left: 0;
+    border-top: 4px solid transparent;
+  }
+
+  .app__nav a.active {
+    border-top-color: var(--sky);
+  }
+
+  .app__main {
+    padding: var(--space-4) var(--space-3) 7rem;
+  }
+
+  .app__main h2 {
+    font-size: 1.75rem;
+  }
+}
