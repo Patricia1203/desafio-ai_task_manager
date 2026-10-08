@@ -12,6 +12,12 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      # F14: foto das areas de trabalho via POST/PUT multipart. 5MB por arquivo
+      # e um teto generoso para a imagem de capa sem deixar payload infinito.
+      max-file-size: 5MB
+      max-request-size: 6MB
   ai:
     model:
       chat: ollama
