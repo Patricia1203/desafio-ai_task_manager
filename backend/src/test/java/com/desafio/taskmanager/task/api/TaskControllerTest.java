@@ -346,6 +346,20 @@ class TaskControllerTest {
     }
 
     @Test
+    void listarPorTituloRepassaAoFiltro() throws Exception {
+        when(service.list(any(TaskFilter.class), any())).thenReturn(
+                new org.springframework.data.domain.PageImpl<>(
+                        List.of(tarefa()), org.springframework.data.domain.PageRequest.of(0, 20), 1));
+
+        mockMvc.perform(get("/tasks").param("title", "relatorio"))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<TaskFilter> captor = ArgumentCaptor.forClass(TaskFilter.class);
+        verify(service).list(captor.capture(), any());
+        assertThat(captor.getValue().title()).isEqualTo("relatorio");
+    }
+
+    @Test
     void criarSemTituloRetorna400ComListaDeCampos() throws Exception {
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)

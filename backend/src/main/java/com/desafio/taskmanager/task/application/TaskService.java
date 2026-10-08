@@ -248,7 +248,20 @@ public class TaskService {
         if (filter != null && filter.hasArea()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("area").get("id"), filter.areaId()));
         }
+        if (filter != null && filter.hasTitle()) {
+            spec = spec.and(tituloContem(filter.title()));
+        }
         return spec;
+    }
+
+    /** Contem parcial, sem diferenciar caixa e sem deixar %/_ do termo virarem coringa. */
+    private static Specification<Task> tituloContem(String termo) {
+        String escapado = termo
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        String pattern = "%" + escapado.toLowerCase() + "%";
+        return (root, query, cb) -> cb.like(cb.lower(root.get("title")), pattern, '\\');
     }
 
     /** Raiz: {@code parent} nulo. Subtarefa so e alcancada pelo id ou pelo pai. */

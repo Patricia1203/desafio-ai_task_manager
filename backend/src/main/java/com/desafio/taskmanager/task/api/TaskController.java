@@ -93,11 +93,12 @@ public class TaskController {
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) TaskPriority priority,
             @RequestParam(required = false) UUID areaId,
+            @RequestParam(required = false) String title,
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "page nao pode ser negativo") int page,
             @RequestParam(defaultValue = "20") @Min(value = 1, message = "size deve ser no minimo 1")
             @Max(value = MAX_PAGE_SIZE, message = "size deve ser no maximo " + MAX_PAGE_SIZE) int size) {
         Page<Task> pagina = service.list(
-                new TaskFilter(status, priority, areaId),
+                new TaskFilter(status, priority, areaId, title),
                 PageRequest.of(page, size, ORDENACAO_PADRAO));
         Map<UUID, Long> subtaskCounts = service.subtaskCounts(
                 pagina.getContent().stream().map(Task::getId).toList());

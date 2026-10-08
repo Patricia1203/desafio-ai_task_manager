@@ -627,6 +627,42 @@ class TaskServiceTest extends PostgresIntegrationTest {
                 .containsExactly("NA");
     }
 
+    @Test
+    void filtroPorTituloTrazSomenteAsQueContemIgnorandoCaixa() {
+        service.create(new TaskCommand("Pintar a parede", null, null, null, null, null, null));
+        service.create(new TaskCommand("Comprar tinta", null, null, null, null, null, null));
+        service.create(new TaskCommand("Lavar o carro", null, null, null, null, null, null));
+
+        assertThat(service.findAll(new TaskFilter(null, null, null, "tINTA")))
+                .extracting(Task::getTitle)
+                .containsExactly("Comprar tinta");
+    }
+
+    @Test
+    void filtroPorTituloTrataCoringaDoLikeComoLiteral() {
+        service.create(new TaskCommand("100% feito", null, null, null, null, null, null));
+        service.create(new TaskCommand("100 e feito", null, null, null, null, null, null));
+
+        assertThat(service.findAll(new TaskFilter(null, null, null, "%")))
+                .extracting(Task::getTitle)
+                .containsExactly("100% feito");
+    }
+
+    @Test
+    void filtroPorTituloCompostaComStatus() {
+        service.create(new TaskCommand("Relatorio pronto", null, null, null, null, null, null));
+        Task emAberto = service.create(
+                new TaskCommand("Relatorio em andamento", null, null, null, null, null, null));
+
+        emAberto.changeStatus(TaskStatus.IN_PROGRESS);
+        repository.save(emAberto);
+
+        assertThat(service.findAll(
+                new TaskFilter(TaskStatus.IN_PROGRESS, null, null, "relatorio")))
+                .extracting(Task::getTitle)
+                .containsExactly("Relatorio em andamento");
+    }
+
     // --- helpers ---
 
     private static TaskCommand pedido(String title, String description, TaskPriority priority,

@@ -13,11 +13,16 @@ import com.desafio.taskmanager.task.domain.TaskStatus;
  * {@code TaskService#list}, para o mesmo filtro servir tanto para a listagem
  * paginada da tela quanto para uma leitura completa do assistente (F04).
  */
-public record TaskFilter(TaskStatus status, TaskPriority priority, UUID areaId) {
+public record TaskFilter(TaskStatus status, TaskPriority priority, UUID areaId, String title) {
 
     /** Variante sem area, usada pela maior parte dos fluxos atuais. */
     public TaskFilter(TaskStatus status, TaskPriority priority) {
-        this(status, priority, null);
+        this(status, priority, null, null);
+    }
+
+    /** Variante com area e sem titulo (F14). */
+    public TaskFilter(TaskStatus status, TaskPriority priority, UUID areaId) {
+        this(status, priority, areaId, null);
     }
 
     /** Sem filtro: devolve a listagem inteira. */
@@ -46,8 +51,13 @@ public record TaskFilter(TaskStatus status, TaskPriority priority, UUID areaId) 
         return areaId != null;
     }
 
+    /** Busca por parte do titulo, ignorando caixa ({@code GET /tasks?title=}). */
+    public boolean hasTitle() {
+        return title != null && !title.isBlank();
+    }
+
     /** Verdadeiro quando nenhum criterio foi informado. */
     public boolean isEmpty() {
-        return !hasStatus() && !hasPriority() && !hasArea();
+        return !hasStatus() && !hasPriority() && !hasArea() && !hasTitle();
     }
 }
