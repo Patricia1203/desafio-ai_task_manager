@@ -28,6 +28,7 @@
   --space-4: 1.5rem;
   --space-5: 2rem;
   --space-6: 3rem;
+  --space-7: 4rem;
   --radius: 8px;
   color-scheme: light;
 }
@@ -292,7 +293,8 @@ textarea::placeholder {
 .app__main {
   width: 100%;
   max-width: 1180px;
-  padding: var(--space-5) var(--space-6) 4rem;
+  /* esquerda maior: respiro entre a sidebar e o texto */
+  padding: var(--space-5) var(--space-6) 4rem var(--space-7);
 }
 
 .app__main:has(.assistant) {
@@ -802,6 +804,17 @@ textarea::placeholder {
 
 .task-form__title {
   margin-top: 0;
+}
+
+.task-form__linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.task-form__linha .field {
+  flex: 1 1 160px;
+  min-width: 0;
 }
 
 .task-form__actions,
