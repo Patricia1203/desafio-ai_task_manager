@@ -666,8 +666,34 @@ textarea::placeholder {
   margin-bottom: var(--space-4);
 }
 
-.tasks__voltar {
-  margin-bottom: var(--space-3);
+.tasks__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.tasks__titulo h2 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tasks__voltar--seta {
+  width: 44px;
+  flex: none;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.tasks__voltar--seta:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .task-list__items {

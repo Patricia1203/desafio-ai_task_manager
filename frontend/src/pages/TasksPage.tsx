@@ -125,19 +125,25 @@ export default function TasksPage() {
       </nav>
 
       <header className="tasks__header">
-        <h2 id="tasks-heading">Tarefas</h2>
+        <div className="tasks__titulo">
+          {subModo && (
+            <button
+              type="button"
+              className="tasks__voltar--seta"
+              aria-label="Voltar"
+              onClick={voltar}
+            >
+              ←
+            </button>
+          )}
+          <h2 id="tasks-heading">Tarefas</h2>
+        </div>
         {modo === 'lista' && (
           <button type="button" onClick={() => setModo('criar')}>
             Nova tarefa
           </button>
         )}
       </header>
-
-      {(modo === 'criar' || modo === 'editar') && (
-        <button type="button" className="tasks__voltar" onClick={voltar}>
-          Voltar
-        </button>
-      )}
 
       {modo === 'lista' && (
         <>
@@ -186,9 +192,6 @@ export default function TasksPage() {
 
       {modo === 'detalhe' && selecionada && (
         <>
-          <button type="button" className="tasks__voltar" onClick={() => setModo('lista')}>
-            Voltar para a lista
-          </button>
           <TaskDetail
             key={`${selecionada.id}-${detalheVersao}`}
             task={selecionada}
