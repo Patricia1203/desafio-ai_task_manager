@@ -675,12 +675,12 @@ textarea::placeholder {
 .dashboard__prazo-linha {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
   min-height: 48px;
 }
 
 .dashboard__prazo-linha > strong {
+  flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -707,6 +707,7 @@ textarea::placeholder {
 }
 
 .dashboard__prazo-tempo {
+  flex: none;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-muted);
@@ -716,6 +717,19 @@ textarea::placeholder {
 .dashboard__prazos--nivel {
   padding-left: 1.25rem;
   border-left: 2px solid var(--color-border);
+  /* com mais de 3 subtarefas, rolagem vertical no proprio bloco */
+  max-height: 9rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.dashboard__prazos--nivel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard__prazos--nivel::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
 }
 
 .dashboard__prazo-filhos .async-state__empty {
@@ -724,6 +738,7 @@ textarea::placeholder {
 }
 
 .dashboard__data {
+  flex: none;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-muted);
