@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Task } from '../types/task';
 import { getSubtasks, getTask, listTasks } from '../api/tasks';
+import { areasPorId, listAreas } from '../api/areas';
 import TasksPage from '../pages/TasksPage';
 
 vi.mock('../api/tasks', () => ({
@@ -16,6 +17,13 @@ vi.mock('../api/tasks', () => ({
   updateTask: vi.fn(),
 }));
 
+vi.mock('../api/areas', () => ({
+  areasPorId: vi.fn(),
+  listAreas: vi.fn(),
+}));
+
+const areas = [{ id: '3f1d3f6e-0000-4000-8000-000000000033', title: 'Moradia', imageType: null }];
+
 const raiz: Task = {
   id: '3f1d3f6e-0000-4000-8000-000000000001',
   title: 'Mover casa',
@@ -24,6 +32,7 @@ const raiz: Task = {
   priority: 'MEDIUM',
   dueDate: '2026-11-01',
   parentId: null,
+  areaId: areas[0].id,
   createdAt: '2026-10-01T10:00:00Z',
   updatedAt: '2026-10-01T10:00:00Z',
   subtaskCount: 1,
@@ -64,6 +73,8 @@ describe('TasksPage', () => {
     });
     vi.mocked(getTask).mockResolvedValue(raiz);
     vi.mocked(getSubtasks).mockResolvedValue([]);
+    vi.mocked(listAreas).mockResolvedValue(areas);
+    vi.mocked(areasPorId).mockImplementation((lista) => new Map(lista.map((area) => [area.id, area])));
   });
 
   it('abre o detalhe da subtarefa com breadcrumb Tarefas / pai / subtarefa', async () => {

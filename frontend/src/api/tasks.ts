@@ -11,6 +11,7 @@ import type {
 export interface ListParams {
   status?: TaskStatus;
   priority?: TaskPriority;
+  areaId?: string;
   page?: number;
   size?: number;
 }
@@ -69,6 +70,7 @@ function queryString(params: ListParams): string {
   const search = new URLSearchParams();
   if (params.status) search.set('status', params.status);
   if (params.priority) search.set('priority', params.priority);
+  if (params.areaId) search.set('areaId', params.areaId);
   if (params.page !== undefined) search.set('page', String(params.page));
   if (params.size !== undefined) search.set('size', String(params.size));
   const query = search.toString();

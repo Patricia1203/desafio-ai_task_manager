@@ -2,9 +2,11 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Task, TaskInput, TaskPriority, TaskTimeUnit } from '../../types/task';
 import { PRIORITY_LABELS, PRIORITY_OPTIONS, TIME_UNIT_LABELS, TIME_UNIT_OPTIONS } from '../../types/task';
+import type { WorkArea } from '../../types/area';
 
 interface TaskFormProps {
   task?: Task | null;
+  areas: WorkArea[];
   submitting: boolean;
   onSubmit: (input: TaskInput) => void;
   onCancel: () => void;
@@ -40,6 +42,7 @@ function validate(title: string, description: string, estimatedTime: string): Fi
 
 export default function TaskForm({
   task,
+  areas,
   submitting,
   onSubmit,
   onCancel,
@@ -50,6 +53,7 @@ export default function TaskForm({
   const [description, setDescription] = useState(task?.description ?? '');
   const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? 'MEDIUM');
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
+  const [areaId, setAreaId] = useState(task?.areaId ?? '');
   const [estimatedTime, setEstimatedTime] = useState(
     task?.estimatedTime != null ? String(task.estimatedTime) : '',
   );
@@ -74,6 +78,7 @@ export default function TaskForm({
       dueDate: eSubtarefa ? null : dueDate || null,
       estimatedTime: eSubtarefa ? numero : null,
       estimatedUnit: numero != null && eSubtarefa ? estimatedUnit : null,
+      areaId: areaId || null,
     });
   }
 
@@ -124,6 +129,18 @@ export default function TaskForm({
           {PRIORITY_OPTIONS.map((option) => (
             <option key={option} value={option}>
               {PRIORITY_LABELS[option]}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label htmlFor="task-form-area" className="field">
+        <span className="field__label">Área de trabalho</span>
+        <select id="task-form-area" value={areaId} onChange={(event) => setAreaId(event.target.value)}>
+          <option value="">Sem área</option>
+          {areas.map((area) => (
+            <option key={area.id} value={area.id}>
+              {area.title}
             </option>
           ))}
         </select>

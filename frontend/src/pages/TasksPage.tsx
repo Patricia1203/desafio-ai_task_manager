@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { Task, TaskInput, TaskStatus } from '../types/task';
 import { STATUS_LABELS, STATUS_OPTIONS } from '../types/task';
+import type { WorkArea } from '../types/area';
+import { areasPorId, listAreas } from '../api/areas';
 import { createTask, getTask, listTasks, updateTask } from '../api/tasks';
 import TaskList from '../components/task/TaskList';
 import TaskForm from '../components/task/TaskForm';
@@ -26,6 +28,23 @@ export default function TasksPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [detalheVersao, setDetalheVersao] = useState(0);
   const [paiDaSelecionada, setPaiDaSelecionada] = useState<Task | null>(null);
+  const [areas, setAreas] = useState<WorkArea[]>([]);
+
+  useEffect(() => {
+    let ativo = true;
+    listAreas()
+      .then((lista) => {
+        if (ativo) setAreas(lista);
+      })
+      .catch(() => {
+        if (ativo) setAreas([]);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const mapaAreas = areasPorId(areas);
 
   useEffect(() => {
     let ativo = true;
@@ -100,9 +119,9 @@ useEffect(() => {
   setModo('detalhe');
 }
 
-  function voltar() {
-    setModo(modo === 'editar' && selecionada ? 'detalhe' : 'lista');
-  }
+function voltar() {
+  setModo(modo === 'editar' && selecionada ? 'detalhe' : 'lista');
+}
 
   async function salvar(input: TaskInput) {
     setSubmitting(true);
@@ -241,6 +260,7 @@ useEffect(() => {
         <TaskForm
           key={modo === 'editar' && selecionada ? selecionada.id : 'novo'}
           task={modo === 'editar' ? selecionada : null}
+          areas={areas}
           submitting={submitting}
           onSubmit={salvar}
           onCancel={voltar}
@@ -253,6 +273,7 @@ useEffect(() => {
           <TaskDetail
             key={`${selecionada.id}-${detalheVersao}`}
             task={selecionada}
+            areaNome={selecionada.areaId ? (mapaAreas.get(selecionada.areaId)?.title ?? null) : null}
             onChanged={aposTrocaStatus}
             onDeleted={aposExclusao}
             onEdit={() => setModo('editar')}

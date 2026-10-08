@@ -27,6 +27,7 @@ const tarefa: Task = {
   priority: 'MEDIUM',
   dueDate: null,
   parentId: null,
+  areaId: null,
   createdAt: '2026-10-01T10:00:00Z',
   updatedAt: '2026-10-01T10:00:00Z',
   subtaskCount: 0,
@@ -74,6 +75,7 @@ describe('AiPanel', () => {
       dueDate: null,
       estimatedTime: null,
       estimatedUnit: null,
+      areaId: null,
     });
     await vi.waitFor(() => expect(onChanged).toHaveBeenCalledWith(atualizada));
     expect(screen.queryByText('Sugestão de melhoria')).not.toBeInTheDocument();

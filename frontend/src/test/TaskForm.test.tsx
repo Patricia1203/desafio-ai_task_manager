@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Task } from '../types/task';
 import TaskForm from '../components/task/TaskForm';
 
+const areaId = '3f1d3f6e-0000-4000-8000-000000000033';
+
 const tarefa: Task = {
   id: '3f1d3f6e-0000-4000-8000-000000000001',
   title: 'Revisar contrato',
@@ -12,6 +14,7 @@ const tarefa: Task = {
   priority: 'HIGH',
   dueDate: '2026-10-20',
   parentId: null,
+  areaId,
   createdAt: '2026-10-01T10:00:00Z',
   updatedAt: '2026-10-01T10:00:00Z',
   subtaskCount: 0,
@@ -29,9 +32,14 @@ const subtarefa: Task = {
 };
 
 describe('TaskForm', () => {
+  const areas = [
+    { id: areaId, title: 'Moradia', imageType: null },
+    { id: '3f1d3f6e-0000-4000-8000-000000000055', title: 'Finanças', imageType: null },
+  ];
+
   it('recusa submit sem titulo e mostra o erro no campo', async () => {
     const onSubmit = vi.fn();
-    render(<TaskForm submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
+    render(<TaskForm areas={areas} submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
@@ -41,10 +49,11 @@ describe('TaskForm', () => {
 
   it('envia os campos preenchidos com titulo aparado', async () => {
     const onSubmit = vi.fn();
-    render(<TaskForm submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
+    render(<TaskForm areas={areas} submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
 
     await userEvent.type(screen.getByLabelText(/Título/), '  Pagar boleto  ');
     await userEvent.selectOptions(screen.getByLabelText('Prioridade'), 'LOW');
+    await userEvent.selectOptions(screen.getByLabelText('Área de trabalho'), 'Finanças');
     await userEvent.type(screen.getByLabelText('Prazo'), '2026-11-01');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
@@ -55,7 +64,24 @@ describe('TaskForm', () => {
       dueDate: '2026-11-01',
       estimatedTime: null,
       estimatedUnit: null,
+      areaId: '3f1d3f6e-0000-4000-8000-000000000055',
     });
+  });
+
+  it('envia Sem área quando nenhuma area e escolhida', async () => {
+    const onSubmit = vi.fn();
+    render(<TaskForm areas={areas} submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
+
+    await userEvent.type(screen.getByLabelText(/Título/), 'Pagar boleto');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ areaId: null }));
+  });
+
+  it('mostra a area da tarefa como selecionada ao editar', () => {
+    render(<TaskForm task={tarefa} areas={areas} submitting={false} onSubmit={vi.fn()} onCancel={vi.fn()} />);
+
+    expect(screen.getByLabelText('Área de trabalho')).toHaveValue(areaId);
   });
 
   it('envia o tempo estimado com a unidade escolhida', async () => {
@@ -63,6 +89,7 @@ describe('TaskForm', () => {
     render(
       <TaskForm
         task={{ ...subtarefa, title: '', estimatedTime: null, estimatedUnit: null }}
+        areas={areas}
         submitting={false}
         onSubmit={onSubmit}
         onCancel={vi.fn()}
@@ -89,6 +116,7 @@ describe('TaskForm', () => {
     render(
       <TaskForm
         task={{ ...subtarefa, title: '', estimatedTime: null, estimatedUnit: null }}
+        areas={areas}
         submitting={false}
         onSubmit={onSubmit}
         onCancel={vi.fn()}
@@ -106,7 +134,9 @@ describe('TaskForm', () => {
   });
 
   it('a raiz edita somente o prazo e nao mostra tempo', () => {
-    render(<TaskForm task={tarefa} submitting={false} onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    render(
+      <TaskForm task={tarefa} areas={areas} submitting={false} onSubmit={vi.fn()} onCancel={vi.fn()} />,
+    );
 
     expect(screen.getByLabelText(/Título/)).toHaveValue('Revisar contrato');
     expect(screen.getByLabelText('Prioridade')).toHaveValue('HIGH');
@@ -117,7 +147,13 @@ describe('TaskForm', () => {
 
   it('a subtarefa edita somente o tempo e nao mostra prazo', () => {
     render(
-      <TaskForm task={subtarefa} submitting={false} onSubmit={vi.fn()} onCancel={vi.fn()} />,
+      <TaskForm
+        task={subtarefa}
+        areas={areas}
+        submitting={false}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     );
 
     expect(screen.getByLabelText('Tempo estimado')).toHaveValue(2);
@@ -126,9 +162,7 @@ describe('TaskForm', () => {
   });
 
   it('desabilita os botoes enquanto o submit esta em andamento', () => {
-    render(
-      <TaskForm submitting={true} onSubmit={vi.fn()} onCancel={vi.fn()} />,
-    );
+    render(<TaskForm areas={areas} submitting={true} onSubmit={vi.fn()} onCancel={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Salvando...' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();

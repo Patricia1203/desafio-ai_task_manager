@@ -8,6 +8,7 @@ import StatusSelect from './StatusSelect';
 
 interface TaskDetailProps {
   task: Task;
+  areaNome?: string | null;
   onChanged: (task: Task) => void;
   onDeleted: () => void;
   onEdit: () => void;
@@ -18,7 +19,7 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : 'Erro inesperado.';
 }
 
-export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen }: TaskDetailProps) {
+export default function TaskDetail({ task, areaNome, onChanged, onDeleted, onEdit, onOpen }: TaskDetailProps) {
   const [statusBusy, setStatusBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -149,6 +150,12 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
           <dt>Prioridade</dt>
           <dd>{PRIORITY_LABELS[task.priority]}</dd>
         </div>
+        {areaNome ? (
+          <div>
+            <dt>Área</dt>
+            <dd>{areaNome}</dd>
+          </div>
+        ) : null}
         {task.parentId ? (
           <div>
             <dt>Tempo estimado</dt>

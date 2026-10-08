@@ -12,6 +12,7 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string | null;
   parentId: string | null;
+  areaId: string | null;
   createdAt: string;
   updatedAt: string;
   subtaskCount: number;
@@ -26,6 +27,7 @@ export interface TaskInput {
   dueDate: string | null;
   estimatedTime: number | null;
   estimatedUnit: TaskTimeUnit | null;
+  areaId: string | null;
 }
 
 export interface PageResponse<T> {

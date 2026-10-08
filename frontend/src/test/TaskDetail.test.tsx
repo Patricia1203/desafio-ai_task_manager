@@ -20,6 +20,7 @@ const tarefa: Task = {
   priority: 'MEDIUM',
   dueDate: null,
   parentId: null,
+  areaId: null,
   createdAt: '2026-10-01T10:00:00Z',
   updatedAt: '2026-10-01T10:00:00Z',
   subtaskCount: 0,
