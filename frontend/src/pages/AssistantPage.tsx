@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
-import { enviarMensagem } from '../api/assistant';
-import type { ChatMessage, ChatRole } from '../types/assistant';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { buscarConversa, enviarMensagem, listarConversas } from '../api/assistant';
+import type { ChatMessage, ChatRole, ConversationSummary } from '../types/assistant';
 import ChatWindow from '../components/assistant/ChatWindow';
 
 function messageOf(error: unknown): string {
@@ -25,18 +25,70 @@ function responseText(response: unknown): string {
   return String(response ?? '');
 }
 
+function formatarData(iso: string): string {
+  const data = new Date(iso);
+  if (Number.isNaN(data.getTime())) {
+    return '';
+  }
+  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
 export default function AssistantPage() {
   const [mensagens, setMensagens] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [digitando, setDigitando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [conversas, setConversas] = useState<ConversationSummary[]>([]);
+  const [ativaId, setAtivaId] = useState<string | null>(null);
+  const [carregandoConversa, setCarregandoConversa] = useState(false);
   const proximoId = useRef(1);
+
+  const recarregarConversas = useCallback(() => {
+    listarConversas()
+      .then(setConversas)
+      .catch(() => {
+        // Histórico é suporte: falha ao listar não quebra a conversa em andamento.
+      });
+  }, []);
+
+  useEffect(() => {
+    recarregarConversas();
+  }, [recarregarConversas]);
 
   function adicionarMensagem(role: ChatRole, text: string) {
     setMensagens((anteriores) => [
       ...anteriores,
       { id: `msg-${proximoId.current++}`, role, text },
     ]);
+  }
+
+  function moverParaTopo(id: string) {
+    setConversas((anteriores) => [
+      ...anteriores.filter((conversa) => conversa.id !== id),
+      ...anteriores.filter((conversa) => conversa.id === id),
+    ]);
+  }
+
+  async function abrirConversa(conversa: ConversationSummary) {
+    setErro(null);
+    setCarregandoConversa(true);
+    try {
+      const perfil = await buscarConversa(conversa.id);
+      setMensagens(
+        perfil.messages.map((linha) => ({
+          id: `msg-${proximoId.current++}`,
+          role: linha.role,
+          text: linha.content,
+        })),
+      );
+      setConversationId(perfil.id);
+      setAtivaId(perfil.id);
+      moverParaTopo(perfil.id);
+    } catch (caught) {
+      setErro(messageOf(caught));
+    } finally {
+      setCarregandoConversa(false);
+    }
   }
 
   async function enviar(texto: string) {
@@ -46,7 +98,9 @@ export default function AssistantPage() {
     try {
       const reply = await enviarMensagem(conversationId, texto);
       setConversationId(reply.conversationId);
+      setAtivaId(reply.conversationId);
       adicionarMensagem('assistant', responseText(reply.response));
+      recarregarConversas();
     } catch (caught) {
       setErro(messageOf(caught));
     } finally {
@@ -57,6 +111,7 @@ export default function AssistantPage() {
   function novaConversa() {
     setMensagens([]);
     setConversationId(null);
+    setAtivaId(null);
     setErro(null);
   }
 
@@ -69,7 +124,39 @@ export default function AssistantPage() {
         </button>
       </header>
 
-      <ChatWindow mensagens={mensagens} digitando={digitando} erro={erro} onEnviar={enviar} />
+      <div className="assistant__corpo">
+        <nav className="assistant__historico" aria-label="Histórico de conversas">
+          <h3 className="assistant__historico-titulo">Histórico</h3>
+          {conversas.length === 0 ? (
+            <p className="assistant__historico-vazio">Nenhuma conversa salva.</p>
+          ) : (
+            <ol className="assistant__conversas">
+              {conversas.map((conversa) => (
+                <li
+                  key={conversa.id}
+                  className={conversa.id === ativaId ? 'assistant__conversa--ativa' : ''}
+                >
+                  <button
+                    type="button"
+                    onClick={() => abrirConversa(conversa)}
+                    disabled={digitando || carregandoConversa}
+                    aria-current={conversa.id === ativaId ? 'true' : undefined}
+                  >
+                    <span className="assistant__conversa-titulo">
+                      {conversa.title || 'Conversa'}
+                    </span>
+                    <span className="assistant__conversa-data">
+                      {formatarData(conversa.updatedAt)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+        </nav>
+
+        <ChatWindow mensagens={mensagens} digitando={digitando} erro={erro} onEnviar={enviar} />
+      </div>
     </section>
   );
 }

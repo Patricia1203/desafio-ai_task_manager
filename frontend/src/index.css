@@ -340,6 +340,19 @@ textarea::placeholder {
   .app__main {
     padding: var(--space-4) var(--space-4) 4rem;
   }
+
+  .assistant__corpo {
+    flex-direction: column;
+  }
+
+  .assistant__historico {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .assistant__conversas {
+    max-height: 28vh;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1024,7 +1037,87 @@ textarea::placeholder {
   margin-bottom: var(--space-4);
 }
 
+.assistant__corpo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.assistant__historico {
+  flex: 0 0 280px;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.assistant__historico-titulo {
+  margin: 0 0 var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  text-transform: uppercase;
+}
+
+.assistant__historico-vazio {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.assistant__conversas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.assistant__conversas button {
+  width: 100%;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) / 2);
+}
+
+.assistant__conversas button:hover:not(:disabled) {
+  background: var(--color-ai-soft);
+}
+
+.assistant__conversa--ativa button {
+  border-color: var(--color-ai);
+  background: var(--color-ai-soft);
+}
+
+.assistant__conversa-titulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.assistant__conversa-data {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
 .assistant__janela {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: min(60vh, 640px);
   padding: var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -1038,6 +1131,7 @@ textarea::placeholder {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  flex: 1 1 auto;
   max-height: min(60vh, 640px);
   overflow-y: auto;
 }
@@ -1085,7 +1179,7 @@ textarea::placeholder {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: var(--space-3);
+  margin-top: auto;
 }
 
 .assistant__form .field {

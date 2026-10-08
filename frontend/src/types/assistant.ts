@@ -11,3 +11,21 @@ export interface ChatMessage {
   role: ChatRole;
   text: string;
 }
+
+/** Item do histórico de conversas (F10): o que a sidebar lista e retoma. */
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+/** Mensagem de uma conversa restaurada (F10): role em minúsculo, vindo da API. */
+export interface ConversationMessage {
+  role: ChatRole;
+  content: string;
+}
+
+/** Perfil de uma conversa do histórico: resumo + mensagens na ordem cronológica. */
+export interface ConversationDetail extends ConversationSummary {
+  messages: ConversationMessage[];
+}

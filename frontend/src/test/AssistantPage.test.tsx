@@ -1,16 +1,33 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { enviarMensagem } from '../api/assistant';
+import { buscarConversa, enviarMensagem, listarConversas } from '../api/assistant';
 import AssistantPage from '../pages/AssistantPage';
 
 vi.mock('../api/assistant', () => ({
   enviarMensagem: vi.fn(),
+  listarConversas: vi.fn(),
+  buscarConversa: vi.fn(),
 }));
+
+function historico() {
+  return within(screen.getByRole('navigation', { name: 'Histórico de conversas' }));
+}
+
+function janela() {
+  return within(screen.getByRole('region', { name: 'Conversa' }));
+}
 
 describe('AssistantPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(listarConversas).mockResolvedValue([]);
+    vi.mocked(buscarConversa).mockResolvedValue({
+      id: '00000000-0000-4000-8000-000000000000',
+      title: '',
+      updatedAt: '2026-10-08T10:00:00Z',
+      messages: [],
+    });
   });
 
   it('renderiza o cabecalho e o estado vazio', () => {
@@ -144,5 +161,97 @@ describe('AssistantPage', () => {
 
     expect(enviarMensagem).not.toHaveBeenCalled();
     expect(screen.getByText(/Mande uma mensagem para consultar o assistente/)).toBeInTheDocument();
+  });
+
+  it('lista as conversas salvas no historico com titulo e data', async () => {
+    vi.mocked(listarConversas).mockResolvedValue([
+      {
+        id: '0052e5f4-0000-4000-8000-000000000001',
+        title: 'Quantas tarefas pendentes tenho?',
+        updatedAt: '2026-10-08T10:00:00Z',
+      },
+      {
+        id: '0052e5f4-0000-4000-8000-000000000002',
+        title: 'Planejar a semana',
+        updatedAt: '2026-10-07T09:00:00Z',
+      },
+    ]);
+    render(<AssistantPage />);
+
+    const nav = historico();
+    expect(await nav.findByText('Quantas tarefas pendentes tenho?')).toBeInTheDocument();
+    expect(nav.getByText('Planejar a semana')).toBeInTheDocument();
+    expect(nav.getByText('08/10/2026')).toBeInTheDocument();
+    expect(nav.getByText('07/10/2026')).toBeInTheDocument();
+  });
+
+  it('mostra estado vazio e fallback de titulo sem informacao no historico', async () => {
+    render(<AssistantPage />);
+
+    expect(await historico().findByText('Nenhuma conversa salva.')).toBeInTheDocument();
+  });
+
+  it('conversa sem titulo cai no fallback no historico', async () => {
+    vi.mocked(listarConversas).mockResolvedValue([
+      { id: '0052e5f4-0000-4000-8000-000000000001', title: '', updatedAt: '2026-10-08T10:00:00Z' },
+    ]);
+    render(<AssistantPage />);
+
+    expect(await historico().findByText('Conversa')).toBeInTheDocument();
+  });
+
+  it('escolhe uma conversa do historico, restaura as mensagens e retoma o conversationId', async () => {
+    const id = '0052e5f4-0000-4000-8000-000000000001';
+    vi.mocked(listarConversas).mockResolvedValue([
+      { id, title: 'O que tenho para hoje?', updatedAt: '2026-10-08T10:00:00Z' },
+    ]);
+    vi.mocked(buscarConversa).mockResolvedValue({
+      id,
+      title: 'O que tenho para hoje?',
+      updatedAt: '2026-10-08T10:00:00Z',
+      messages: [
+        { role: 'user', content: 'O que tenho para hoje?' },
+        { role: 'assistant', content: 'Voce tem uma tarefa vencida.' },
+      ],
+    });
+    vi.mocked(enviarMensagem).mockResolvedValue({
+      conversationId: id,
+      response: 'Mais alguma coisa?',
+    });
+    render(<AssistantPage />);
+
+    const nav = historico();
+    await userEvent.click(await nav.findByRole('button', { name: /O que tenho para hoje/ }));
+
+    expect(buscarConversa).toHaveBeenCalledWith(id);
+    expect(screen.getByRole('button', { name: /O que tenho para hoje/ })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+    const chat = janela();
+    expect(await chat.findByText('O que tenho para hoje?')).toBeInTheDocument();
+    expect(chat.getByText('Voce tem uma tarefa vencida.')).toBeInTheDocument();
+
+    await userEvent.type(chat.getByLabelText('Sua mensagem'), 'e depois?{Enter}');
+
+    expect(enviarMensagem).toHaveBeenCalledWith(id, 'e depois?');
+    expect(await chat.findByText('Mais alguma coisa?')).toBeInTheDocument();
+  });
+
+  it('falha ao restaurar uma conversa mostra erro e mantem a janela atual', async () => {
+    const id = '0052e5f4-0000-4000-8000-000000000001';
+    vi.mocked(listarConversas).mockResolvedValue([
+      { id, title: 'Antiga', updatedAt: '2026-10-08T10:00:00Z' },
+    ]);
+    vi.mocked(buscarConversa).mockRejectedValue(new Error('Conversa nao encontrada'));
+    render(<AssistantPage />);
+
+    const nav = historico();
+    await userEvent.click(await nav.findByRole('button', { name: /Antiga/ }));
+
+    const chat = janela();
+    expect(await chat.findByRole('alert')).toHaveTextContent('Conversa nao encontrada');
+    expect(chat.getByText(/Mande uma mensagem para consultar o assistente/)).toBeInTheDocument();
+    expect(enviarMensagem).not.toHaveBeenCalled();
   });
 });

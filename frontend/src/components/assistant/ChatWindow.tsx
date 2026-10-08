@@ -35,7 +35,7 @@ export default function ChatWindow({ mensagens, digitando, erro, onEnviar }: Cha
   }
 
   return (
-    <div className="assistant__janela">
+    <div className="assistant__janela" role="region" aria-label="Conversa">
       {mensagens.length === 0 ? (
         <p role="status" className="assistant__vazio">
           Mande uma mensagem para consultar o assistente.
