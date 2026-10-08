@@ -162,6 +162,20 @@ public class Task {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * F13: aplica a sugestao da analise de IA. Troca a prioridade e, quando ha
+     * tempo em horas, grava como {@code HOURS} — caminho de escrita exclusivo
+     * da IA (a escrita manual nao deixa raiz com tempo, ver T-F13-01). Horas
+     * nulas nao alteram o tempo atual.
+     */
+    public void applySuggestion(TaskPriority prioridade, Double tempoHoras) {
+        this.priority = prioridade;
+        if (tempoHoras != null) {
+            setEstimatedTime(tempoHoras, TimeUnit.HOURS);
+        }
+        touch();
+    }
+
     private static String requireTitle(String title) {
         if (title == null || title.isBlank()) {
             throw new BusinessRuleException("titulo nao pode ser vazio");

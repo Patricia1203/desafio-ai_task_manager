@@ -87,6 +87,16 @@ public class AiTaskService {
         return criadas;
     }
 
+    /**
+     * F13: aplica a sugestao da analise ({@code /analysis/apply}). Resolve a
+     * regra raiz × subtarefa dentro de {@link TaskService#applySuggestion} e
+     * persiste na mesma transacao.
+     */
+    @Transactional
+    public Task applySuggestion(UUID id, TaskPriority prioridade, Double horasLlms) {
+        return tarefas.applySuggestion(id, prioridade, horasLlms);
+    }
+
     private static TaskAiContext contextoDe(Task tarefa) {
         return new TaskAiContext(tarefa.getTitle(), normaliza(tarefa.getDescription()), tarefa.getPriority());
     }

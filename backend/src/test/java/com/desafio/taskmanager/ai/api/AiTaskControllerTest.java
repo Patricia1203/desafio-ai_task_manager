@@ -249,6 +249,64 @@ class AiTaskControllerTest {
                 .andExpect(jsonPath("$.type", containsString("nao-encontrado")));
     }
 
+    // --- POST /ai/tasks/{id}/analysis/apply ---
+
+    @Test
+    void applyAnalysisRetorna200ComATarefaAtualizada() throws Exception {
+        when(service.applySuggestion(ID, TaskPriority.HIGH, 12.0))
+                .thenReturn(new Task("Titulo", null, TaskPriority.HIGH, null, 12.0, TimeUnit.HOURS, null));
+
+        mockMvc.perform(post("/ai/tasks/{id}/analysis/apply", ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"priority":"HIGH","estimatedHours":12.0}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.priority").value("HIGH"))
+                .andExpect(jsonPath("$.estimatedTime").value(12.0))
+                .andExpect(jsonPath("$.estimatedUnit").value("HOURS"));
+    }
+
+    @Test
+    void applyAnalysisSemPrioridadeRetorna400ComOCampo() throws Exception {
+        mockMvc.perform(post("/ai/tasks/{id}/analysis/apply", ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"estimatedHours":12.0}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("priority"));
+
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void applyAnalysisComHorasForaDoTetoRetorna400() throws Exception {
+        mockMvc.perform(post("/ai/tasks/{id}/analysis/apply", ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"priority":"HIGH","estimatedHours":500.0}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("estimatedHours"));
+
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void applyAnalysisComIdInexistenteRetorna404() throws Exception {
+        when(service.applySuggestion(ID, TaskPriority.HIGH, 12.0))
+                .thenThrow(ResourceNotFoundException.of("tarefa", ID));
+
+        mockMvc.perform(post("/ai/tasks/{id}/analysis/apply", ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"priority":"HIGH","estimatedHours":12.0}
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type", containsString("nao-encontrado")));
+    }
+
     // --- erro de LLM ---
 
     @Test

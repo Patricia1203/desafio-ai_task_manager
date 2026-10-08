@@ -197,20 +197,101 @@ class TaskServiceTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void criarEDitarComTempoEstimadoGravaESerializa() {
-        Task criada = service.create(new TaskCommand("T", null, null, null, 2.0, TimeUnit.DAYS));
-        assertThat(criada.getEstimatedTime()).isEqualTo(2.0);
-        assertThat(criada.getEstimatedUnit()).isEqualTo(TimeUnit.DAYS);
+    void tarefaPrincipalNaoAceitaTempoEstimado() {
+        assertThatThrownBy(() -> service.create(
+                new TaskCommand("T", null, null, null, 2.0, TimeUnit.DAYS)))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("tempo estimado");
+    }
 
-        Task editada = service.update(criada.getId(),
-                new TaskCommand("T editado", null, null, null, 5.0, TimeUnit.HOURS));
+    @Test
+    void editarRaizComTempoEstimadoEhRecusado() {
+        Task raiz = criar("Raiz");
+
+        assertThatThrownBy(() -> service.update(raiz.getId(),
+                new TaskCommand("Raiz", null, null, null, 2.0, TimeUnit.HOURS)))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("tempo estimado");
+    }
+
+    @Test
+    void subtarefaNaoAceitaPrazo() {
+        Task raiz = criar("Raiz");
+
+        assertThatThrownBy(() -> service.createSubtask(raiz.getId(),
+                new TaskCommand("Filha", null, null, LocalDate.of(2026, 12, 1))))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("prazo");
+    }
+
+    @Test
+    void subtarefaComTempoEstimadoGravaESerializa() {
+        Task raiz = criar("Raiz");
+        Task filha = service.createSubtask(raiz.getId(),
+                new TaskCommand("Filha", null, null, null, 2.0, TimeUnit.DAYS));
+        assertThat(filha.getEstimatedTime()).isEqualTo(2.0);
+        assertThat(filha.getEstimatedUnit()).isEqualTo(TimeUnit.DAYS);
+        assertThat(filha.getDueDate()).isNull();
+
+        Task editada = service.update(filha.getId(),
+                new TaskCommand("Filha", null, null, null, 5.0, TimeUnit.HOURS));
         assertThat(editada.getEstimatedTime()).isEqualTo(5.0);
         assertThat(editada.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
 
-        Task vazia = service.update(criada.getId(),
-                new TaskCommand("T editado", null, null, null, null, null));
+        Task vazia = service.update(filha.getId(),
+                new TaskCommand("Filha", null, null, null, null, null));
         assertThat(vazia.getEstimatedTime()).isNull();
         assertThat(vazia.getEstimatedUnit()).isNull();
+    }
+
+    // --- aplicar sugestao (T-F13-02) ---
+
+    @Test
+    void aplicarSugestaoNaRaizSomaAsSubtarefasEmHoras() {
+        Task raiz = criar("Raiz");
+        service.createSubtask(raiz.getId(),
+                new TaskCommand("A", null, null, null, 2.0, TimeUnit.HOURS));
+        service.createSubtask(raiz.getId(),
+                new TaskCommand("B", null, null, null, 1.0, TimeUnit.DAYS));
+
+        Task aplicada = service.applySuggestion(raiz.getId(), TaskPriority.HIGH, 99.0);
+
+        assertThat(aplicada.getPriority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(aplicada.getEstimatedTime()).isEqualTo(26.0);
+        assertThat(aplicada.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
+    }
+
+    @Test
+    void aplicarSugestaoNaRaizSemSubtarefasUsaAsHorasDaAnalise() {
+        Task raiz = criar("Raiz");
+
+        Task aplicada = service.applySuggestion(raiz.getId(), TaskPriority.MEDIUM, 4.0);
+
+        assertThat(aplicada.getEstimatedTime()).isEqualTo(4.0);
+        assertThat(aplicada.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
+    }
+
+    @Test
+    void aplicarSugestaoSemHorasSoTrocaAPrioridade() {
+        Task raiz = criar("Raiz");
+
+        Task aplicada = service.applySuggestion(raiz.getId(), TaskPriority.HIGH, null);
+
+        assertThat(aplicada.getPriority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(aplicada.getEstimatedTime()).isNull();
+    }
+
+    @Test
+    void aplicarSugestaoNaSubtarefaUsaOEstimadoDaAnalise() {
+        Task raiz = criar("Raiz");
+        Task filha = service.createSubtask(raiz.getId(),
+                new TaskCommand("Filha", null, null, null, 2.0, TimeUnit.HOURS));
+
+        Task aplicada = service.applySuggestion(filha.getId(), TaskPriority.LOW, 5.0);
+
+        assertThat(aplicada.getPriority()).isEqualTo(TaskPriority.LOW);
+        assertThat(aplicada.getEstimatedTime()).isEqualTo(5.0);
+        assertThat(aplicada.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
     }
 
     @Test

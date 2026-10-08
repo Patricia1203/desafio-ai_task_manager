@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.desafio.taskmanager.ai.api.dto.AnalyzeTaskResponse;
+import com.desafio.taskmanager.ai.api.dto.ApplyAnalysisRequest;
 import com.desafio.taskmanager.ai.api.dto.ApplyDecompositionRequest;
 import com.desafio.taskmanager.ai.api.dto.DecomposeTaskResponse;
 import com.desafio.taskmanager.ai.api.dto.ImproveTaskRequest;
@@ -68,6 +69,17 @@ public class AiTaskController {
         TaskAnalysis analise = service.analyze(id);
         return new AnalyzeTaskResponse(
                 analise.priority(), analise.complexity(), analise.estimatedHours(), analise.reason());
+    }
+
+    /**
+     * F13: aplica a sugestao da analise na propria tarefa. A raiz recebe o total
+     * em horas das subtarefas (quando existirem), a subtarefa recebe o estimado da
+     * analise; a prioridade e sempre aplicada. 200 com a tarefa atualizada.
+     */
+    @PostMapping("/{id}/analysis/apply")
+    public TaskResponse applyAnalysis(@PathVariable UUID id, @Valid @RequestBody ApplyAnalysisRequest request) {
+        return mapper.toResponse(
+                service.applySuggestion(id, request.priority(), request.estimatedHours()));
     }
 
     /** RF-13. 200 com as sugestoes; nenhuma subtarefa e criada aqui. */

@@ -16,6 +16,7 @@ import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 import com.desafio.taskmanager.task.infra.TaskRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -160,6 +161,34 @@ class AiTaskServiceTest {
         assertThat(captor.getAllValues())
                 .extracting(Task::getTitle)
                 .containsExactly("Primeira", "Segunda", "Terceira");
+    }
+
+    // --- applySuggestion (F13) ---
+
+    @Test
+    void applySuggestionNaRaizSemFilhasUsaHorizontalDaAnalise() {
+        Task tarefa = tarefa();
+        when(repository.findById(tarefa.getId())).thenReturn(Optional.of(tarefa));
+        when(repository.findByParentIdOrderByCreatedAtAsc(tarefa.getId())).thenReturn(List.of());
+
+        Task aplicada = service.applySuggestion(tarefa.getId(), TaskPriority.HIGH, 4.0);
+
+        assertThat(aplicada.getPriority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(aplicada.getEstimatedTime()).isEqualTo(4.0);
+        assertThat(aplicada.getEstimatedUnit()).isEqualTo(TimeUnit.HOURS);
+    }
+
+    @Test
+    void applySuggestionNaSubtarefaAplicaDiretoSemConsultarFilhas() {
+        Task pai = tarefa();
+        Task filha = new Task("Filha", null, TaskPriority.LOW, null, pai);
+        when(repository.findById(filha.getId())).thenReturn(Optional.of(filha));
+
+        service.applySuggestion(filha.getId(), TaskPriority.HIGH, 3.0);
+
+        assertThat(filha.getPriority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(filha.getEstimatedTime()).isEqualTo(3.0);
+        verify(repository, never()).findByParentIdOrderByCreatedAtAsc(any());
     }
 
     /** Porta fake: registra o contexto recebido e devolve o valor roteirizado. */

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.desafio.taskmanager.common.error.BusinessRuleException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.task.application.dto.TaskCommand;
 import com.desafio.taskmanager.task.application.dto.TaskFilter;
@@ -13,6 +14,7 @@ import com.desafio.taskmanager.task.application.dto.TaskSummary;
 import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
+import com.desafio.taskmanager.task.domain.TimeUnit;
 import com.desafio.taskmanager.task.infra.TaskRepository;
 
 import org.springframework.data.domain.Page;
@@ -45,6 +47,7 @@ public class TaskService {
     /** RF-01. A tarefa nasce TODO; quem decide o status inicial e a entidade. */
     @Transactional
     public Task create(TaskCommand command) {
+        exigirRaizSemTempo(command.tempoEstimado());
         return repository.save(toTask(command, null));
     }
 
@@ -52,6 +55,9 @@ public class TaskService {
     @Transactional
     public Task createSubtask(UUID parentId, TaskCommand command) {
         Task parent = getOrThrow(parentId);
+        if (command.prazo() != null) {
+            throw new BusinessRuleException("subtarefa nao pode ter prazo");
+        }
         return repository.save(toTask(command, parent));
     }
 
@@ -93,6 +99,13 @@ public class TaskService {
     @Transactional
     public Task update(UUID id, TaskCommand command) {
         Task task = getOrThrow(id);
+        if (task.isSubtask()) {
+            if (command.prazo() != null) {
+                throw new BusinessRuleException("subtarefa nao pode ter prazo");
+            }
+        } else {
+            exigirRaizSemTempo(command.tempoEstimado());
+        }
         task.updateContent(command.titulo(), command.descricao(), command.prioridade(), command.prazo(),
                 command.tempoEstimado(), command.unidadeTempo());
         return task;
@@ -102,6 +115,25 @@ public class TaskService {
     @Transactional
     public Task changeStatus(UUID id, TaskStatus newStatus) {
         return changeStatus(id, newStatus, false);
+    }
+
+    /**
+     * T-F13-02: aplica a sugestao da analise. Na <b>raiz</b> o tempo vira a soma
+     * em horas das subtarefas (Dias → x24) quando essas existirem e somarem; senao
+     * usa o estimado da propria analise ({@code horasLlms}); na <b>subtarefa</b> usa
+     * o estimado da analise direto. Horas resolvidas como nulas so trocam a
+     * prioridade, sem mexer no tempo atual.
+     */
+    @Transactional
+    public Task applySuggestion(UUID id, TaskPriority prioridade, Double horasLlms) {
+        Task task = getOrThrow(id);
+        if (task.isSubtask()) {
+            task.applySuggestion(prioridade, horasLlms);
+            return task;
+        }
+        Double total = totalEmHoras(repository.findByParentIdOrderByCreatedAtAsc(id));
+        task.applySuggestion(prioridade, total == null ? horasLlms : total);
+        return task;
     }
 
     /**
@@ -163,8 +195,29 @@ public class TaskService {
                 parent);
     }
 
+    /**
+     * T-F13-01: tarefa principal e so de prazo. O caminho de escrita da IA
+     * ("Aplicar Sugestao") nao passa por aqui e pode atribuir tempo a uma raiz.
+     */
+    private static void exigirRaizSemTempo(Double tempoEstimado) {
+        if (tempoEstimado != null) {
+            throw new BusinessRuleException("tarefa principal nao pode ter tempo estimado");
+        }
+    }
+
     private Task getOrThrow(UUID id) {
         return repository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("tarefa", id));
+    }
+
+    /** Soma do tempo estimado das filhas em horas (Dias → x24); nulo quando nao soma. */
+    private static Double totalEmHoras(List<Task> filhas) {
+        double soma = filhas.stream().mapToDouble(filha -> {
+            if (filha.getEstimatedTime() == null) {
+                return 0;
+            }
+            return filha.getEstimatedTime() * (filha.getEstimatedUnit() == TimeUnit.DAYS ? 24 : 1);
+        }).sum();
+        return soma > 0 ? soma : null;
     }
 
     /**
