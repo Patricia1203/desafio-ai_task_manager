@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.desafio.taskmanager.area.domain.WorkArea;
 import com.desafio.taskmanager.task.domain.Task;
 import com.desafio.taskmanager.task.domain.TaskPriority;
 import com.desafio.taskmanager.task.domain.TaskStatus;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -31,6 +33,18 @@ public interface TaskRepository
     List<Task> findByParentIdOrderByCreatedAtAsc(UUID parentId);
 
     List<Task> findByStatusOrderByCreatedAtDesc(TaskStatus status);
+
+    /**
+     * Vínculo em lote das tarefas sem quadro ao primeiro quadro criado (pedido do
+     * usuário na F14: as tarefas já existentes passam a pertencer ao 1º quadro).
+     * O {@code @Modifying} precisa de {@code clearAutomatically} ou ({@code flush})
+     * porque o Service delega a transação e a lista consultada antes ficaria em
+     * cache no persistence context; aqui o UPDATE roda direto no banco, então é
+     * seguro após um flush.
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("update Task t set t.area = :area where t.area is null")
+    int assignAreaToOrphans(@Param("area") WorkArea area);
 
     /**
      * Tarefas em aberto ordenadas por urgencia (T-F06-07): prazo proximo primeiro,

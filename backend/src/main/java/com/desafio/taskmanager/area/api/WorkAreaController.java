@@ -46,10 +46,11 @@ public class WorkAreaController {
         this.service = service;
     }
 
-    /** Lista as areas em ordem alfabetica, sem os bytes das fotos. */
+    /** Lista as areas em ordem alfabetica (sem os bytes das fotos), com busca ?title=. */
     @GetMapping
-    public java.util.List<WorkAreaResponse> list() {
-        return service.list().stream().map(WorkAreaResponse::of).toList();
+    public java.util.List<WorkAreaResponse> list(
+            @RequestParam(required = false) String title) {
+        return service.list(title).stream().map(WorkAreaResponse::of).toList();
     }
 
     /** Cria a area; 201 com Location. A foto e opcional. */

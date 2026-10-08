@@ -8,6 +8,9 @@ import com.desafio.taskmanager.area.infra.WorkAreaRepository;
 import com.desafio.taskmanager.common.error.BusinessRuleException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.support.PostgresIntegrationTest;
+import com.desafio.taskmanager.task.application.TaskService;
+import com.desafio.taskmanager.task.application.dto.TaskCommand;
+import com.desafio.taskmanager.task.infra.TaskRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,8 +36,15 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
     @Autowired
     private WorkAreaRepository repository;
 
+    @Autowired
+    private TaskService taskService;
+
+    @Autowired
+    private TaskRepository taskRepository;
+
     @BeforeEach
     void clean() {
+        taskRepository.deleteAll();
         repository.deleteAll();
     }
 
@@ -89,6 +99,40 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
         List<WorkArea> areas = service.list();
 
         assertThat(areas).extracting(WorkArea::getTitle).containsExactly("Alfa", "Zeta");
+    }
+
+    @Test
+    void listarPorTituloIgnoraCaixaECoringaLiteral() {
+        repository.save(new WorkArea("Relatorio trimestral"));
+        repository.save(new WorkArea("100% feito"));
+        repository.save(new WorkArea("100 e feito"));
+
+        assertThat(service.list("RELAT"))
+                .extracting(WorkArea::getTitle)
+                .containsExactly("Relatorio trimestral");
+        assertThat(service.list("100%"))
+                .extracting(WorkArea::getTitle)
+                .containsExactly("100% feito");
+    }
+
+    @Test
+    void listarPorTituloEmBrancoDevolveTudo() {
+        repository.save(new WorkArea("Alfa"));
+
+        assertThat(service.list("   ")).extracting(WorkArea::getTitle).containsExactly("Alfa");
+    }
+
+    @Test
+    void primeiroQuadroVinculaAsTarefasOrfasAEle() {
+        UUID orfa = taskService.create(
+                new TaskCommand("Existente", null, null, null, null, null, null)).getId();
+
+        WorkArea primeiro = service.create("Primeiro", null, null);
+        WorkArea segundo = service.create("Segundo", null, null);
+
+        assertThat(taskRepository.findById(orfa).orElseThrow().getArea().getId())
+                .isEqualTo(primeiro.getId());
+        assertThat(primeiro.getId()).isNotEqualTo(segundo.getId());
     }
 
     @Test

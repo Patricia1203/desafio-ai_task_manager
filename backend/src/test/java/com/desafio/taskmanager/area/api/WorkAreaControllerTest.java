@@ -60,13 +60,26 @@ class WorkAreaControllerTest {
     @Test
     void listarDevolveResumoSemBytes() throws Exception {
         WorkArea area = area();
-        when(service.list()).thenReturn(List.of(area));
+        when(service.list(isNull())).thenReturn(List.of(area));
 
         mockMvc.perform(get("/areas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(area.getId().toString()))
                 .andExpect(jsonPath("$[0].title").value("Pessoal"))
                 .andExpect(jsonPath("$[0].imageType").value("image/png"));
+
+        verify(service).list(isNull());
+    }
+
+    @Test
+    void listarPorTituloRepassaBuscaAoService() throws Exception {
+        when(service.list("mor")).thenReturn(List.of(new WorkArea("Moradia")));
+
+        mockMvc.perform(get("/areas").param("title", "mor"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Moradia"));
+
+        verify(service).list("mor");
     }
 
     // --- POST /areas (multipart) ---
