@@ -225,6 +225,92 @@ describe('DashboardPage', () => {
     expect(within(bloco).queryByText('Contratar empresa')).not.toBeInTheDocument();
   });
 
+  it('rola as subtarefas no espaco de 3 somente quando passa de 3', async () => {
+    const pai: Task = {
+      id: '5',
+      title: 'Montar apresentacao',
+      description: null,
+      status: 'TODO',
+      priority: 'MEDIUM',
+      dueDate: '2026-10-18',
+      parentId: null,
+      createdAt: '2026-10-01T10:00:00Z',
+      updatedAt: '2026-10-01T10:00:00Z',
+      subtaskCount: 4,
+      estimatedTime: null,
+      estimatedUnit: null,
+    };
+    const filhas: Task[] = Array.from({ length: 4 }, (_, i) => ({
+      ...pai,
+      id: `5-${i}`,
+      title: `Slide ${i + 1}`,
+      parentId: pai.id,
+      subtaskCount: 0,
+    }));
+    vi.mocked(getSummary).mockResolvedValue(
+      resumo({ total: 4, pending: 4, inProgress: 0, done: 0, highPriority: 0 }),
+    );
+    vi.mocked(listTasks).mockResolvedValue(pagina([pai]));
+    vi.mocked(getSubtasks).mockResolvedValue(filhas);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
+
+    const bloco = await screen.findByLabelText('Próximos prazos');
+    await userEvent.click(
+      within(bloco).getByRole('button', { name: 'Ver subtarefas de Montar apresentacao' }),
+    );
+
+    const nivel = (await within(bloco).findByText('Slide 1')).closest('ul');
+    expect(nivel).toHaveClass('dashboard__prazos--nivel');
+    expect(nivel).toHaveClass('dashboard__prazos--rolagem');
+  });
+
+  it('sem passar de 3 subtarefas o bloco nao ganha a classe de rolagem', async () => {
+    const pai: Task = {
+      id: '5',
+      title: 'Montar apresentacao',
+      description: null,
+      status: 'TODO',
+      priority: 'MEDIUM',
+      dueDate: '2026-10-18',
+      parentId: null,
+      createdAt: '2026-10-01T10:00:00Z',
+      updatedAt: '2026-10-01T10:00:00Z',
+      subtaskCount: 3,
+      estimatedTime: null,
+      estimatedUnit: null,
+    };
+    const filhas: Task[] = Array.from({ length: 3 }, (_, i) => ({
+      ...pai,
+      id: `5-${i}`,
+      title: `Slide ${i + 1}`,
+      parentId: pai.id,
+      subtaskCount: 0,
+    }));
+    vi.mocked(getSummary).mockResolvedValue(
+      resumo({ total: 3, pending: 3, inProgress: 0, done: 0, highPriority: 0 }),
+    );
+    vi.mocked(listTasks).mockResolvedValue(pagina([pai]));
+    vi.mocked(getSubtasks).mockResolvedValue(filhas);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
+
+    const bloco = await screen.findByLabelText('Próximos prazos');
+    await userEvent.click(
+      within(bloco).getByRole('button', { name: 'Ver subtarefas de Montar apresentacao' }),
+    );
+
+    const nivel = (await within(bloco).findByText('Slide 1')).closest('ul');
+    expect(nivel).toHaveClass('dashboard__prazos--nivel');
+    expect(nivel).not.toHaveClass('dashboard__prazos--rolagem');
+  });
+
   it('mostra o erro quando o resumo falha e permite tentar de novo', async () => {
     vi.mocked(getSummary)
       .mockRejectedValueOnce(new Error('Falhou a rede'))

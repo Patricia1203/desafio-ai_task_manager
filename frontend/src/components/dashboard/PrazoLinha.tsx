@@ -75,7 +75,11 @@ export default function PrazoLinha({ tarefa, hoje }: PrazoLinhaProps) {
             <p className="async-state__empty">Sem subtarefas.</p>
           )}
           {filhos !== null && filhos.length > 0 && (
-            <ul className="dashboard__prazos dashboard__prazos--nivel">
+            <ul
+              className={`dashboard__prazos dashboard__prazos--nivel${
+                filhos.length > 3 ? ' dashboard__prazos--rolagem' : ''
+              }`}
+            >
               {filhos.map((filho) => (
                 <PrazoLinha key={filho.id} tarefa={filho} hoje={hoje} />
               ))}

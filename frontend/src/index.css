@@ -717,17 +717,20 @@ textarea::placeholder {
 .dashboard__prazos--nivel {
   padding-left: 1.25rem;
   border-left: 2px solid var(--color-border);
-  /* com mais de 3 subtarefas, rolagem vertical no proprio bloco */
+}
+
+/* so com mais de 3 subtarefas o bloco passa a rolar verticalmente */
+.dashboard__prazos--rolagem {
   max-height: 9rem;
   overflow-y: auto;
   scrollbar-width: thin;
 }
 
-.dashboard__prazos--nivel::-webkit-scrollbar {
+.dashboard__prazos--rolagem::-webkit-scrollbar {
   width: 6px;
 }
 
-.dashboard__prazos--nivel::-webkit-scrollbar-thumb {
+.dashboard__prazos--rolagem::-webkit-scrollbar-thumb {
   background: var(--color-border-strong);
   border-radius: 999px;
 }
