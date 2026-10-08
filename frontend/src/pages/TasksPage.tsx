@@ -113,7 +113,9 @@ export default function TasksPage() {
         </span>
         {subModo ? (
           <>
-            <Link to="/tasks">Tarefas</Link>
+            <Link to="/tasks" onClick={() => setModo('lista')}>
+              Tarefas
+            </Link>
             <span className="breadcrumb__sep" aria-hidden="true">
               /
             </span>
