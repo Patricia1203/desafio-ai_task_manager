@@ -8,8 +8,11 @@ import type { WorkArea } from '../types/area';
  * o {@code client.request} nao mescla {@code Content-Type} manual quando o
  * corpo e um FormData, deixando o browser montar o boundary da requisicao.
  */
-export function listAreas(): Promise<WorkArea[]> {
-  return request<WorkArea[]>('/areas');
+export function listAreas(params: { title?: string } = {}): Promise<WorkArea[]> {
+  const search = new URLSearchParams();
+  if (params.title?.trim()) search.set('title', params.title.trim());
+  const query = search.toString();
+  return request<WorkArea[]>(`/areas${query ? `?${query}` : ''}`);
 }
 
 export function createArea(form: FormData): Promise<WorkArea> {

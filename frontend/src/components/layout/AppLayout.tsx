@@ -11,6 +11,7 @@ export default function AppLayout() {
         <nav className="app__nav" aria-label="Navegacao principal">
           <NavLink to="/">Dashboard</NavLink>
           <NavLink to="/tasks">Tarefas</NavLink>
+          <NavLink to="/areas">Quadros</NavLink>
           <NavLink to="/assistente">Assistente</NavLink>
         </nav>
       </header>

@@ -53,7 +53,7 @@ describe('TaskForm', () => {
 
     await userEvent.type(screen.getByLabelText(/Título/), '  Pagar boleto  ');
     await userEvent.selectOptions(screen.getByLabelText('Prioridade'), 'LOW');
-    await userEvent.selectOptions(screen.getByLabelText('Área de trabalho'), 'Finanças');
+    await userEvent.selectOptions(screen.getByLabelText('Quadro'), 'Finanças');
     await userEvent.type(screen.getByLabelText('Prazo'), '2026-11-01');
     await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
@@ -68,7 +68,7 @@ describe('TaskForm', () => {
     });
   });
 
-  it('envia Sem área quando nenhuma area e escolhida', async () => {
+  it('envia Sem quadro quando nenhum quadro e escolhido', async () => {
     const onSubmit = vi.fn();
     render(<TaskForm areas={areas} submitting={false} onSubmit={onSubmit} onCancel={vi.fn()} />);
 
@@ -78,10 +78,10 @@ describe('TaskForm', () => {
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ areaId: null }));
   });
 
-  it('mostra a area da tarefa como selecionada ao editar', () => {
+  it('mostra o quadro da tarefa como selecionado ao editar', () => {
     render(<TaskForm task={tarefa} areas={areas} submitting={false} onSubmit={vi.fn()} onCancel={vi.fn()} />);
 
-    expect(screen.getByLabelText('Área de trabalho')).toHaveValue(areaId);
+    expect(screen.getByLabelText('Quadro')).toHaveValue(areaId);
   });
 
   it('envia o tempo estimado com a unidade escolhida', async () => {

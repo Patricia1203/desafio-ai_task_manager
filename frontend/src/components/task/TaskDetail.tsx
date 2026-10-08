@@ -152,7 +152,7 @@ export default function TaskDetail({ task, areaNome, onChanged, onDeleted, onEdi
         </div>
         {areaNome ? (
           <div>
-            <dt>Área</dt>
+            <dt>Quadro</dt>
             <dd>{areaNome}</dd>
           </div>
         ) : null}

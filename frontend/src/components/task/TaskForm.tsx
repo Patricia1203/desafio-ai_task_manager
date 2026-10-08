@@ -135,9 +135,9 @@ export default function TaskForm({
       </label>
 
       <label htmlFor="task-form-area" className="field">
-        <span className="field__label">Área de trabalho</span>
+        <span className="field__label">Quadro</span>
         <select id="task-form-area" value={areaId} onChange={(event) => setAreaId(event.target.value)}>
-          <option value="">Sem área</option>
+          <option value="">Sem quadro</option>
           {areas.map((area) => (
             <option key={area.id} value={area.id}>
               {area.title}

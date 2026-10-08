@@ -57,10 +57,33 @@ describe('TaskList', () => {
     expect(screen.queryByRole('button', { name: /Pagar boleto/ })).not.toBeInTheDocument();
   });
 
+  it('mostra o filtro de status quando onStatusChange e informado e avisa a mudanca', async () => {
+    const onStatusChange = vi.fn();
+    renderizar(tarefas, { status: 'TODO', onStatusChange });
+
+    const select = screen.getByLabelText('Filtrar por status');
+    expect(select).toHaveValue('TODO');
+    await userEvent.selectOptions(select, 'IN_PROGRESS');
+
+    expect(onStatusChange).toHaveBeenCalledWith('IN_PROGRESS');
+  });
+
+  it('nao mostra o filtro de status quando a pagina nao oferece mudanca', () => {
+    renderizar();
+
+    expect(screen.queryByLabelText('Filtrar por status')).not.toBeInTheDocument();
+  });
+
   it('mostra mensagem de vazio quando nao ha tarefas', () => {
     renderizar([]);
 
     expect(screen.getByText('Nenhuma tarefa cadastrada. Crie a primeira!')).toBeInTheDocument();
+  });
+
+  it('esconde o filtro por titulo quando nao ha tarefas no quadro', () => {
+    renderizar([]);
+
+    expect(screen.queryByLabelText('Filtrar por título')).not.toBeInTheDocument();
   });
 
   it('mostra o estado de carregamento', () => {
