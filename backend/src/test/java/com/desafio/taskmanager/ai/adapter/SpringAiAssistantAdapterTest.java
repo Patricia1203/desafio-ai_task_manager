@@ -158,6 +158,8 @@ class SpringAiAssistantAdapterTest {
             assertThat(resposta).isEqualTo("Resposta so com o contexto");
             assertThat(textoDoPrompt(fake.prompts().get(0)))
                     .contains("Contexto de tarefas disponivel")
+                    .contains("<dados>")
+                    .contains("</dados>")
                     .contains("\"pendentes\"");
             assertThat(fake.prompts().get(0).getOptions())
                     .isNotInstanceOf(ToolCallingChatOptions.class);
