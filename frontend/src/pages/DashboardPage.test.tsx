@@ -165,7 +165,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('1 de 4 concluídas · 75% não concluídas')).toBeInTheDocument();
   });
 
-  it('expande a raiz e lista as subtarefas recuadas com o tempo estimado', async () => {
+  it('expande a raiz e lista as subtarefas recuadas com o tempo para realizar', async () => {
     const pai: Task = {
       id: '4',
       title: 'Mover casa',
@@ -202,7 +202,7 @@ describe('DashboardPage', () => {
 
     const bloco = await screen.findByLabelText('Próximos prazos');
 
-    expect(within(bloco).getByText('1 hora')).toBeInTheDocument();
+    expect(within(bloco).getByText('15/10/2026')).toBeInTheDocument();
     expect(within(bloco).queryByText('Contratar empresa')).not.toBeInTheDocument();
 
     await userEvent.click(
@@ -211,7 +211,7 @@ describe('DashboardPage', () => {
 
     expect(getSubtasks).toHaveBeenCalledWith(pai.id);
     expect(await within(bloco).findByText('Contratar empresa')).toBeInTheDocument();
-    expect(within(bloco).getByText('2 dias')).toBeInTheDocument();
+    expect(within(bloco).getByText('2 dias para realizar')).toBeInTheDocument();
     expect(within(bloco).getByText('Contratar empresa').closest('ul')).toHaveClass(
       'dashboard__prazos--nivel',
     );
@@ -223,6 +223,37 @@ describe('DashboardPage', () => {
       within(bloco).getByRole('button', { name: 'Recolher subtarefas de Mover casa' }),
     );
     expect(within(bloco).queryByText('Contratar empresa')).not.toBeInTheDocument();
+  });
+
+  it('o clique no titulo da raiz tambem expande as subtarefas', async () => {
+    vi.mocked(getSummary).mockResolvedValue(
+      resumo({ total: 4, pending: 3, inProgress: 1, done: 0, highPriority: 0 }),
+    );
+    vi.mocked(listTasks).mockResolvedValue(
+      pagina([
+        {
+          ...TAREFAS[0],
+          id: '4',
+          title: 'Mover casa',
+          dueDate: '2026-10-15',
+          subtaskCount: 1,
+          estimatedTime: null,
+          estimatedUnit: null,
+        },
+      ]),
+    );
+    vi.mocked(getSubtasks).mockResolvedValue([{ ...TAREFAS[0], id: '4a', parentId: '4' }]);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
+
+    const bloco = await screen.findByLabelText('Próximos prazos');
+    await userEvent.click(within(bloco).getByRole('button', { name: 'Mover casa' }));
+
+    expect(getSubtasks).toHaveBeenCalledWith('4');
+    expect(await within(bloco).findByText('Definir roadmap')).toBeInTheDocument();
   });
 
   it('rola as subtarefas no espaco de 3 somente quando passa de 3', async () => {

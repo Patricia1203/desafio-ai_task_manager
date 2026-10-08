@@ -39,11 +39,13 @@ export default function PrazoLinha({ tarefa, hoje }: PrazoLinhaProps) {
 
   const atrasada = tarefa.dueDate !== null && tarefa.dueDate < hoje;
   const tempo = formatarTempoEstimado(tarefa.estimatedTime, tarefa.estimatedUnit);
+  const eSubtarefa = Boolean(tarefa.parentId);
+  const temFilhos = tarefa.subtaskCount > 0;
 
   return (
     <li className="dashboard__prazo">
       <div className="dashboard__prazo-linha">
-        {tarefa.subtaskCount > 0 && (
+        {temFilhos && (
           <button
             type="button"
             className="dashboard__prazo-toggle"
@@ -54,14 +56,26 @@ export default function PrazoLinha({ tarefa, hoje }: PrazoLinhaProps) {
             {aberta ? '▾' : '▸'}
           </button>
         )}
-        <strong>{tarefa.title}</strong>
-        {tempo && (
-          <span className="dashboard__prazo-tempo">{tempo}</span>
+        {temFilhos ? (
+          <button
+            type="button"
+            className="dashboard__prazo-titulo"
+            aria-expanded={aberta}
+            onClick={alternar}
+          >
+            {tarefa.title}
+          </button>
+        ) : (
+          <strong className="dashboard__prazo-titulo">{tarefa.title}</strong>
         )}
-        <span className={`dashboard__data${atrasada ? ' dashboard__data--atrasada' : ''}`}>
-          {atrasada ? 'Atrasada · ' : ''}
-          {formatarDataBR(tarefa.dueDate)}
-        </span>
+        {eSubtarefa ? (
+          tempo && <span className="dashboard__prazo-tempo">{tempo} para realizar</span>
+        ) : (
+          <span className={`dashboard__data${atrasada ? ' dashboard__data--atrasada' : ''}`}>
+            {atrasada ? 'Atrasada · ' : ''}
+            {formatarDataBR(tarefa.dueDate)}
+          </span>
+        )}
       </div>
       {aberta && (
         <div className="dashboard__prazo-filhos">
