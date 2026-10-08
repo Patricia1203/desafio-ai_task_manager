@@ -23,6 +23,7 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
   const [statusError, setStatusError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [subtasksEmExclusao, setSubtasksEmExclusao] = useState<Task[] | null>(null);
+  const [pendentesParaConcluir, setPendentesParaConcluir] = useState<Task[] | null>(null);
   const [subtasks, setSubtasks] = useState<Task[] | null>(null);
   const [subtasksBusy, setSubtasksBusy] = useState(true);
   const [subtasksError, setSubtasksError] = useState<string | null>(null);
@@ -62,16 +63,57 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
   }, [task.parentId]);
 
   async function handleStatusChange(status: TaskStatus) {
+    if (status === 'DONE') {
+      try {
+        const filhas = subtasks ?? (await getSubtasks(task.id));
+        const pendentes = filhas.filter((subtask) => subtask.status !== 'DONE');
+        if (pendentes.length > 0) {
+          setPendentesParaConcluir(pendentes);
+          return;
+        }
+      } catch (error) {
+        setStatusError(messageOf(error));
+        return;
+      }
+    }
+    await trocarStatus(status, false);
+  }
+
+  async function trocarStatus(status: TaskStatus, completeSubtasks: boolean) {
     setStatusBusy(true);
     setStatusError(null);
     try {
-      const atualizada = await changeStatus(task.id, status);
+      const atualizada = await changeStatus(task.id, status, completeSubtasks);
       onChanged(atualizada);
     } catch (error) {
       setStatusError(messageOf(error));
     } finally {
       setStatusBusy(false);
     }
+  }
+
+  async function confirmConcluir() {
+    setStatusBusy(true);
+    setStatusError(null);
+    try {
+      const atualizada = await changeStatus(task.id, 'DONE', true);
+      setSubtasks((anteriores) =>
+        (anteriores ?? []).map((subtask) =>
+          subtask.status === 'DONE' ? subtask : { ...subtask, status: 'DONE' },
+        ),
+      );
+      setPendentesParaConcluir(null);
+      onChanged(atualizada);
+    } catch (error) {
+      setStatusError(messageOf(error));
+    } finally {
+      setStatusBusy(false);
+    }
+  }
+
+  function cancelConcluir() {
+    setPendentesParaConcluir(null);
+    setStatusBusy(false);
   }
 
   async function handleDelete() {
@@ -105,6 +147,7 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
   }
 
   const emExclusao = subtasksEmExclusao !== null;
+  const emConclusao = pendentesParaConcluir !== null;
 
   return (
     <article className="task-detail" aria-labelledby="task-detail-titulo">
@@ -249,6 +292,43 @@ export default function TaskDetail({ task, onChanged, onDeleted, onEdit, onOpen 
               {deleteBusy ? 'Excluindo...' : 'Excluir'}
             </button>
             <button type="button" onClick={cancelDelete} disabled={deleteBusy}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    {emConclusao && (
+        <div
+          className="dialog"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="dialogo-conclusao-titulo"
+        >
+          <h4 id="dialogo-conclusao-titulo">Concluir tarefa e subtarefas?</h4>
+          <p>
+            A tarefa <strong>{task.title}</strong> será concluída junto com as subtarefas
+            pendentes:
+          </p>
+          <ul className="dialog__lista">
+            {pendentesParaConcluir.map((subtask) => (
+              <li key={subtask.id}>{subtask.title}</li>
+            ))}
+          </ul>
+          {statusError && (
+            <p className="error-message" role="alert">
+              {statusError}
+            </p>
+          )}
+          <div className="dialog__acoes">
+            <button
+              type="button"
+              className="button--danger"
+              onClick={confirmConcluir}
+              disabled={statusBusy}
+            >
+              {statusBusy ? 'Concluindo...' : 'Concluir'}
+            </button>
+            <button type="button" onClick={cancelConcluir} disabled={statusBusy}>
               Cancelar
             </button>
           </div>

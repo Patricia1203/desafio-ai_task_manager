@@ -61,7 +61,7 @@ describe('TaskDetail', () => {
 
     await userEvent.selectOptions(screen.getByLabelText('Status'), 'IN_PROGRESS');
 
-    expect(changeStatus).toHaveBeenCalledWith(tarefa.id, 'IN_PROGRESS');
+    expect(changeStatus).toHaveBeenCalledWith(tarefa.id, 'IN_PROGRESS', false);
     expect(await vi.waitFor(() => onChanged(atualizada))).toBeUndefined();
   });
 
@@ -72,6 +72,69 @@ describe('TaskDetail', () => {
     await userEvent.selectOptions(screen.getByLabelText('Status'), 'DONE');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('422: transicao invalida');
+    expect(changeStatus).toHaveBeenCalledWith(tarefa.id, 'DONE', false);
+  });
+
+  it('conclui direto sem modal quando nao ha subtarefas pendentes', async () => {
+    const atualizada = { ...tarefa, status: 'DONE' as const };
+    vi.mocked(changeStatus).mockResolvedValue(atualizada);
+    const { onChanged } = montar();
+
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'DONE');
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(changeStatus).toHaveBeenCalledWith(tarefa.id, 'DONE', false);
+    expect(await vi.waitFor(() => expect(onChanged).toHaveBeenCalledWith(atualizada)));
+  });
+
+  it('abre o modal ao concluir pai com subtarefas pendentes e cancelar nao chama a API', async () => {
+    vi.mocked(getSubtasks).mockResolvedValue([filha]);
+    const { onChanged } = montar();
+
+    await screen.findByRole('region');
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'DONE');
+
+    const dialogo = await screen.findByRole('alertdialog');
+    expect(within(dialogo).getByText('Contratar empresa')).toBeInTheDocument();
+    expect(changeStatus).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
+
+    expect(changeStatus).not.toHaveBeenCalled();
+    expect(onChanged).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('confirma a conclusao com a flag e marca as subtarefas como concluidas', async () => {
+    vi.mocked(getSubtasks).mockResolvedValue([filha]);
+    const atualizada = { ...tarefa, status: 'DONE' as const };
+    vi.mocked(changeStatus).mockResolvedValue(atualizada);
+    const { onChanged } = montar();
+
+    await screen.findByRole('region');
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'DONE');
+
+    const dialogo = await screen.findByRole('alertdialog');
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Concluir' }));
+
+    expect(changeStatus).toHaveBeenCalledWith(tarefa.id, 'DONE', true);
+    expect(onChanged).toHaveBeenCalledWith(atualizada);
+    expect(await screen.findByText('Concluída', { selector: '.badge--done' })).toBeInTheDocument();
+  });
+
+  it('mantem o modal aberto e mostra o erro quando a confirmacao falha', async () => {
+    vi.mocked(getSubtasks).mockResolvedValue([filha]);
+    vi.mocked(changeStatus).mockRejectedValue(new Error('502: comunicacao com o servidor'));
+    montar();
+
+    await screen.findByRole('region');
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'DONE');
+
+    const dialogo = await screen.findByRole('alertdialog');
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Concluir' }));
+
+    expect(await within(dialogo).findByText('502: comunicacao com o servidor')).toBeInTheDocument();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 
   it('agrupa as subtarefas em bloco e abre a selecionada', async () => {

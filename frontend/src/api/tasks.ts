@@ -105,10 +105,18 @@ export function updateTask(id: string, input: TaskInput): Promise<Task> {
   });
 }
 
-export function changeStatus(id: string, status: TaskStatus): Promise<Task> {
+export function changeStatus(
+  id: string,
+  status: TaskStatus,
+  completeSubtasks?: boolean,
+): Promise<Task> {
+  const body: Record<string, unknown> = { status };
+  if (completeSubtasks !== undefined) {
+    body.completeSubtasks = completeSubtasks;
+  }
   return request<Task>(`/tasks/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
 }
 
