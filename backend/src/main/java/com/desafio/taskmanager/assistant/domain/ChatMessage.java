@@ -44,7 +44,6 @@ public class ChatMessage {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    /** Construtor para o JPA. Nao use: mensagem nasce pelo construtor com validacao. */
     protected ChatMessage() {
     }
 

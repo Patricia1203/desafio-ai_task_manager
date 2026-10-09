@@ -119,7 +119,6 @@ public class WorkAreaService {
         return "%" + escapado.toLowerCase(Locale.ROOT) + "%";
     }
 
-    /** Bytes + content type devolvidos pelo endpoint de imagem. */
     public record WorkAreaImage(byte[] bytes, String contentType) {
     }
 }

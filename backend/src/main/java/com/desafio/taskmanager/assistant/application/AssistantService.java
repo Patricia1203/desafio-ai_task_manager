@@ -113,7 +113,6 @@ public class AssistantService {
                 .toList();
     }
 
-    /** Resultado de um turno: a conversa (nova ou retomada) e a resposta do assistente. */
     public record RespostaChat(UUID conversationId, String resposta) {
     }
 

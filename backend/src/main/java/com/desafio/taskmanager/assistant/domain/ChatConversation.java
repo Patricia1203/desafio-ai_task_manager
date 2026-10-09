@@ -40,7 +40,6 @@ public class ChatConversation {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    /** Construtor para o JPA. Nao use: toda conversa nasce por {@link #nova()}. */
     protected ChatConversation() {
     }
 

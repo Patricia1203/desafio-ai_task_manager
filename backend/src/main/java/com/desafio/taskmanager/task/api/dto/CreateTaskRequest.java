@@ -31,7 +31,6 @@ public record CreateTaskRequest(
         /** Opcional: sem valor a tarefa nasce MEDIUM. */
         TaskPriority priority,
 
-        /** Prazo em data (sem hora). Opcional. */
         LocalDate dueDate,
 
         /**
@@ -42,11 +41,7 @@ public record CreateTaskRequest(
         @DecimalMax(value = "200", message = "estimatedTime deve ter no maximo 200")
         Double estimatedTime,
 
-        /**
-         * F12: unidade do tempo estimado (HOURS ou DAYS). Opcional.
-         */
         TimeUnit estimatedUnit,
 
-        /** F14: id da area de trabalho da tarefa. Opcional. */
         UUID areaId) {
 }

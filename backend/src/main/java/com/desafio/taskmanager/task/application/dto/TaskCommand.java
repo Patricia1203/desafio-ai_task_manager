@@ -33,12 +33,10 @@ public record TaskCommand(
         TimeUnit unidadeTempo,
         UUID areaId) {
 
-    /** Variante sem tempo estimado nem area, usada por quem ainda nao conhece F12. */
     public TaskCommand(String titulo, String descricao, TaskPriority prioridade, LocalDate prazo) {
         this(titulo, descricao, prioridade, prazo, null, null, null);
     }
 
-    /** Variante sem area, usada por quem ainda nao conhece F14. */
     public TaskCommand(String titulo, String descricao, TaskPriority prioridade, LocalDate prazo,
             Double tempoEstimado, TimeUnit unidadeTempo) {
         this(titulo, descricao, prioridade, prazo, tempoEstimado, unidadeTempo, null);

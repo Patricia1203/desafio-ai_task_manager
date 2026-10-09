@@ -15,17 +15,14 @@ import com.desafio.taskmanager.task.domain.TaskStatus;
  */
 public record TaskFilter(TaskStatus status, TaskPriority priority, UUID areaId, String title) {
 
-    /** Variante sem area, usada pela maior parte dos fluxos atuais. */
     public TaskFilter(TaskStatus status, TaskPriority priority) {
         this(status, priority, null, null);
     }
 
-    /** Variante com area e sem titulo (F14). */
     public TaskFilter(TaskStatus status, TaskPriority priority, UUID areaId) {
         this(status, priority, areaId, null);
     }
 
-    /** Sem filtro: devolve a listagem inteira. */
     public static TaskFilter all() {
         return new TaskFilter(null, null);
     }
@@ -46,17 +43,14 @@ public record TaskFilter(TaskStatus status, TaskPriority priority, UUID areaId, 
         return priority != null;
     }
 
-    /** F14: filtro por area de trabalho ({@code GET /tasks?areaId=}). */
     public boolean hasArea() {
         return areaId != null;
     }
 
-    /** Busca por parte do titulo, ignorando caixa ({@code GET /tasks?title=}). */
     public boolean hasTitle() {
         return title != null && !title.isBlank();
     }
 
-    /** Verdadeiro quando nenhum criterio foi informado. */
     public boolean isEmpty() {
         return !hasStatus() && !hasPriority() && !hasArea() && !hasTitle();
     }

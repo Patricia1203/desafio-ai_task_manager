@@ -57,8 +57,6 @@ class WorkAreaControllerTest {
         return area;
     }
 
-    // --- GET /areas ---
-
     @Test
     void listarDevolveResumoSemBytes() throws Exception {
         WorkArea area = area();
@@ -85,8 +83,6 @@ class WorkAreaControllerTest {
 
         verify(service).list("mor");
     }
-
-    // --- POST /areas (multipart) ---
 
     @Test
     void criarComImagemDevolve201ComLocation() throws Exception {
@@ -118,8 +114,6 @@ class WorkAreaControllerTest {
         verify(service).create(eq("Sem foto"), isNull(), isNull());
     }
 
-    // --- PUT /areas/{id} (multipart) ---
-
     @Test
     void editarSoTituloMantemAFoto() throws Exception {
         WorkArea atualizada = area();
@@ -145,8 +139,6 @@ class WorkAreaControllerTest {
         verify(service).update(eq(ID), isNull(), isNull(), isNull(), eq(true));
     }
 
-    // --- GET /areas/{id}/image ---
-
     @Test
     void buscarImagemDevolveBytesEContentType() throws Exception {
         when(service.findImage(ID)).thenReturn(new WorkAreaService.WorkAreaImage(PNG, "image/png"));
@@ -168,8 +160,6 @@ class WorkAreaControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // --- DELETE /areas/{id} ---
-
     @Test
     void excluirDevolve204() throws Exception {
         mockMvc.perform(delete("/areas/{id}", ID))
@@ -177,8 +167,6 @@ class WorkAreaControllerTest {
 
         verify(service).delete(ID);
     }
-
-    // --- helpers ---
 
     private static MockMultipartHttpServletRequestBuilder putMultipart(UUID id) {
         return multipart("/areas/{id}", id).with(request -> {

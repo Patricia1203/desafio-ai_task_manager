@@ -82,7 +82,6 @@ class AiTaskManagerApplicationTests extends PostgresIntegrationTest {
         assertThat(tabelas).contains("flyway_schema_history", "tasks");
     }
 
-    /** Nenhuma tabela de negocio pode aparecer fora das migrations aplicadas. */
     @Test
     void todoNegocioVeioDoFlywayEAindaEstaNoHistorico() throws IOException {
         Set<String> criadasPelasMigrations = tabelasCriadasNasMigrations();
@@ -104,7 +103,6 @@ class AiTaskManagerApplicationTests extends PostgresIntegrationTest {
                 .isSubsetOf(criadasPelasMigrations);
     }
 
-    /** Nomes de tabela criados pelos scripts de migration, lidos do classpath. */
     private Set<String> tabelasCriadasNasMigrations() throws IOException {
         Resource[] scripts = new PathMatchingResourcePatternResolver()
                 .getResources("classpath*:db/migration/V*.sql");

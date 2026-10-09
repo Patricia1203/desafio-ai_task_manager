@@ -16,7 +16,6 @@ public record CorsProperties(List<String> allowedOrigins) {
         allowedOrigins = allowedOrigins == null ? List.of() : List.copyOf(allowedOrigins);
     }
 
-    /** Indica se a origem do request esta na lista liberada por app.cors.allowed-origins. */
     public boolean allowsOrigin(String origin) {
         return allowedOrigins.contains(origin);
     }

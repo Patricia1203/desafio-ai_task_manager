@@ -47,19 +47,16 @@ class ErrorProbeController {
         return request;
     }
 
-    /** Lanca 405 de proposito, para provar que o handler nao devolve 500. */
     @GetMapping("/metodo")
     void metodo() throws HttpRequestMethodNotSupportedException {
         throw new HttpRequestMethodNotSupportedException("POST");
     }
 
-    /** Lanca 415 de proposito, para provar que o handler nao devolve 500. */
     @PostMapping("/tipo")
     void tipo() throws HttpMediaTypeNotSupportedException {
         throw new HttpMediaTypeNotSupportedException("application/xml");
     }
 
-    /** Simula upload acima do teto de multipart: deve virar 413 e nao 500. */
     @PostMapping("/upload-grande")
     void uploadGrande() {
         throw new MaxUploadSizeExceededException(5 * 1024 * 1024L,

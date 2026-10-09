@@ -35,10 +35,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
  * configuracao morta e a {@code SocketTimeoutException} mapeada pelo
  * adaptador nunca aconteceria de verdade.
  *
- * <p>Tambem registra {@link AssistantLimitsProperties} (F04): a lista de
- * arquivos de T-F04-02 nao previa uma classe de config propria para o
- * assistente, entao o mesmo {@code @EnableConfigurationProperties} de
- * {@code AiProperties} ganha a segunda entrada.
+ * <p>Tambem registra {@link AssistantLimitsProperties} (F04) junto com o
+ * {@link AiProperties} no mesmo {@code @EnableConfigurationProperties}.
  */
 @Configuration
 @EnableConfigurationProperties({AiProperties.class, AssistantLimitsProperties.class})

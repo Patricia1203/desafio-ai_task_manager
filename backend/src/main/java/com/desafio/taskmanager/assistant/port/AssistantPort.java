@@ -27,6 +27,5 @@ public interface AssistantPort {
     record Mensagem(ChatRole role, String content) {
     }
 
-    /** Resposta do assistente para {@code mensagem} com o {@code historico} como contexto. */
     String chat(List<Mensagem> historico, String mensagem);
 }

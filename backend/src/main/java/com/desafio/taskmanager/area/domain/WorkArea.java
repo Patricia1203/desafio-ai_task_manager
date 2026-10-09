@@ -60,7 +60,6 @@ public class WorkArea {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    /** Construtor para o JPA. Não use: toda criação passa pela factory. */
     protected WorkArea() {
     }
 
@@ -137,7 +136,6 @@ public class WorkArea {
         return true;
     }
 
-    /** WEBP: contêiner RIFF com o marcador WEBP nos bytes 8..11. */
     private static boolean isWebp(byte[] bytes) {
         return bytes.length >= 12
                 && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F'

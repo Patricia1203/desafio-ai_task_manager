@@ -173,9 +173,8 @@ public class TaskController {
     }
 
     /**
-     * Request da API para o comando neutro do application. A normalizacao do
-     * titulo (trim) nao acontece aqui: o dominio faz isso ao construir a
-     * entidade, entao o comando carrega o valor tal qual chegou.
+     * A normalizacao do titulo (trim) nao acontece aqui: o dominio faz isso
+     * ao construir a entidade.
      */
     private static TaskCommand comandoDe(CreateTaskRequest request) {
         return new TaskCommand(request.title(), request.description(), request.priority(), request.dueDate(),

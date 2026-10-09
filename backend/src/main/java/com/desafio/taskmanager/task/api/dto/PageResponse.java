@@ -8,14 +8,6 @@ import java.util.List;
  *
  * <p>Os nomes dos componentes sao os campos do JSON (contrato em ingles desde
  * a revisao F06).
- *
- * @param content    itens da pagina atual
- * @param page       indice da pagina, comecando em zero
- * @param size       tamanho da pagina
- * @param totalItems total de itens no resultado, ignorando a paginacao
- * @param totalPages total de paginas
- * @param first      se esta e a primeira pagina
- * @param last       se esta e a ultima pagina
  */
 public record PageResponse<T>(
         List<T> content,

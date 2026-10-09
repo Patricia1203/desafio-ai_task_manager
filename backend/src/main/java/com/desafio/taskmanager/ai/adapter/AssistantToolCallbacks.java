@@ -17,14 +17,13 @@ import org.springframework.ai.tool.annotation.ToolParam;
  * como tool calling.
  *
  * <p>Fica no adaptador para a anotacao do Spring AI nao vazar para
- * {@code assistant.application} (RNF-14, mesmo criterio do
- * {@code LayerDependenciesTest}): a classe so delega para o
- * {@link TaskQueryTools} testado em T-F04-02, e nenhum metodo escreve.
+ * {@code assistant.application} (RNF-14): a classe so delega para o
+ * {@link TaskQueryTools}, e nenhum metodo escreve.
  *
  * <p>Os nomes em snake_case e as descricoes em portugues sao o contrato que o
  * modelo enxerga. As ferramentas de lista devolvem {@link ToolResultPage}
- * ({@code total} + {@code items}, T-F06-07): a descricao diz que o total e do
- * filtro inteiro para o modelo responder "3 de 40" em vez de truncar sem avisar.
+ * ({@code total} + {@code items}): a descricao diz que o total e do filtro
+ * inteiro para o modelo responder "3 de 40" em vez de truncar sem avisar.
  */
 final class AssistantToolCallbacks {
 

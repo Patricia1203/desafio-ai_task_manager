@@ -8,9 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * <p>{@code @JsonProperty} fixa os nomes do JSON Schema que o structured
  * output gera (RNF-10), estáveis mesmo que o componente Java mude de nome.
- * Os nomes em inglês vêm do design.md desta feature: esta record é contrato
- * interno da porta, não o JSON que a API expõe (RF-24 se resolve na camada
- * de api, em T-F03-03).
+ * Esta record é contrato interno da porta, não o JSON que a API expõe
+ * (RF-24).
  */
 public record TaskImprovement(
         @JsonProperty("title") String title,

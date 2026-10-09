@@ -118,10 +118,7 @@ public class AiTaskController {
         return ResponseEntity.created(location).body(criadas);
     }
 
-    /**
-     * A IA sempre propoe horas: o estimatedHours vira committedTime e HOURS.
-     * F12 passou a persistir esse tempo (antes caia na validacao e no usuario, sem coluna).
-     */
+    /** A IA sempre propoe horas: o estimatedHours vira committedTime e HOURS. */
     private static TaskCommand comandoDe(SubtaskDraft draft) {
         return new TaskCommand(draft.title(), draft.description(), null, null,
                 draft.estimatedHours(), TimeUnit.HOURS);

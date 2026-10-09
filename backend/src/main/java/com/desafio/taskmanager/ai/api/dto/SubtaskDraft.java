@@ -8,11 +8,10 @@ import jakarta.validation.constraints.Size;
 /**
  * Um item da lista aceita pelo POST /decompose/apply (US-022, RF-14).
  *
- * <p>A validacao acontece na borda, por Bean Validation (CONVENTIONS): titulo
- * obrigatorio e nos limites do dominio, descricao opcional, e estimatedHours
- * — se o modelo trouxe — dentro de (0, 200], o mesmo intervalo que o
- * {@code LlmResponseValidator} exige da resposta da IA. Draft invalido vira
- * 400 com a lista {@code errors} apontando o item (ex.:
+ * <p>A validacao acontece na borda, por Bean Validation (CONVENTIONS); a
+ * estimatedHours — se o modelo trouxe — fica dentro de (0, 200], o mesmo
+ * intervalo que o {@code LlmResponseValidator} exige da resposta da IA. Draft
+ * invalido vira 400 com a lista {@code errors} apontando o item (ex.:
  * {@code subtasks[0].title}), antes de qualquer escrita.
  *
  * <p>{@code estimatedHours} nao e persistido: a tabela {@code tasks} nao tem

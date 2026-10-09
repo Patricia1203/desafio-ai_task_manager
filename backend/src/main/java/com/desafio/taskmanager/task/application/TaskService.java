@@ -70,7 +70,6 @@ public class TaskService {
         return repository.save(task);
     }
 
-    /** RF-02. Filtros de status e prioridade, opcionalmente paginados. */
     public Page<Task> list(TaskFilter filter, Pageable pageable) {
         return repository.findAll(toSpecification(filter), pageable);
     }
@@ -98,7 +97,6 @@ public class TaskService {
         return getOrThrow(id);
     }
 
-    /** RF-02. Subtarefas em ordem de criacao. */
     public List<Task> findSubtasks(UUID parentId) {
         getOrThrow(parentId);
         return repository.findByParentIdOrderByCreatedAtAsc(parentId);

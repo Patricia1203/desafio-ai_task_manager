@@ -53,8 +53,6 @@ class AssistantControllerTest {
     @MockitoBean
     private AssistantService service;
 
-    // --- POST /assistant/chat ---
-
     @Test
     void chatRetorna200ComConversaEResposta() throws Exception {
         when(service.chat(null, "Quais tarefas estao pendentes?"))
@@ -128,8 +126,6 @@ class AssistantControllerTest {
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }
 
-    // --- GET /assistant/conversations (F10) ---
-
     @Test
     void conversationsRetorna200ComOsResumosDoMaisRecenteParaOMaisAntigo() throws Exception {
         when(service.listarConversas()).thenReturn(List.of(
@@ -178,8 +174,6 @@ class AssistantControllerTest {
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }
 
-    // --- GET /assistant/conversations/{id}/messages (T-F06-10) ---
-
     @Test
     void messagesRetorna200ComIdRoleConteudoECreatedAtEmOrdem() throws Exception {
         when(service.mensagensDaConversa(ID)).thenReturn(List.of(
@@ -210,8 +204,6 @@ class AssistantControllerTest {
                 .andExpect(jsonPath("$.type", containsString("nao-encontrado")))
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }
-
-    // --- falhas do LLM ---
 
     @Test
     void respostaInvalidaDaIaRetorna502ComOCodigoLlmInvalidResponse() throws Exception {

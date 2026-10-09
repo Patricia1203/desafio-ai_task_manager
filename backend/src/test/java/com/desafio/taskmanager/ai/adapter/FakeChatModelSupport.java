@@ -23,7 +23,6 @@ final class FakeChatModelSupport {
     private final Deque<Object> passos = new ArrayDeque<>();
     private final List<Prompt> prompts = new ArrayList<>();
 
-    /** Roteira respostas (JSON cru) na ordem. */
     FakeChatModelSupport respond(String... json) {
         for (String texto : json) {
             passos.add(new ChatResponse(List.of(new Generation(new AssistantMessage(texto)))));
@@ -31,7 +30,6 @@ final class FakeChatModelSupport {
         return this;
     }
 
-    /** Roteira uma excecao de transporte, lancada na chamada em que chegar a vez dela. */
     FakeChatModelSupport fail(RuntimeException excecao) {
         passos.add(excecao);
         return this;

@@ -43,9 +43,6 @@ import tools.jackson.core.JacksonException;
  * (ERR-05) e timeout/I/O vira {@link LlmCommunicationException} (ERR-03).
  * Qualquer outra {@code RuntimeException} e bug de codigo e propaga sem retry —
  * nao vira "resposta invalida".
- *
- * <p>O mapeamento para resposta HTTP e da camada de api (T-F03-03); aqui as
- * excecoes apenas nascem tipadas.
  */
 public class SpringAiTaskAiAdapter implements TaskAiPort {
 

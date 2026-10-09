@@ -62,8 +62,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
         areas.deleteAll();
     }
 
-    // --- criar (RF-01) ---
-
     @Test
     void criarNasceComStatusInicialEPrioridadePadrao() {
         Task criada = service.create(pedido("Nova tarefa", null, null, null));
@@ -98,8 +96,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("200");
     }
-
-    // --- ler (RF-02) ---
 
     @Test
     void buscarPorIdDevolveATarefa() {
@@ -185,8 +181,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(primeira.getContent()).extracting(Task::getTitle).containsExactly("A", "B");
     }
 
-    // --- editar (RF-03) ---
-
     @Test
     void editarAtualizaConteudoEMantemStatus() {
         Task original = criar("Antigo", "antes", TaskPriority.LOW, null);
@@ -250,8 +244,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(vazia.getEstimatedUnit()).isNull();
     }
 
-    // --- aplicar sugestao (T-F13-02) ---
-
     @Test
     void aplicarSugestaoNaRaizSomaAsSubtarefasEmHoras() {
         Task raiz = criar("Raiz");
@@ -314,8 +306,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThatThrownBy(() -> service.update(id, new TaskCommand("  ", null, null, null)))
                 .isInstanceOf(BusinessRuleException.class);
     }
-
-    // --- status (RF-06) ---
 
     @Test
     void alterarStatusPersisteNoBanco() {
@@ -402,8 +392,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(service.findById(filha.getId()).getStatus()).isEqualTo(TaskStatus.TODO);
     }
 
-    // --- excluir (RF-05) ---
-
     @Test
     void excluirRemoveATarefa() {
         UUID id = criar("Some").getId();
@@ -430,8 +418,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
 
         assertThat(service.findAll(TaskFilter.all())).isEmpty();
     }
-
-    // --- subtarefas ---
 
     @Test
     void criarSubtaskLigaAoPai() {
@@ -460,8 +446,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
     void listarSubtarefasDeTarefaSemFilhasDevolveVazio() {
         assertThat(service.findSubtasks(criar("Solitaria").getId())).isEmpty();
     }
-
-    // --- summary (RF-20) ---
 
     @Test
     void summaryComBancoVazioTemTudoZero() {
@@ -523,8 +507,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
         assertThat(summary.highPriority()).isEqualTo(1);
     }
 
-    // --- lista so com tarefas-raiz (T-F07-01) ---
-
     @Test
     void listaPublicaNaoDevolveSubtarefas() {
         Task raiz = criar("Raiz");
@@ -572,8 +554,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
                 .doesNotContainKey(outraRaiz.getId());
         assertThat(service.subtaskCounts(List.of())).isEmpty();
     }
-
-    // --- area de trabalho (F14) ---
 
     @Test
     void criarComAreaGravaOVinculo() {
@@ -662,8 +642,6 @@ class TaskServiceTest extends PostgresIntegrationTest {
                 .extracting(Task::getTitle)
                 .containsExactly("Relatorio em andamento");
     }
-
-    // --- helpers ---
 
     private static TaskCommand pedido(String title, String description, TaskPriority priority,
             LocalDate dueDate) {

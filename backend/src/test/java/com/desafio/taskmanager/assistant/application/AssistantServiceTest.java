@@ -66,8 +66,6 @@ class AssistantServiceTest {
                 .thenAnswer(chamada -> chamada.getArgument(0));
     }
 
-    // --- conversa nova / retomada ---
-
     @Test
     void semConversationIdCriaConversaNovaEPersisteOTurno() {
         AssistantService.RespostaChat resultado = service.chat(null, "Quais tarefas estao pendentes?");
@@ -132,8 +130,6 @@ class AssistantServiceTest {
         verify(conversas, never()).save(any(ChatConversation.class));
         verify(mensagens, never()).save(any(ChatMessage.class));
     }
-
-    // --- janela de historico ---
 
     @Test
     void enviaAsUltimasVinteMensagensDaConversaEmOrdemCronologica() {
@@ -233,8 +229,6 @@ class AssistantServiceTest {
 
         verify(mensagens, never()).save(any(ChatMessage.class));
     }
-
-    // --- historico (F10): titulo, atividade e listagem ---
 
     @Test
     void conversaNovaDerivaOTituloDaPrimeiraMensagemEViraAActividade() {
@@ -337,8 +331,6 @@ class AssistantServiceTest {
         assertThatThrownBy(() -> service.conversa(id))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
-
-    // --- mensagens da conversa (T-F06-10) ---
 
     @Test
     void mensagensDaConversaDevolveRoleConteudoECreatedAtEmOrdemCronologica() {

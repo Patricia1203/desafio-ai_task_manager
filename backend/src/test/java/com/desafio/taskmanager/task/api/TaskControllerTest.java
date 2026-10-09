@@ -72,8 +72,6 @@ class TaskControllerTest {
                 LocalDate.of(2026, 12, 31), null);
     }
 
-    // --- GET /tasks ---
-
     @Test
     void listarRetorna200ComEnvelopeDePagina() throws Exception {
         Task primeira = tarefa();
@@ -172,8 +170,6 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.errors[0].field").value("size"));
     }
 
-    // --- GET /tasks/summary ---
-
     @Test
     void summaryRetorna200ComOsCincoIndicadores() throws Exception {
         when(service.summary()).thenReturn(new TaskSummary(7, 3, 2, 2, 4));
@@ -186,8 +182,6 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.done").value(2))
                 .andExpect(jsonPath("$.highPriority").value(4));
     }
-
-    // --- GET /tasks/{id} ---
 
     @Test
     void buscarPorIdRetorna200() throws Exception {
@@ -222,8 +216,6 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.type").value("https://desafio.ai-task-manager/errors/requisicao-malformada"));
     }
 
-    // --- GET /tasks/{id}/subtasks ---
-
     @Test
     void listarSubtarefasRetorna200() throws Exception {
         Task pai = new Task("Pai", null, null, null, null);
@@ -243,8 +235,6 @@ class TaskControllerTest {
         mockMvc.perform(get("/tasks/{id}/subtasks", ID))
                 .andExpect(status().isNotFound());
     }
-
-    // --- POST /tasks ---
 
     /**
      * O {@code context-path} e /api, entao o Location precisa do prefixo: um
@@ -412,8 +402,6 @@ class TaskControllerTest {
                 .doesNotContain("line:");
     }
 
-    // --- PUT /tasks/{id} ---
-
     @Test
     void editarRetorna200() throws Exception {
         when(service.update(eq(ID), any(TaskCommand.class))).thenReturn(tarefa());
@@ -464,8 +452,6 @@ class TaskControllerTest {
         // status, o mapeamento teria mudado de tipo
         verify(service).update(eq(ID), any(TaskCommand.class));
     }
-
-    // --- PATCH /tasks/{id}/status ---
 
     @Test
     void alterarStatusRetorna200() throws Exception {
@@ -526,8 +512,6 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.type").value("https://desafio.ai-task-manager/errors/regra-de-negocio"))
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("DONE")));
     }
-
-    // --- DELETE /tasks/{id} ---
 
     @Test
     void excluirRetorna204SemCorpo() throws Exception {

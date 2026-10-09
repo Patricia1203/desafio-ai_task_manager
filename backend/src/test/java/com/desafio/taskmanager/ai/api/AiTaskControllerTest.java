@@ -65,8 +65,6 @@ class AiTaskControllerTest {
         return new Task("Titulo", "Descricao", TaskPriority.MEDIUM, null, null);
     }
 
-    // --- POST /ai/tasks/improve ---
-
     @Test
     void improveRetorna200ComOsCamposEmIngles() throws Exception {
         when(service.improve("Titulo", "Descricao"))
@@ -96,8 +94,6 @@ class AiTaskControllerTest {
         verifyNoInteractions(service);
     }
 
-    // --- POST /ai/tasks/{id}/analyze ---
-
     @Test
     void analyzeRetorna200ComAAnaliseTraduzida() throws Exception {
         when(service.analyze(ID)).thenReturn(
@@ -121,8 +117,6 @@ class AiTaskControllerTest {
                 .andExpect(jsonPath("$.title").value("Recurso nao encontrado"));
     }
 
-    // --- POST /ai/tasks/{id}/decompose ---
-
     @Test
     void decomposeRetorna200ComAsSugestoesEmIngles() throws Exception {
         when(service.decompose(ID)).thenReturn(new TaskDecomposition(List.of(
@@ -136,8 +130,6 @@ class AiTaskControllerTest {
                 .andExpect(jsonPath("$.subtasks[0].estimatedHours").value(2.0))
                 .andExpect(jsonPath("$.subtasks[1].title").value("Subtitulo 2"));
     }
-
-    // --- POST /ai/tasks/{id}/decompose/apply ---
 
     @Test
     void applyRetorna201ComAsCriadasEOLocationParaAsSubtarefas() throws Exception {
@@ -249,8 +241,6 @@ class AiTaskControllerTest {
                 .andExpect(jsonPath("$.type", containsString("nao-encontrado")));
     }
 
-    // --- POST /ai/tasks/{id}/analysis/apply ---
-
     @Test
     void applyAnalysisRetorna200ComATarefaAtualizada() throws Exception {
         when(service.applySuggestion(ID, TaskPriority.HIGH, 12.0))
@@ -306,8 +296,6 @@ class AiTaskControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type", containsString("nao-encontrado")));
     }
-
-    // --- erro de LLM ---
 
     @Test
     void respostaInvalidaDaIaRetorna502ComOCodigoLlmInvalidResponse() throws Exception {

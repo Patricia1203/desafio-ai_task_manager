@@ -57,8 +57,6 @@ class AiTaskServiceTest {
         return new Task("Titulo", "Descricao", TaskPriority.LOW, null, null);
     }
 
-    // --- improve ---
-
     @Test
     void improveDevolveASugestaoSemGravarNada() {
         TaskImprovement sugestao = service.improve("Titulo", "Descricao");
@@ -76,8 +74,6 @@ class AiTaskServiceTest {
         assertThat(ia.contextos.get(0).description()).isEmpty();
         verify(repository, never()).save(any(Task.class));
     }
-
-    // --- analyze ---
 
     @Test
     void analyzeDevolveAAnaliseENaoAlteraAPrioridadeDaTarefa() {
@@ -103,8 +99,6 @@ class AiTaskServiceTest {
         verify(repository, never()).save(any(Task.class));
     }
 
-    // --- decompose ---
-
     @Test
     void decomposeDevolveASugestaoSemCriarSubtarefa() {
         Task tarefa = tarefa();
@@ -115,8 +109,6 @@ class AiTaskServiceTest {
         assertThat(decomposicao.subtasks()).hasSize(2);
         verify(repository, never()).save(any(Task.class));
     }
-
-    // --- apply ---
 
     @Test
     void applyCriaAsSubtarefasRecebidasSobOPai() {
@@ -163,8 +155,6 @@ class AiTaskServiceTest {
                 .extracting(Task::getTitle)
                 .containsExactly("Primeira", "Segunda", "Terceira");
     }
-
-    // --- applySuggestion (F13) ---
 
     @Test
     void applySuggestionNaRaizSemFilhasUsaHorizontalDaAnalise() {

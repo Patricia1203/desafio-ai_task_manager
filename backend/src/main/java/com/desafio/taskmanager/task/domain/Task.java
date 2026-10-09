@@ -51,7 +51,6 @@ public class Task {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
-    /** F12: tempo estimado para realizar (valor). Nulo = sem estimativa. */
     @Column(name = "estimated_time")
     private Double estimatedTime;
 
@@ -64,7 +63,6 @@ public class Task {
     @JoinColumn(name = "parent_id")
     private Task parent;
 
-    /** F14: area de trabalho da tarefa (opcional), lazy como o pai. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_id")
     private WorkArea area;
@@ -75,13 +73,13 @@ public class Task {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    /** Construtor para o JPA. Não use: toda criação passa pela factory. */
+    /** Não use: toda criação passa pela factory. */
     protected Task() {
     }
 
     /**
-     * Cria uma tarefa nova. O id e os timestamps sao gerados aqui para que a
-     * entidade ja fique consistente antes de chegar ao banco.
+     * O id e os timestamps sao gerados aqui para que a entidade ja fique
+     * consistente antes de chegar ao banco.
      */
     public Task(String title, String description, TaskPriority priority, LocalDate dueDate, Task parent) {
         this(title, description, priority, dueDate, null, null, parent);
@@ -130,7 +128,7 @@ public class Task {
         touch();
     }
 
-    /** Edicao dos campos de conteudo. Status nao muda por aqui. */
+    /** Status nao muda por aqui. */
     public void updateContent(String title, String description, TaskPriority priority, LocalDate dueDate) {
         this.title = requireTitle(title);
         this.description = description;
@@ -139,7 +137,6 @@ public class Task {
         touch();
     }
 
-    /** F12: edicao do tempo estimado junto com as demais informacoes. */
     public void updateContent(String title, String description, TaskPriority priority, LocalDate dueDate,
             Double estimatedTime, TimeUnit estimatedUnit) {
         updateContent(title, description, priority, dueDate);
@@ -228,12 +225,10 @@ public class Task {
         return parent;
     }
 
-    /** F14: area da tarefa; {@code null} quando a tarefa nao tem area. */
     public WorkArea getArea() {
         return area;
     }
 
-    /** F14: vincula (ou desvincula, com {@code null}) a area da tarefa. */
     public void setArea(WorkArea area) {
         this.area = area;
     }
@@ -246,7 +241,6 @@ public class Task {
         return updatedAt;
     }
 
-    /** Verdadeiro quando a tarefa e uma subtarefa de outra. */
     public boolean isSubtask() {
         return parent != null;
     }

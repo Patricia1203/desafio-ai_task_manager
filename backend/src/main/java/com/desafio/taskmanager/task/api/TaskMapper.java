@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class TaskMapper {
 
-    /** Entidade para DTO. A referencia ao pai sai so como id. */
     public TaskResponse toResponse(Task task) {
         return toResponse(task, null);
     }

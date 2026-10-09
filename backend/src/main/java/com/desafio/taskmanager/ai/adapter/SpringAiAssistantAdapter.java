@@ -35,14 +35,12 @@ import tools.jackson.databind.json.JsonMapper;
  * ligado (default), as ferramentas vao como tool calling reproduzido pelo
  * Spring AI (US-032). Com desligado - modelo que nao suporta - o adaptador
  * injeta no system prompt um contexto pre-montado (pendentes, vencidas e
- * indicadores) e nao registra tool alguma; a decisao de qual modo roda em
- * producao fica no STATE.md.
+ * indicadores) e nao registra tool alguma.
  *
  * <p>Resposta em texto livre: vazia e rejeitada como resposta fora do contrato
  * (ERR-04). Falha de transporte nao vira "resposta invalida": conexao recusada
  * vira {@code LlmUnavailableException} (ERR-05) e timeout/I/O vira
- * {@code LlmCommunicationException} (ERR-03), pelas mesmas regras do adaptador
- * de tarefas.
+ * {@code LlmCommunicationException} (ERR-03).
  */
 public class SpringAiAssistantAdapter implements AssistantPort {
 

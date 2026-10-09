@@ -16,7 +16,6 @@ public record WorkAreaResponse(UUID id, String title, String imageType) {
         return new WorkAreaResponse(area.getId(), area.getTitle(), area.getImageType());
     }
 
-    /** Mesmo resumo a partir da projecao de leitura usada na listagem (F15). */
     public static WorkAreaResponse of(WorkAreaSummary area) {
         return new WorkAreaResponse(area.id(), area.title(), area.imageType());
     }

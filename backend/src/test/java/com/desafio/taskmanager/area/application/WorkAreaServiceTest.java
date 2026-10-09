@@ -53,8 +53,6 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
         repository.deleteAll();
     }
 
-    // --- criar (R1) ---
-
     @Test
     void criarSemImagemGravaOTituloAparado() {
         WorkArea area = service.create("  Pessoal  ", null, null);
@@ -110,8 +108,6 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("tamanho");
     }
-
-    // --- ler (R1) ---
 
     @Test
     void listarOrdenaPorTitulo() {
@@ -181,8 +177,6 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    // --- editar (R1) ---
-
     @Test
     void editarSoTituloMantemAFoto() {
         UUID id = service.create("Pessoal", PNG, "image/png").getId();
@@ -218,8 +212,6 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
         assertThatThrownBy(() -> service.update(UUID.randomUUID(), "X", null, null, false))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
-
-    // --- excluir (R1) ---
 
     @Test
     void excluirRemoveADoBanco() {

@@ -27,12 +27,10 @@ import tools.jackson.databind.json.JsonMapper;
  * acima do máximo, horas fora de (0, {@code max-estimated-hours}] e quantidade
  * de subtarefas fora de {@code min-subtasks..max-subtasks}.
  *
- * <p>Os limites vêm da configuração ({@link AiProperties}) para o mesmo número
- * valer em produção e no teste, sem literal repetido — o {@code AiProperties}
- * é a fonte única de {@code app.ai.*}. O mapper é estrito
- * ({@code FAIL_ON_UNKNOWN_PROPERTIES}): sobrar campo na resposta do modelo é
- * erro aqui, não silêncio — assim o retry do adaptador (T-F03-02) tem o que
- * corrigir.
+ * <p>Os limites vêm da configuração ({@link AiProperties}), fonte única de
+ * {@code app.ai.*}, para o mesmo número valer em produção e no teste. O mapper
+ * é estrito ({@code FAIL_ON_UNKNOWN_PROPERTIES}): sobrar campo na resposta do
+ * modelo é erro aqui, não silêncio.
  */
 @Component
 public class LlmResponseValidator {
@@ -55,7 +53,6 @@ public class LlmResponseValidator {
         this.maxTextLength = properties.maxTextLength();
     }
 
-    /** RF-10: título e descrição são obrigatorios e limitados. */
     public TaskImprovement validateImprovement(String rawJson) {
         TaskImprovement improvement = parse(rawJson, TaskImprovement.class, "melhoria");
         requireText(improvement.title(), "title", maxTitleLength, "melhoria");
