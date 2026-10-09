@@ -4,9 +4,9 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.desafio.taskmanager.ai.adapter.config.AiProperties;
 import com.desafio.taskmanager.ai.port.dto.ProposedSubtask;
 import com.desafio.taskmanager.ai.port.dto.TaskAnalysis;
 import com.desafio.taskmanager.ai.port.dto.TaskDecomposition;
@@ -27,8 +27,9 @@ import tools.jackson.databind.json.JsonMapper;
  * acima do máximo, horas fora de (0, {@code max-estimated-hours}] e quantidade
  * de subtarefas fora de {@code min-subtasks..max-subtasks}.
  *
- * <p>Os limites vêm da configuração para o mesmo número valer em produção e
- * no teste, sem literal repetido. O mapper é estrito
+ * <p>Os limites vêm da configuração ({@link AiProperties}) para o mesmo número
+ * valer em produção e no teste, sem literal repetido — o {@code AiProperties}
+ * é a fonte única de {@code app.ai.*}. O mapper é estrito
  * ({@code FAIL_ON_UNKNOWN_PROPERTIES}): sobrar campo na resposta do modelo é
  * erro aqui, não silêncio — assim o retry do adaptador (T-F03-02) tem o que
  * corrigir.
@@ -46,17 +47,12 @@ public class LlmResponseValidator {
     private final int maxTitleLength;
     private final int maxTextLength;
 
-    public LlmResponseValidator(
-            @Value("${app.ai.min-subtasks:2}") int minSubtasks,
-            @Value("${app.ai.max-subtasks:10}") int maxSubtasks,
-            @Value("${app.ai.max-estimated-hours:200}") double maxEstimatedHours,
-            @Value("${app.ai.max-title-length:200}") int maxTitleLength,
-            @Value("${app.ai.max-text-length:5000}") int maxTextLength) {
-        this.minSubtasks = minSubtasks;
-        this.maxSubtasks = maxSubtasks;
-        this.maxEstimatedHours = maxEstimatedHours;
-        this.maxTitleLength = maxTitleLength;
-        this.maxTextLength = maxTextLength;
+    public LlmResponseValidator(AiProperties properties) {
+        this.minSubtasks = properties.minSubtasks();
+        this.maxSubtasks = properties.maxSubtasks();
+        this.maxEstimatedHours = properties.maxEstimatedHours();
+        this.maxTitleLength = properties.maxTitleLength();
+        this.maxTextLength = properties.maxTextLength();
     }
 
     /** RF-10: título e descrição são obrigatorios e limitados. */

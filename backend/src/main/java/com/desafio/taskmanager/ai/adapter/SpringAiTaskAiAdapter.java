@@ -21,6 +21,8 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.core.io.ClassPathResource;
 
+import tools.jackson.core.JacksonException;
+
 /**
  * Implementacao da {@link TaskAiPort} em cima do ChatClient do Spring AI — a
  * unica classe de dominio que conhece o provedor (RNF-14).
@@ -32,12 +34,15 @@ import org.springframework.core.io.ClassPathResource;
  * parseado, mas nao rejeita campo desconhecido nem limite de dominio — quem
  * rejeita e o validador, sobre o JSON cru.
  *
- * <p>Retry controlado (design.md): disse saida invalida — JSON malformado,
- * enum fora do schema, campo faltando ou rejeicao do validador — refaz a
+ * <p>Retry controlado (design.md): disse saida invalida — rejeicao do
+ * {@code LlmResponseValidator} ({@link InvalidLlmResponseException}) ou falha
+ * de desserializacao do structured output ({@link JacksonException}) — refaz a
  * chamada com uma instrucao de correcao; esgotado {@code app.ai.max-retries}
  * lanca {@link InvalidLlmResponseException} (ERR-04). Falha de transporte nao
  * entra no retry: conexao recusada vira {@link LlmUnavailableException}
  * (ERR-05) e timeout/I/O vira {@link LlmCommunicationException} (ERR-03).
+ * Qualquer outra {@code RuntimeException} e bug de codigo e propaga sem retry —
+ * nao vira "resposta invalida".
  *
  * <p>O mapeamento para resposta HTTP e da camada de api (T-F03-03); aqui as
  * excecoes apenas nascem tipadas.
@@ -105,13 +110,15 @@ public class SpringAiTaskAiAdapter implements TaskAiPort {
                 return validar.apply(textoCru(resposta.getResponse()));
             } catch (InvalidLlmResponseException e) {
                 ultimaFalha = e;
+            } catch (JacksonException e) {
+                ultimaFalha = new InvalidLlmResponseException(
+                        "saida estruturada invalida: " + e.getMessage(), e);
             } catch (RuntimeException e) {
                 RuntimeException transporte = SpringAiTransportErrors.traduzir(e);
                 if (transporte != null) {
                     throw transporte;
                 }
-                ultimaFalha = new InvalidLlmResponseException(
-                        "saida estruturada invalida: " + e.getMessage(), e);
+                throw e;
             }
             correcao = "Sua resposta anterior foi rejeitada: " + ultimaFalha.getMessage()
                     + ". Responda somente com o JSON no formato pedido, sem texto fora dele.";

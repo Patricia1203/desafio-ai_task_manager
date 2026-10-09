@@ -55,7 +55,7 @@ class SpringAiTaskAiAdapterTest {
                 .defaultTemplateRenderer(StTemplateRenderer.builder().build())
                 .build();
         return new SpringAiTaskAiAdapter(
-                chatClient, new LlmResponseValidator(2, 10, 200, 200, 5000), properties);
+                chatClient, new LlmResponseValidator(properties), properties);
     }
 
     @Nested
@@ -210,6 +210,22 @@ class SpringAiTaskAiAdapterTest {
                     .isInstanceOf(InvalidLlmResponseException.class)
                     .hasMessageContaining("estimatedHours");
             assertThat(fake.prompts()).hasSize(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("excecao inesperada propaga sem retry (T-F06-14)")
+    class ExcecaoInesperada {
+
+        @Test
+        @DisplayName("bug de codigo nao vira resposta invalida nem entrada no retry")
+        void propagaSemVitimaDeRetry() {
+            fake.fail(new IllegalStateException("bug interno do roteamento"));
+
+            assertThatThrownBy(() -> adapter.improve(contexto))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("bug interno do roteamento");
+            assertThat(fake.prompts()).hasSize(1);
         }
     }
 

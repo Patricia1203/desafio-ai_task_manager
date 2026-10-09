@@ -7,10 +7,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Configuracao de {@code app.ai.*} lida pelo adaptador (ver application.yml).
  *
- * <p>Sao os mesmos numeros que o {@code LlmResponseValidator} le por
- * {@code @Value} (T-F03-01): o validador e quem rejeita a resposta, o
- * adaptador e quem trunca o contexto e decide as variaveis do prompt, e os
- * dois precisam enxergar o mesmo limite.
+ * <p>Fonte única dos limites de {@code app.ai.*}: o {@code LlmResponseValidator}
+ * e o adaptador recebem este record (T-F06-14), então o mesmo número vale na
+ * validação da resposta e no truncamento do contexto/variáveis do prompt.
  *
  * @param timeout limite de conexao e de leitura no cliente do Ollama (AI_TIMEOUT)
  * @param maxRetries tentativas extras apos saida invalida (AI_MAX_RETRIES); a primeira chamada nao conta

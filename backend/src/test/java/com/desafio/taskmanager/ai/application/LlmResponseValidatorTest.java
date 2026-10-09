@@ -1,8 +1,10 @@
 package com.desafio.taskmanager.ai.application;
 
+import java.time.Duration;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.desafio.taskmanager.ai.adapter.config.AiProperties;
 import com.desafio.taskmanager.ai.port.dto.TaskAnalysis;
 import com.desafio.taskmanager.ai.port.dto.TaskComplexity;
 import com.desafio.taskmanager.ai.port.dto.TaskDecomposition;
@@ -24,13 +26,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * do intervalo, textos vazios ou longos demais e subtarefas duplicadas,
  * vazias ou excedentes.
  *
- * <p>Sem Spring e sem container: o validador é construído direto com os
- * mesmos limites do application.yml, para o teste valer como contrato.
+ * <p>Sem Spring e sem container: o validador é construído direto a partir do
+ * {@link AiProperties} com os mesmos valores do application.yml, para o
+ * teste valer como contrato e provar o binding pelas properties (T-F06-14).
  */
 @DisplayName("LlmResponseValidator — so record tipado passa adiante")
 class LlmResponseValidatorTest {
 
-    private final LlmResponseValidator validator = new LlmResponseValidator(2, 10, 200, 200, 5000);
+    private final AiProperties properties =
+            new AiProperties(Duration.ofSeconds(180), 1, 2, 10, 200, 200, 5000);
+    private final LlmResponseValidator validator = new LlmResponseValidator(properties);
 
     @Nested
     @DisplayName("melhoria (RF-10)")
