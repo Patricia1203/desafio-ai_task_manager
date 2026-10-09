@@ -116,6 +116,18 @@ describe('TasksPage', () => {
     );
   });
 
+  it('mostra o breadcrumb de Tarefas sem Dashboard e o link para todas', async () => {
+    montar();
+
+    const trilha = screen.getByLabelText('Trilha de navegação');
+    expect(trilha).toHaveTextContent('Tarefas');
+    expect(trilha).not.toHaveTextContent('Dashboard');
+    expect(screen.getByRole('link', { name: 'Ver todas as tarefas' })).toHaveAttribute(
+      'href',
+      '/tasks/todas',
+    );
+  });
+
   it('exibe a linha do tempo com as proximas datas de vencimento', async () => {
     montar();
 

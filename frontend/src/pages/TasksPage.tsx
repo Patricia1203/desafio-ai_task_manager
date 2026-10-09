@@ -46,6 +46,9 @@ export default function TasksPage() {
 
   const mapaAreas = areasPorId(areas);
 
+  const quadroId = searchParams.get('quadro');
+  const quadroArea = quadroId ? (areas.find((item) => item.id === quadroId) ?? null) : null;
+
   useEffect(() => {
     let ativo = true;
     if (selecionada?.parentId) {
@@ -175,11 +178,37 @@ function voltar() {
   return (
     <section aria-labelledby="tasks-heading">
       <nav className="breadcrumb" aria-label="Trilha de navegação">
-        <Link to="/">Dashboard</Link>
-        <span className="breadcrumb__sep" aria-hidden="true">
-          /
-        </span>
-        {subModo ? (
+        {quadroArea ? (
+          <>
+            <Link to="/areas">Quadros</Link>
+            <span className="breadcrumb__sep" aria-hidden="true">
+              /
+            </span>
+            <Link to={`/areas/${quadroArea.id}`}>{quadroArea.title}</Link>
+            {subModo && (
+              <>
+                <span className="breadcrumb__sep" aria-hidden="true">
+                  /
+                </span>
+                {paiDaSelecionada && (
+                  <>
+                    <button
+                      type="button"
+                      className="breadcrumb__link"
+                      onClick={() => abrirDetalhe(paiDaSelecionada)}
+                    >
+                      {paiDaSelecionada.title}
+                    </button>
+                    <span className="breadcrumb__sep" aria-hidden="true">
+                      /
+                    </span>
+                  </>
+                )}
+                <span aria-current="page">{subModo}</span>
+              </>
+            )}
+          </>
+        ) : subModo ? (
           <>
             <Link to="/tasks" onClick={() => setModo('lista')}>
               Tarefas
@@ -223,9 +252,12 @@ function voltar() {
           <h2 id="tasks-heading">Tarefas</h2>
         </div>
         {modo === 'lista' && (
-          <button type="button" onClick={() => setModo('criar')}>
-            Nova tarefa
-          </button>
+          <div className="tasks__header__acoes">
+            <Link to="/tasks/todas">Ver todas as tarefas</Link>
+            <button type="button" onClick={() => setModo('criar')}>
+              Nova tarefa
+            </button>
+          </div>
         )}
       </header>
 

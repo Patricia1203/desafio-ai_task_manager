@@ -80,10 +80,10 @@ describe('TaskList', () => {
     expect(screen.getByText('Nenhuma tarefa cadastrada. Crie a primeira!')).toBeInTheDocument();
   });
 
-  it('esconde o filtro por titulo quando nao ha tarefas no quadro', () => {
+  it('mostra o filtro por titulo mesmo sem tarefas no quadro', () => {
     renderizar([]);
 
-    expect(screen.queryByLabelText('Filtrar por título')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Filtrar por título')).toBeInTheDocument();
   });
 
   it('mostra o estado de carregamento', () => {

@@ -13,6 +13,7 @@ interface TaskListProps {
   onRetry: () => void;
   onSelect: (task: Task) => void;
   adicionaisPorTarefa?: (tarefa: Task) => React.ReactNode;
+  emptyMessage?: string;
 }
 
 export default function TaskList({
@@ -24,6 +25,7 @@ export default function TaskList({
   onRetry,
   onSelect,
   adicionaisPorTarefa,
+  emptyMessage = 'Nenhuma tarefa cadastrada. Crie a primeira!',
 }: TaskListProps) {
   const [filtro, setFiltro] = useState('');
 
@@ -34,6 +36,16 @@ export default function TaskList({
   return (
     <div className="task-list">
       <div className="task-list__filtros">
+        <label htmlFor="task-list-filtro" className="field">
+          <span className="field__label">Filtrar por título</span>
+          <input
+            id="task-list-filtro"
+            type="search"
+            value={filtro}
+            onChange={(event) => setFiltro(event.target.value)}
+          />
+        </label>
+
         {onStatusChange && (
           <label htmlFor="task-list-status" className="field">
             <span className="field__label">Filtrar por status</span>
@@ -51,18 +63,6 @@ export default function TaskList({
             </select>
           </label>
         )}
-
-        {tasks.length > 0 && (
-          <label htmlFor="task-list-filtro" className="field">
-            <span className="field__label">Filtrar por título</span>
-            <input
-              id="task-list-filtro"
-              type="search"
-              value={filtro}
-              onChange={(event) => setFiltro(event.target.value)}
-            />
-          </label>
-        )}
       </div>
 
       <AsyncState
@@ -70,7 +70,7 @@ export default function TaskList({
         error={error}
         onRetry={onRetry}
         isEmpty={tasks.length === 0}
-        emptyMessage="Nenhuma tarefa cadastrada. Crie a primeira!"
+        emptyMessage={emptyMessage}
       >
         <ul className="task-list__items">
           {filtradas.map((task) => (

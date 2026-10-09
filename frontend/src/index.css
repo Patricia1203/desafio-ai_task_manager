@@ -104,6 +104,7 @@ button:disabled {
 }
 
 .tasks__header > button,
+.tasks__header__acoes > button,
 button[type='submit'] {
   color: #fff;
   background: var(--color-accent);
@@ -111,6 +112,7 @@ button[type='submit'] {
 }
 
 .tasks__header > button:hover:not(:disabled),
+.tasks__header__acoes > button:hover:not(:disabled),
 button[type='submit']:hover:not(:disabled) {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
@@ -792,6 +794,13 @@ button.dashboard__prazo-titulo:active {
   justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+}
+
+.tasks__header__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .tasks__titulo {
