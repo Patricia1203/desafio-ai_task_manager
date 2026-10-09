@@ -133,7 +133,7 @@
 - **Commit (rascunho):** `configure: Compose repassa variaveis do assistente e fixa imagem do ollama`
 
 ### T-F06-13 — Documentação e processo (README, Maven, desafio.pdf, convenção de commits)
-- **Status:** done (2026-10-08; hash confirmado na verificação final da F06)
+- **Status:** done (commit `efc709b`, 2026-10-08)
 - **Reqs:** DOC-01, RNF-04
 - **Depende de:** decisão do usuário (começo de execução) — não é bloqueante de código
 - **Arquivos (criar/alterar):** README.md, .agent/rules/commit-convention.md, .specs/project/STATE.md, docs/ (decisão sobre desafio.pdf)
@@ -143,7 +143,7 @@
 - **Commit (rascunho):** `document: Documentacao de execucao, prompts e regras de processo`
 
 ### T-F06-14 — Validador e retry: fonte única de limites e exceções restritas
-- **Status:** pending
+- **Status:** done (commit `39a6c38`, 2026-10-08)
 - **Reqs:** RNF-10, RNF-15, TST-03
 - **Depende de:** —
 - **Arquivos (criar/alterar):** backend/src/main/java/com/desafio/taskmanager/ai/application/LlmResponseValidator.java, backend/src/main/java/com/desafio/taskmanager/ai/adapter/SpringAiTaskAiAdapter.java, backend/src/test/java/.../ai/application/LlmResponseValidatorTest.java, .../ai/adapter/SpringAiTaskAiAdapterTest.java
