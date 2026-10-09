@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type { WorkArea } from '../types/area';
 import { areaImageUrl, createArea, deleteArea, listAreas, updateArea } from '../api/areas';
 import AsyncState from '../components/common/AsyncState';
 
 type Modo = 'lista' | 'form';
+
+const TIPOS_ACEITOS = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const TAMANHO_MAXIMO_FOTO = 5 * 1024 * 1024;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : 'Erro inesperado.';
@@ -76,6 +79,33 @@ export default function AreasPage() {
     setModo('form');
   }
 
+  /**
+   * Valida a foto no cliente antes do upload: a whitelist e o teto de 5MB
+   * espelham as regras do backend (WorkArea#setImage), poupando um round-trip
+   * que terminaria em 422/413.
+   */
+  function selecionarFoto(event: ChangeEvent<HTMLInputElement>) {
+    const escolhido = event.target.files?.[0] ?? null;
+    if (!escolhido) {
+      setArquivo(null);
+      return;
+    }
+    if (!TIPOS_ACEITOS.includes(escolhido.type)) {
+      setArquivo(null);
+      event.target.value = '';
+      setFormError('Formato de imagem não suportado. Use PNG, JPEG, WEBP ou GIF.');
+      return;
+    }
+    if (escolhido.size > TAMANHO_MAXIMO_FOTO) {
+      setArquivo(null);
+      event.target.value = '';
+      setFormError('A foto deve ter no máximo 5MB.');
+      return;
+    }
+    setArquivo(escolhido);
+    setFormError(null);
+  }
+
   async function salvar(event: FormEvent) {
     event.preventDefault();
     const nome = titulo.trim();
@@ -129,13 +159,23 @@ export default function AreasPage() {
   return (
     <section aria-labelledby="areas-heading">
       <nav className="breadcrumb" aria-label="Trilha de navegação">
-        <Link to="/">Dashboard</Link>
-        <span className="breadcrumb__sep" aria-hidden="true">
-          /
-        </span>
-        <span aria-current="page">
-          {modo === 'form' ? (editando ? 'Editar quadro' : 'Novo quadro') : 'Quadros'}
-        </span>
+        {modo === 'form' ? (
+          <>
+            <button
+              type="button"
+              className="breadcrumb__link"
+              onClick={() => setModo('lista')}
+            >
+              Quadros
+            </button>
+            <span className="breadcrumb__sep" aria-hidden="true">
+              /
+            </span>
+            <span aria-current="page">{editando ? 'Editar quadro' : 'Novo quadro'}</span>
+          </>
+        ) : (
+          <span aria-current="page">Quadros</span>
+        )}
       </nav>
 
       <header className="tasks__header">
@@ -179,14 +219,15 @@ export default function AreasPage() {
             />
           </label>
 
-          <label htmlFor="areas-form-foto" className="field">
+          <label htmlFor="areas-form-foto" className="field areas-form__foto">
             <span className="field__label">Foto</span>
             <input
               id="areas-form-foto"
               type="file"
-              accept="image/*"
-              onChange={(event) => setArquivo(event.target.files?.[0] ?? null)}
+              accept={TIPOS_ACEITOS.join(',')}
+              onChange={selecionarFoto}
             />
+            <span className="field__hint">PNG, JPEG, WEBP ou GIF, até 5MB.</span>
           </label>
 
           {editando?.imageType && !removerFoto && (

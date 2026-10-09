@@ -99,4 +99,26 @@ describe('AreasPage', () => {
 
     expect(listAreas).toHaveBeenLastCalledWith({ title: 'morad' });
   });
+
+  it('mostra o breadcrumb de Quadros sem Dashboard', async () => {
+    montar();
+    await screen.findByRole('link', { name: /Moradia/ });
+
+    const trilha = screen.getByLabelText('Trilha de navegação');
+    expect(trilha).toHaveTextContent('Quadros');
+    expect(trilha).not.toHaveTextContent('Dashboard');
+  });
+
+  it('recusa foto acima de 5MB antes de enviar', async () => {
+    montar();
+    await screen.findByRole('link', { name: /Moradia/ });
+    await userEvent.click(screen.getByRole('button', { name: 'Novo quadro' }));
+
+    const grande = new File(['x'], 'grande.png', { type: 'image/png' });
+    Object.defineProperty(grande, 'size', { value: 5 * 1024 * 1024 + 1 });
+    await userEvent.upload(screen.getByLabelText(/Foto/), grande);
+
+    expect(await screen.findByText(/no máximo 5MB/)).toBeInTheDocument();
+    expect(createArea).not.toHaveBeenCalled();
+  });
 });

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { WorkArea } from '../types/area';
-import type { Task, TaskPriority } from '../types/task';
+import type { Task, TaskPriority, TaskStatus } from '../types/task';
 import { PRIORITY_LABELS, PRIORITY_OPTIONS } from '../types/task';
 import { areaImageUrl, listAreas } from '../api/areas';
 import { createTask, listTasks, updateTask } from '../api/tasks';
@@ -22,6 +22,7 @@ export default function AreaDetailPage() {
   const [tarefas, setTarefas] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFiltro, setStatusFiltro] = useState<TaskStatus | ''>('');
 
   const [mostrarCriar, setMostrarCriar] = useState(false);
   const [titulo, setTitulo] = useState('');
@@ -66,7 +67,7 @@ export default function AreaDetailPage() {
     if (!areaId) {
       return;
     }
-    listTasks({ areaId, size: 50 })
+    listTasks({ areaId, status: statusFiltro || undefined, size: 50 })
       .then((pagina) => {
         if (ativo) {
           setTarefas(pagina.content);
@@ -82,14 +83,14 @@ export default function AreaDetailPage() {
     return () => {
       ativo = false;
     };
-  }, [areaId]);
+  }, [areaId, statusFiltro]);
 
   const carregarTarefas = () => {
     if (!areaId) {
       return;
     }
     setLoading(true);
-    listTasks({ areaId, size: 50 })
+    listTasks({ areaId, status: statusFiltro || undefined, size: 50 })
       .then((pagina) => {
         setTarefas(pagina.content);
         setError(null);
@@ -155,10 +156,6 @@ export default function AreaDetailPage() {
   return (
     <section aria-labelledby="area-heading">
       <nav className="breadcrumb" aria-label="Trilha de navegação">
-        <Link to="/">Dashboard</Link>
-        <span className="breadcrumb__sep" aria-hidden="true">
-          /
-        </span>
         <Link to="/areas">Quadros</Link>
         <span className="breadcrumb__sep" aria-hidden="true">
           /
@@ -288,8 +285,11 @@ export default function AreaDetailPage() {
             tasks={tarefas}
             loading={loading}
             error={error}
+            status={statusFiltro}
+            onStatusChange={(status) => setStatusFiltro(status)}
+            emptyMessage={mostrarCriar ? '' : undefined}
             onRetry={carregarTarefas}
-            onSelect={(task) => navigate(`/tasks?tarefa=${task.id}`)}
+            onSelect={(task) => navigate(`/tasks?tarefa=${task.id}&quadro=${areaId}`)}
             adicionaisPorTarefa={(tarefa) =>
               outrosQuadros.length > 0 ? (
                 <label className="task-list__mover">

@@ -39,11 +39,11 @@ export default function AsyncState({
   }
 
   if (isEmpty) {
-    return (
+    return emptyMessage ? (
       <p role="status" className="async-state__empty">
         {emptyMessage}
       </p>
-    );
+    ) : null;
   }
 
   return <>{children}</>;
