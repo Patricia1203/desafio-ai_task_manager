@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * Controller descartavel usado só nos testes do handler de erro. Nao contem
@@ -56,6 +57,13 @@ class ErrorProbeController {
     @PostMapping("/tipo")
     void tipo() throws HttpMediaTypeNotSupportedException {
         throw new HttpMediaTypeNotSupportedException("application/xml");
+    }
+
+    /** Simula upload acima do teto de multipart: deve virar 413 e nao 500. */
+    @PostMapping("/upload-grande")
+    void uploadGrande() {
+        throw new MaxUploadSizeExceededException(5 * 1024 * 1024L,
+                new IllegalStateException("the request was rejected because its size exceeds the configured maximum"));
     }
 
     /**

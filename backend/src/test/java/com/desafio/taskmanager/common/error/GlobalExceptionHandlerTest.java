@@ -143,6 +143,18 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void uploadAcimaDoLimiteDevolve413ENao500() throws Exception {
+        mockMvc.perform(post("/__test/upload-grande"))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(content().contentTypeCompatibleWith(PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(413))
+                .andExpect(jsonPath("$.type").value(containsString("arquivo-muito-grande")))
+                .andExpect(jsonPath("$.detail").value("O arquivo enviado excede o tamanho maximo permitido"))
+                .andExpect(content().string(not(containsString("at com.desafio"))))
+                .andExpect(content().string(not(containsString("exceeds the configured maximum"))));
+    }
+
+    @Test
     void falhaDeBancoDevolve500ComMensagemFixaESemSql() throws Exception {
         mockMvc.perform(get("/__test/banco"))
                 .andExpect(status().isInternalServerError())

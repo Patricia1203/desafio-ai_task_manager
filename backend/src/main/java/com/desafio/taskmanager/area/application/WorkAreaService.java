@@ -1,24 +1,26 @@
 package com.desafio.taskmanager.area.application;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import com.desafio.taskmanager.area.domain.WorkArea;
 import com.desafio.taskmanager.area.infra.WorkAreaRepository;
+import com.desafio.taskmanager.area.infra.WorkAreaSummary;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.task.infra.TaskRepository;
 
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Regras de negocio de areas de trabalho (F14).
  *
- * <p>O service orquestra; as invariantes (titulo obrigatorio, foto so com
- * content type {@code image/*}) ficam em {@link WorkArea}. Aqui ficam a
- * existencia (404), a ordem da listagem, a busca por titulo e o comportamento
- * do {@code PUT} parcial (titulo/ foto/ remocao independentes).
+ * <p>O service orquestra; as invariantes (titulo obrigatorio, foto so na
+ * whitelist png/jpeg/webp/gif com magic bytes conferidos) ficam em
+ * {@link WorkArea}. Aqui ficam a existencia (404), a ordem da listagem, a busca
+ * por titulo e o comportamento do {@code PUT} parcial (titulo/ foto/ remocao
+ * independentes).
  */
 @Service
 @Transactional(readOnly = true)
@@ -33,9 +35,9 @@ public class WorkAreaService {
         this.taskRepository = taskRepository;
     }
 
-    /** Lista as areas em ordem alfabetica (sem os bytes das fotos). */
-    public List<WorkArea> list() {
-        return repository.findAllByOrderByTitleAsc();
+    /** Lista os resumos em ordem alfabetica (projecao sem os bytes das fotos). */
+    public List<WorkAreaSummary> list() {
+        return repository.findAllSummaryOrderedByTitle();
     }
 
     /**
@@ -43,13 +45,11 @@ public class WorkAreaService {
      * deixar {@code %}/{@code _} do termo virarem coringa). Termo em branco
      * devolve a lista completa, igual a {@link #list()}.
      */
-    public List<WorkArea> list(String titulo) {
+    public List<WorkAreaSummary> list(String titulo) {
         if (titulo == null || titulo.isBlank()) {
             return list();
         }
-        return repository.findAll(
-                tituloContem(titulo.trim()),
-                org.springframework.data.domain.Sort.by("title").ascending());
+        return repository.findSummaryByTitle(patternDe(titulo.trim()));
     }
 
     /**
@@ -111,13 +111,12 @@ public class WorkAreaService {
     }
 
     /** Contem parcial, sem diferenciar caixa e sem deixar %/_ do termo virarem coringa. */
-    private static Specification<WorkArea> tituloContem(String termo) {
+    private static String patternDe(String termo) {
         String escapado = termo
                 .replace("\\", "\\\\")
                 .replace("%", "\\%")
                 .replace("_", "\\_");
-        String pattern = "%" + escapado.toLowerCase() + "%";
-        return (root, query, cb) -> cb.like(cb.lower(root.get("title")), pattern, '\\');
+        return "%" + escapado.toLowerCase(Locale.ROOT) + "%";
     }
 
     /** Bytes + content type devolvidos pelo endpoint de imagem. */

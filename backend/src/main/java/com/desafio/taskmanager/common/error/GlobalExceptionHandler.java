@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -52,6 +53,7 @@ public class GlobalExceptionHandler {
     private static final URI NOT_FOUND_TYPE = URI.create(BASE_TYPE + "nao-encontrado");
     private static final URI METHOD_NOT_ALLOWED_TYPE = URI.create(BASE_TYPE + "metodo-nao-permitido");
     private static final URI UNSUPPORTED_MEDIA_TYPE = URI.create(BASE_TYPE + "tipo-nao-suportado");
+    private static final URI PAYLOAD_TOO_LARGE_TYPE = URI.create(BASE_TYPE + "arquivo-muito-grande");
     private static final URI MALFORMED_TYPE = URI.create(BASE_TYPE + "requisicao-malformada");
     private static final URI RULE_TYPE = URI.create(BASE_TYPE + "regra-de-negocio");
     private static final URI DATABASE_TYPE = URI.create(BASE_TYPE + "banco-indisponivel");
@@ -122,6 +124,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessRuleException.class)
     public ProblemDetail handleBusinessRule(BusinessRuleException ex) {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, RULE_TYPE, "Regra de negocio violada", ex.getMessage());
+    }
+
+    /**
+     * 413: o upload passa de {@code spring.servlet.multipart.max-file-size}
+     * (5MB para a foto dos quadros). Sem este handler o catch-all transformava
+     * um erro de cliente em 500.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ProblemDetail handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        log.warn("Upload excede o tamanho maximo permitido", ex);
+        return problem(HttpStatus.PAYLOAD_TOO_LARGE, PAYLOAD_TOO_LARGE_TYPE,
+                "Arquivo muito grande", "O arquivo enviado excede o tamanho maximo permitido");
     }
 
     /**

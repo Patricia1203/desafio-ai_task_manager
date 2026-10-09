@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.desafio.taskmanager.area.domain.WorkArea;
 import com.desafio.taskmanager.area.infra.WorkAreaRepository;
+import com.desafio.taskmanager.area.infra.WorkAreaSummary;
 import com.desafio.taskmanager.common.error.BusinessRuleException;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 import com.desafio.taskmanager.support.PostgresIntegrationTest;
@@ -21,6 +22,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /** TST-04: CRUD e regras de area (F14) contra Postgres real. */
 @SpringBootTest
@@ -28,7 +30,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class WorkAreaServiceTest extends PostgresIntegrationTest {
 
-    private static final byte[] PNG = { (byte) 0x89, 'P', 'N', 'G' };
+    private static final byte[] PNG = {
+            (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
+
+    private static final byte[] JPEG = { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 };
 
     @Autowired
     private WorkAreaService service;
@@ -89,6 +94,23 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
                 .hasMessageContaining("formato");
     }
 
+    @Test
+    void criarComBytesQueNaoBatemComOTipoEhRecusado() {
+        assertThatThrownBy(() -> service.create("Projeto", PNG, "image/jpeg"))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("formato");
+    }
+
+    @Test
+    void criarComArquivoAcimaDoLimiteEhRecusado() {
+        byte[] grande = new byte[WorkArea.MAX_IMAGE_SIZE + 1];
+        System.arraycopy(PNG, 0, grande, 0, PNG.length);
+
+        assertThatThrownBy(() -> service.create("Projeto", grande, "image/png"))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("tamanho");
+    }
+
     // --- ler (R1) ---
 
     @Test
@@ -96,9 +118,9 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
         repository.save(new WorkArea("Zeta"));
         repository.save(new WorkArea("Alfa"));
 
-        List<WorkArea> areas = service.list();
+        List<WorkAreaSummary> areas = service.list();
 
-        assertThat(areas).extracting(WorkArea::getTitle).containsExactly("Alfa", "Zeta");
+        assertThat(areas).extracting(WorkAreaSummary::title).containsExactly("Alfa", "Zeta");
     }
 
     @Test
@@ -108,10 +130,10 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
         repository.save(new WorkArea("100 e feito"));
 
         assertThat(service.list("RELAT"))
-                .extracting(WorkArea::getTitle)
+                .extracting(WorkAreaSummary::title)
                 .containsExactly("Relatorio trimestral");
         assertThat(service.list("100%"))
-                .extracting(WorkArea::getTitle)
+                .extracting(WorkAreaSummary::title)
                 .containsExactly("100% feito");
     }
 
@@ -119,7 +141,17 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
     void listarPorTituloEmBrancoDevolveTudo() {
         repository.save(new WorkArea("Alfa"));
 
-        assertThat(service.list("   ")).extracting(WorkArea::getTitle).containsExactly("Alfa");
+        assertThat(service.list("   ")).extracting(WorkAreaSummary::title).containsExactly("Alfa");
+    }
+
+    @Test
+    void listarProjetaImageTypeSemOsBytes() {
+        service.create("Com foto", PNG, "image/png");
+        repository.save(new WorkArea("Sem foto"));
+
+        assertThat(service.list())
+                .extracting(WorkAreaSummary::title, WorkAreaSummary::hasImage)
+                .containsExactly(tuple("Com foto", true), tuple("Sem foto", false));
     }
 
     @Test
@@ -164,11 +196,10 @@ class WorkAreaServiceTest extends PostgresIntegrationTest {
     @Test
     void editarTrocaAFoto() {
         UUID id = service.create("Pessoal", PNG, "image/png").getId();
-        byte[] nova = { 1, 2, 3 };
 
-        WorkArea atualizada = service.update(id, null, nova, "image/jpeg", true);
+        WorkArea atualizada = service.update(id, null, JPEG, "image/jpeg", true);
 
-        assertThat(atualizada.getImage()).isEqualTo(nova);
+        assertThat(atualizada.getImage()).isEqualTo(JPEG);
         assertThat(atualizada.getImageType()).isEqualTo("image/jpeg");
     }
 

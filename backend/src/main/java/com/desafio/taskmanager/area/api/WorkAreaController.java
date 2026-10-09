@@ -29,7 +29,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  * <p>Multipart: {@code title} e o nome (obrigatorio) e {@code image} a foto
  * opcional. No PUT titulo, foto e remocao sao independentes — o cliente manda
  * so o que quer alterar. O content type do arquivo vira o {@code imageType} da
- * area (regra {@code image/*} no dominio).
+ * area depois de conferido no dominio (whitelist png/jpeg/webp/gif + magic
+ * bytes).
  *
  * <p>Sem {@code @Validated} no controller (mesma regra documentada no
  * TaskController): a validacao de borda do titulo que nao cabe em anotacao de
@@ -91,6 +92,10 @@ public class WorkAreaController {
      * Foto da area: bytes com o content type gravado; 404 se a area ou a foto
      * nao existirem. Cache publico de 1 dia — a foto so muda quando o cliente
      * reenvia um PUT.
+     *
+     * <p>Defesas contra XSS por conteudo (F15): {@code nosniff} impede o
+     * browser de adivinhar outro tipo, e a CSP {@code default-src 'none'}
+     * bloqueia qualquer script/recurso carregado a partir da resposta.
      */
     @GetMapping("/{id}/image")
     public ResponseEntity<byte[]> image(@PathVariable UUID id) {
@@ -99,6 +104,8 @@ public class WorkAreaController {
                 .contentType(MediaType.parseMediaType(image.contentType()))
                 .cacheControl(CacheControl.maxAge(java.time.Duration.ofDays(1)))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Content-Security-Policy", "default-src 'none'")
                 .body(image.bytes());
     }
 

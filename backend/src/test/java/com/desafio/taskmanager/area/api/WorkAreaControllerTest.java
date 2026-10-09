@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.desafio.taskmanager.area.application.WorkAreaService;
 import com.desafio.taskmanager.area.domain.WorkArea;
+import com.desafio.taskmanager.area.infra.WorkAreaSummary;
 import com.desafio.taskmanager.common.error.GlobalExceptionHandler;
 import com.desafio.taskmanager.common.error.ResourceNotFoundException;
 
@@ -41,7 +42,8 @@ class WorkAreaControllerTest {
 
     private static final UUID ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
-    private static final byte[] PNG = { (byte) 0x89, 'P', 'N', 'G' };
+    private static final byte[] PNG = {
+            (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
 
     @Autowired
     private MockMvc mockMvc;
@@ -60,7 +62,8 @@ class WorkAreaControllerTest {
     @Test
     void listarDevolveResumoSemBytes() throws Exception {
         WorkArea area = area();
-        when(service.list(isNull())).thenReturn(List.of(area));
+        when(service.list(isNull()))
+                .thenReturn(List.of(new WorkAreaSummary(area.getId(), "Pessoal", "image/png")));
 
         mockMvc.perform(get("/areas"))
                 .andExpect(status().isOk())
@@ -73,7 +76,8 @@ class WorkAreaControllerTest {
 
     @Test
     void listarPorTituloRepassaBuscaAoService() throws Exception {
-        when(service.list("mor")).thenReturn(List.of(new WorkArea("Moradia")));
+        when(service.list("mor"))
+                .thenReturn(List.of(new WorkAreaSummary(UUID.randomUUID(), "Moradia", null)));
 
         mockMvc.perform(get("/areas").param("title", "mor"))
                 .andExpect(status().isOk())
@@ -151,7 +155,9 @@ class WorkAreaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().bytes(PNG))
                 .andExpect(header().string(org.springframework.http.HttpHeaders.CONTENT_TYPE,
-                        org.hamcrest.Matchers.startsWith("image/png")));
+                        org.hamcrest.Matchers.startsWith("image/png")))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("Content-Security-Policy", "default-src 'none'"));
     }
 
     @Test
